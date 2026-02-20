@@ -521,7 +521,7 @@ function updateBetUI() {
   const pay = sdk.calculatePayout(lam, newPool, newTotal, currentMarketData.feeBps);
   est.classList.remove('hidden');
   const v = est.querySelector('.bet-payout-value');
-  if (v) v.textContent = ui.formatSol(pay.net);
+  if (v) v.textContent = ui.formatSol(pay);
 }
 
 async function handlePlaceBet() {
