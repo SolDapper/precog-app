@@ -636,12 +636,25 @@ document.getElementById('token-chooser-dropdown')?.addEventListener('click', (e)
 });
 
 // Positions category filter
+function reRenderPositions() {
+  const listEl = document.getElementById('positions-list');
+  if (_positionEntries.length > 0) renderPositionsList(_positionEntries, listEl);
+}
 document.getElementById('positions-category-filter')?.addEventListener('change', (e) => {
   currentPositionsCategoryFilter = e.target.value;
-  const listEl = document.getElementById('positions-list');
-  if (_positionEntries.length > 0) {
-    renderPositionsList(_positionEntries, listEl);
-  }
+  reRenderPositions();
+});
+document.getElementById('positions-status-filter')?.addEventListener('change', (e) => {
+  currentPositionsStatusFilter = e.target.value;
+  reRenderPositions();
+});
+document.getElementById('positions-result-filter')?.addEventListener('change', (e) => {
+  currentPositionsResultFilter = e.target.value;
+  reRenderPositions();
+});
+document.getElementById('positions-sort')?.addEventListener('change', (e) => {
+  currentPositionsSort = e.target.value;
+  reRenderPositions();
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -828,6 +841,9 @@ document.getElementById('back-to-explore')?.addEventListener('click', () => {
 // My Positions View
 // ═══════════════════════════════════════════════════════════════════
 let currentPositionsCategoryFilter = 'all';
+let currentPositionsStatusFilter = 'all';
+let currentPositionsResultFilter = 'all';
+let currentPositionsSort = 'deadline-desc';
 
 async function loadPositions() {
   const listEl = document.getElementById('positions-list');
@@ -853,7 +869,34 @@ async function loadPositions() {
     const entries = positions.map(({ pubkey: posPk, account: pos }) => {
       const mk = marketMap[pos.market.toBase58()] || null;
       const { category } = mk ? ui.parseDescription(mk.description) : { category: null };
-      return { posPk, pos, mk, market: pos.market, category, deadline: mk ? mk.resolutionDeadline : 0n };
+      const deadline = mk ? mk.resolutionDeadline : 0n;
+      const status = mk ? mk.status : -1;
+      const claimed = pos.claimed;
+
+      // Compute payout estimate for sorting
+      let payout = 0n;
+      let isWinning = false;
+      let isLosing = false;
+      if (mk && !claimed) {
+        const pool = mk.outcomePools[pos.outcomeIndex];
+        if (mk.status < 2 && pool > 0n && mk.totalPool > 0n) {
+          const gross = (BigInt(pos.amount) * mk.totalPool) / pool;
+          const fee = (gross * BigInt(mk.feeBps)) / 10000n;
+          payout = gross - fee;
+        } else if (mk.status === 2 && mk.winningOutcome === pos.outcomeIndex) {
+          isWinning = true;
+          const winPool = mk.outcomePools[mk.winningOutcome];
+          if (winPool > 0n) {
+            const gross = (BigInt(pos.amount) * mk.totalPool) / winPool;
+            const fee = (gross * BigInt(mk.feeBps)) / 10000n;
+            payout = gross - fee;
+          }
+        } else if (mk.status === 2 && mk.winningOutcome !== pos.outcomeIndex) {
+          isLosing = true;
+        }
+      }
+
+      return { posPk, pos, mk, market: pos.market, category, deadline, status, claimed, payout, isWinning, isLosing, amount: pos.amount };
     });
 
     // Populate category filter dropdown
@@ -876,19 +919,59 @@ async function loadPositions() {
 }
 
 function renderPositionsList(entries, listEl) {
-  // Apply category filter
   let filtered = entries;
+
+  // Category filter
   if (currentPositionsCategoryFilter !== 'all') {
     filtered = filtered.filter(e =>
       currentPositionsCategoryFilter === '__none' ? !e.category : e.category === currentPositionsCategoryFilter
     );
   }
 
-  // Sort by deadline descending (newest deadline first)
-  filtered.sort((a, b) => Number(b.deadline - a.deadline));
+  // Status filter
+  if (currentPositionsStatusFilter !== 'all') {
+    const statusVal = parseInt(currentPositionsStatusFilter);
+    filtered = filtered.filter(e => e.status === statusVal);
+  }
+
+  // Result filter
+  if (currentPositionsResultFilter === 'unclaimed') {
+    filtered = filtered.filter(e => !e.claimed);
+  } else if (currentPositionsResultFilter === 'claimed') {
+    filtered = filtered.filter(e => e.claimed);
+  } else if (currentPositionsResultFilter === 'winning') {
+    filtered = filtered.filter(e => e.isWinning);
+  } else if (currentPositionsResultFilter === 'losing') {
+    filtered = filtered.filter(e => e.isLosing);
+  }
+
+  // Sort
+  switch (currentPositionsSort) {
+    case 'deadline-desc':
+      filtered.sort((a, b) => Number(b.deadline - a.deadline));
+      break;
+    case 'deadline-asc':
+      filtered.sort((a, b) => Number(a.deadline - b.deadline));
+      break;
+    case 'amount-desc':
+      filtered.sort((a, b) => Number(b.amount - a.amount));
+      break;
+    case 'amount-asc':
+      filtered.sort((a, b) => Number(a.amount - b.amount));
+      break;
+    case 'payout-desc':
+      filtered.sort((a, b) => Number(b.payout - a.payout));
+      break;
+    case 'payout-asc':
+      filtered.sort((a, b) => Number(a.payout - b.payout));
+      break;
+    case 'status':
+      filtered.sort((a, b) => a.status - b.status || Number(b.deadline - a.deadline));
+      break;
+  }
 
   if (filtered.length === 0) {
-    listEl.innerHTML = '<div class="empty-state">No positions match the selected filter.</div>';
+    listEl.innerHTML = '<div class="empty-state">No positions match the selected filters.</div>';
     return;
   }
 

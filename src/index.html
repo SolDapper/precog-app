@@ -152,11 +152,39 @@
     <!-- ═══════════════════════════════════════════════ -->
     <main id="view-positions" class="view hidden">
       <h2 class="section-title">My Positions</h2>
-      <div class="explore-sort" style="margin-bottom:12px">
-        <label class="sort-label">Category</label>
-        <select id="positions-category-filter" class="sort-select">
-          <option value="all">All Categories</option>
-        </select>
+      <div class="positions-filters">
+        <div class="explore-sort">
+          <label class="sort-label">Category</label>
+          <select id="positions-category-filter" class="sort-select">
+            <option value="all">All Categories</option>
+          </select>
+          <label class="sort-label">Status</label>
+          <select id="positions-status-filter" class="sort-select">
+            <option value="all">All Statuses</option>
+            <option value="0">Open</option>
+            <option value="1">Resolved</option>
+            <option value="2">Finalized</option>
+            <option value="3">Voided</option>
+          </select>
+          <label class="sort-label">Result</label>
+          <select id="positions-result-filter" class="sort-select">
+            <option value="all">All</option>
+            <option value="unclaimed">Unclaimed</option>
+            <option value="claimed">Claimed</option>
+            <option value="winning">Winning</option>
+            <option value="losing">Losing</option>
+          </select>
+          <label class="sort-label">Sort</label>
+          <select id="positions-sort" class="sort-select">
+            <option value="deadline-desc">Deadline ↓</option>
+            <option value="deadline-asc">Deadline ↑</option>
+            <option value="amount-desc">Amount ↓</option>
+            <option value="amount-asc">Amount ↑</option>
+            <option value="payout-desc">Est. Payout ↓</option>
+            <option value="payout-asc">Est. Payout ↑</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
       </div>
       <div id="positions-list" class="positions-list">
         <div class="empty-state">Connect your wallet to view positions.</div>
@@ -275,68 +303,83 @@
       <div class="manual-card card">
         <div class="manual-section">
           <h3 class="manual-heading">Getting Started</h3>
-          <p class="manual-text">Pelfmont Markets is a fully non-custodial prediction market built on Solana. Everything happens on-chain — no accounts, no databases, no middlemen. Connect your Solana wallet to start.</p>
-          <p class="manual-text">Tap <strong>Connect</strong> in the top-right corner. Phantom, Solflare, and Jupiter wallets are supported on desktop. On mobile, the app uses the Solana Mobile Wallet Adapter.</p>
+          <p class="manual-text">Pelfmont Markets is a fully non-custodial prediction market built on Solana. Everything happens on-chain — no accounts, no databases, no middlemen.</p>
+          <p class="manual-text">Tap <strong>Connect</strong> in the top-right corner. Phantom, Solflare, and Jupiter wallets are supported on desktop. On mobile, the app uses the Solana Mobile Wallet Adapter. If you have a .sol domain, it will display in the wallet button and throughout the app.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Exploring Markets</h3>
-          <p class="manual-text">The <strong>Explore</strong> tab is your home screen. It lists all on-chain markets with outcome probability bars, volume, position count, and time remaining.</p>
-          <p class="manual-text"><strong>Filters:</strong> Use the status tabs (Open, Resolved, Finalized, All) to narrow by market state. The "My Markets" filter shows only markets you created.</p>
-          <p class="manual-text"><strong>Sort:</strong> Choose between Closing Soon (default), Volume, or Most Positions.</p>
-          <p class="manual-text"><strong>Creator filter:</strong> Use the Creator dropdown to see markets from a specific creator. Creators with .sol names will display their SNS identity.</p>
-          <p class="manual-text"><strong>Hot Markets:</strong> Toggle the chart to see the top 10 markets by volume at a glance.</p>
+          <p class="manual-text">The <strong>Explore</strong> tab is your home screen. Each market card shows outcome probability bars, volume, position count, and time remaining. If you have a position in a market, an estimate badge shows your projected payout right on the card.</p>
+          <p class="manual-text"><strong>Status tabs</strong> — Filter by Open, Resolved, Finalized, or All. The "My Markets" tab shows only markets you created.</p>
+          <p class="manual-text"><strong>Sort &amp; filter</strong> — Sort by Closing Soon, Volume, or Most Positions. Filter by creator (with SNS name display), category, or token denomination.</p>
+          <p class="manual-text"><strong>Hot Markets chart</strong> — Toggle the bar chart to see the top 10 markets by volume. Voided markets are excluded. Click any bar to jump to that market.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Market Detail</h3>
+          <p class="manual-text">Tap any market card to open its detail page. You'll see the full description, outcome distribution charts, pool breakdown, authority and creator addresses, fee structure, and denomination.</p>
+          <p class="manual-text">If you hold a position, estimate badges appear next to the watchlist button showing your projected payout (or win/loss once finalized).</p>
+          <p class="manual-text">Use the <strong>Share</strong> button to send the market link to others via your device's native share sheet, or it will copy the link to your clipboard.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Placing a Bet</h3>
-          <p class="manual-text">Tap any market card to open its detail page. Select the outcome you want to bet on, enter your amount in SOL, and review the estimated payout. The payout estimate updates live based on current pool sizes and the protocol fee.</p>
-          <p class="manual-text">Tap <strong>Place Bet</strong> and approve the transaction in your wallet. Your SOL goes directly into the on-chain vault — not to any company or individual.</p>
+          <p class="manual-text">On the market detail page, select the outcome you want to bet on, enter your amount, and review the estimated payout. The estimate updates live based on current pool sizes and the total fee.</p>
+          <p class="manual-text">Tap <strong>Place Bet</strong> and approve the transaction in your wallet. Your funds go directly into the on-chain vault — not to any company or individual.</p>
+          <p class="manual-text">Markets can be denominated in native SOL, SPL tokens, or Token-2022 tokens. The denomination is shown on the market card and detail page.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Market Lifecycle</h3>
           <p class="manual-text"><strong>Open</strong> — Accepting bets. Anyone can place a bet on any outcome.</p>
-          <p class="manual-text"><strong>Resolved</strong> — The market authority has declared a winning outcome. A 24-hour dispute window begins. No new bets accepted.</p>
-          <p class="manual-text"><strong>Finalized</strong> — The dispute window has passed. Winners can now claim their payouts.</p>
-          <p class="manual-text"><strong>Voided</strong> — The authority cancelled the market. All bettors can claim full refunds.</p>
+          <p class="manual-text"><strong>Resolved</strong> — The authority declared a winning outcome. A 24-hour dispute window begins. No new bets.</p>
+          <p class="manual-text"><strong>Finalized</strong> — The dispute window has passed. Winners can claim payouts.</p>
+          <p class="manual-text"><strong>Voided</strong> — The authority cancelled the market. All participants can claim full refunds.</p>
         </div>
 
         <div class="manual-section">
-          <h3 class="manual-heading">Claiming Winnings &amp; Refunds</h3>
-          <p class="manual-text">Go to the <strong>Positions</strong> tab to see all your bets. If a market has been finalized and you bet on the winning outcome, a <strong>Claim Winnings</strong> button will appear. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
-          <p class="manual-text">Payouts are proportional: your share of the total pool equals your share of the winning outcome's pool, minus the protocol and creator fees.</p>
+          <h3 class="manual-heading">Positions — Filtering &amp; Sorting</h3>
+          <p class="manual-text">The <strong>Positions</strong> tab shows all your bets across every market. Use the filters to zero in on what you need:</p>
+          <p class="manual-text"><strong>Category</strong> — Filter by the market's on-chain category.</p>
+          <p class="manual-text"><strong>Status</strong> — Show only positions in Open, Resolved, Finalized, or Voided markets.</p>
+          <p class="manual-text"><strong>Result</strong> — Filter by Unclaimed, Claimed, Winning, or Losing. Use "Winning + Unclaimed" together to quickly find everything you need to claim.</p>
+          <p class="manual-text"><strong>Sort</strong> — Order by deadline, bet amount, estimated payout, or group by market status.</p>
+          <p class="manual-text">If a market is finalized and you bet on the winning outcome, a <strong>Claim Winnings</strong> button appears. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Creating a Market</h3>
-          <p class="manual-text">Go to the <strong>Create</strong> tab. Fill in a title, optional category, description, and define 2–10 outcomes. Set a resolution deadline and an optional creator fee (0–500 basis points) — this is the additional fee you earn on top of the protocol default.</p>
-          <p class="manual-text">The category you set is stored on-chain inside the description field and displayed as a badge on market cards.</p>
-          <p class="manual-text">As the market creator (authority), you are responsible for resolving the market with the correct outcome before or after the deadline. You can also void the market if needed.</p>
+          <p class="manual-text">Go to the <strong>Create</strong> tab. Fill in a title, optional category, description, and define 2–10 outcomes. Set a resolution deadline.</p>
+          <p class="manual-text"><strong>Creator Fee</strong> — Optionally set an additional fee (0–500 bps / up to 5%) that you earn on top of the protocol default. This is paid out of winning claims directly to your wallet.</p>
+          <p class="manual-text"><strong>Denomination</strong> — Choose Native SOL, SPL Token, or Token-2022. For token markets, paste the mint address and a live preview with the token icon, name, and symbol will appear from on-chain metadata.</p>
+          <p class="manual-text">The category is stored on-chain inside the description and displayed as a badge on market cards. As the creator, you are the market authority — responsible for resolving with the correct outcome or voiding if needed.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Watchlist</h3>
-          <p class="manual-text">Tap the ☆ star on any market card to add it to your watchlist. A popup lets you choose a category for your personal organization. Your watchlist is stored locally in your browser.</p>
-          <p class="manual-text">In the <strong>Watchlist</strong> tab you can filter by category, reassign categories, and manage your custom categories using the ⚙ button.</p>
+          <p class="manual-text">Tap the ☆ star on any market card to add it to your watchlist with a personal category. Your watchlist is stored locally in your browser.</p>
+          <p class="manual-text">In the <strong>Watchlist</strong> tab, filter by category, reassign categories, and manage your custom categories with the ⚙ button.</p>
         </div>
 
         <div class="manual-section">
-          <h3 class="manual-heading">Deep Links</h3>
-          <p class="manual-text">Every market has a shareable URL. When viewing a market, the browser URL updates to <code>#/market/&lt;address&gt;</code>. Copy and share this link — anyone who opens it will land directly on that market's detail page.</p>
+          <h3 class="manual-heading">Sharing</h3>
+          <p class="manual-text">There are two ways to share. The share icon in the top-right nav bar shares whatever page you're on. On market detail pages, the dedicated <strong>Share</strong> button includes the market title for richer context.</p>
+          <p class="manual-text">On mobile, this opens your device's native share sheet. On desktop, it copies the link to your clipboard.</p>
+          <p class="manual-text">Every market has a permanent deep link: <code>#/market/&lt;address&gt;</code>. Anyone who opens it lands directly on that market.</p>
         </div>
 
         <div class="manual-section">
-          <h3 class="manual-heading">Fees &amp; Protocol</h3>
-          <p class="manual-text">Fees are charged on winning claims only. The protocol takes its default fee (set by the admin) which goes to the protocol treasury. Market creators can add an additional creator fee (up to 5%) which goes directly to the creator's wallet. There are no fees on losing bets, voided refunds, or market creation.</p>
+          <h3 class="manual-heading">Fees</h3>
+          <p class="manual-text">Fees are charged on winning claims only — never on losing bets, voided refunds, or market creation.</p>
+          <p class="manual-text">The total fee is split between the protocol treasury (the default fee set by the admin) and the market creator (any additional fee they set). The fee breakdown is visible on each market's detail page.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Tips</h3>
-          <p class="manual-text">• The outcome bars show implied probabilities based on pool sizes — they update as bets come in.</p>
-          <p class="manual-text">• Your .sol domain name will display in the wallet button and on market authority fields if you have one set.</p>
-          <p class="manual-text">• All data refreshes automatically every 20 seconds on the Explore page.</p>
-          <p class="manual-text">• This app has zero backend infrastructure. If the website goes down, your funds are always safe on-chain and recoverable with any Solana explorer.</p>
+          <p class="manual-text">• Outcome bars show implied probabilities based on pool sizes — they update live as bets come in.</p>
+          <p class="manual-text">• Payout estimates appear on both market cards and position cards when you have an active position.</p>
+          <p class="manual-text">• Data refreshes automatically every 20 seconds on the Explore page.</p>
+          <p class="manual-text">• This app has zero backend infrastructure. If the website goes down, your funds are always safe on-chain and recoverable with any Solana program explorer.</p>
         </div>
       </div>
     </main>

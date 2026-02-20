@@ -743,6 +743,7 @@ body::before {
 }
 
 /* ── My Positions View ──────────────────────────────────────────── */
+.positions-filters { margin-bottom: 12px; }
 .positions-list {
   display: flex;
   flex-direction: column;
