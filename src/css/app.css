@@ -1049,6 +1049,20 @@ body::before {
   background: rgba(255, 255, 255, 0.06);
   object-fit: cover;
 }
+.token-preview-fallback {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(255, 188, 12, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gold);
+}
 .token-preview-details {
   display: flex;
   flex-direction: column;
@@ -1530,6 +1544,13 @@ body::before {
   color: var(--text-muted);
   letter-spacing: 0.02em;
 }
+.footer-brand-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.footer-brand-link:hover { color: var(--gold); }
+.footer-brand-link .accent { color: var(--gold); }
 .accent { color: var(--gold); }
 .footer-admin-link {
   background: none;

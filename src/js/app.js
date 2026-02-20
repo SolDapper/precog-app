@@ -1113,6 +1113,8 @@ function showSolPreview() {
   const fullname = document.getElementById('token-preview-fullname');
   const link = document.getElementById('token-preview-link');
   const loader = document.getElementById('token-preview-loader');
+  clearIconFallback();
+  icon.onerror = null;
   icon.src = SOL_ICON;
   icon.alt = 'SOL';
   icon.style.display = '';
@@ -1129,7 +1131,9 @@ function showTokenPreviewPlaceholder() {
   const fullname = document.getElementById('token-preview-fullname');
   const link = document.getElementById('token-preview-link');
   const loader = document.getElementById('token-preview-loader');
-  icon.src = '';
+  clearIconFallback();
+  icon.onerror = null;
+  icon.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   icon.alt = '';
   icon.style.display = 'none';
   symbol.textContent = 'Enter mint address';
@@ -1140,6 +1144,22 @@ function showTokenPreviewPlaceholder() {
 }
 
 let _previewDebounce = null;
+
+function showIconFallback(letter) {
+  const icon = document.getElementById('token-preview-icon');
+  icon.style.display = 'none';
+  // Remove any existing fallback
+  icon.parentElement.querySelector('.token-preview-fallback')?.remove();
+  const fb = document.createElement('div');
+  fb.className = 'token-preview-fallback';
+  fb.textContent = letter;
+  icon.parentElement.insertBefore(fb, icon);
+}
+
+function clearIconFallback() {
+  const icon = document.getElementById('token-preview-icon');
+  icon.parentElement.querySelector('.token-preview-fallback')?.remove();
+}
 
 function previewTokenMint(mint) {
   const icon = document.getElementById('token-preview-icon');
@@ -1153,6 +1173,7 @@ function previewTokenMint(mint) {
   symbol.textContent = 'Loading…';
   fullname.textContent = '';
   icon.style.display = 'none';
+  clearIconFallback();
 
   const shortMint = mint.slice(0, 5) + '…' + mint.slice(-4);
   link.href = `https://solscan.io/token/${mint}`;
@@ -1160,20 +1181,28 @@ function previewTokenMint(mint) {
 
   fetchTokenIcon(mint).then(({ icon: iconUrl, name, symbol: sym }) => {
     loader.classList.add('hidden');
+    symbol.textContent = sym || shortMint;
+    fullname.textContent = name || '';
+
+    const letter = (sym || mint)[0].toUpperCase();
+
     if (iconUrl) {
+      icon.onerror = () => {
+        icon.onerror = null;
+        icon.style.display = 'none';
+        showIconFallback(letter);
+      };
       icon.src = iconUrl;
       icon.alt = sym || mint;
       icon.style.display = '';
     } else {
-      icon.style.display = 'none';
+      showIconFallback(letter);
     }
-    symbol.textContent = sym || shortMint;
-    fullname.textContent = name || '';
   }).catch(() => {
     loader.classList.add('hidden');
     symbol.textContent = shortMint;
     fullname.textContent = '';
-    icon.style.display = 'none';
+    showIconFallback(mint[0].toUpperCase());
   });
 }
 
