@@ -1299,6 +1299,15 @@ async function handleCreateMarket() {
       accounts.vaultAuthority = vaultAuthority;
       accounts.tokenVault = tokenVault;
       accounts.tokenProgram = tokenProgramId;
+
+      console.log('Token market accounts:');
+      console.log('  market:', market.toBase58());
+      console.log('  vault:', vault.toBase58());
+      console.log('  vaultAuthority:', vaultAuthority.toBase58());
+      console.log('  tokenMint:', tokenMint.toBase58());
+      console.log('  tokenVault (ATA):', tokenVault.toBase58());
+      console.log('  tokenProgram:', tokenProgramId.toBase58());
+      console.log('  denomination:', denomination);
     }
 
     const createIx = sdk.buildCreateMarket(
