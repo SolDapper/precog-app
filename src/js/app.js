@@ -23,6 +23,12 @@ let currentCategoryFilter = 'all';
 let currentMarketPubkey = null;
 let currentMarketData = null;
 let selectedOutcome = null;
+
+// Pagination
+const PAGE_SIZE = 20;
+let currentPage = 0;
+let filteredMarkets = [];   // current filtered+sorted list
+let _loadMoreObserver = null;
 let pollInterval = null;
 
 // ═══════════════════════════════════════════════════════════════════
@@ -114,19 +120,24 @@ async function loadMarkets() {
       listEl.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading markets…</span></div>';
     }
     allMarkets = await sdk.fetchAllMarkets();
-    renderMarketsList();
+    // On poll refresh, don't reset the page — show same amount user has scrolled to
+    const isInitialLoad = listEl.querySelector('.loading-state') !== null;
+    renderMarketsList(isInitialLoad);
   } catch (err) {
     console.error('Failed to load markets:', err);
     listEl.innerHTML = '<div class="empty-state">Failed to load markets. Check RPC connection.</div>';
   }
 }
 
-function renderMarketsList() {
+function renderMarketsList(resetPage = true) {
   const listEl = document.getElementById('markets-list');
 
   // Populate filter dropdowns from all markets
   populateCreatorFilter();
   populateCategoryFilter();
+
+  // Reset page when filters/sort change
+  if (resetPage) currentPage = 0;
 
   let filtered = allMarkets;
 
@@ -163,23 +174,107 @@ function renderMarketsList() {
     case 'deadline': filtered.sort((a, b) => Number(a.account.resolutionDeadline - b.account.resolutionDeadline)); break;
     case 'positions': filtered.sort((a, b) => Number(b.account.totalPositions - a.account.totalPositions)); break;
   }
+
+  // Store for pagination
+  filteredMarkets = filtered;
+
   if (filtered.length === 0) {
     listEl.innerHTML = `<div class="empty-state">No ${currentFilter === 'all' ? '' : currentFilter} markets found.</div>`;
+    cleanupLoadMoreObserver();
     return;
   }
+
+  // Render first page (or up to current scroll position on refresh)
   listEl.innerHTML = '';
-  for (const { pubkey, account } of filtered) {
+  const itemsToShow = resetPage ? PAGE_SIZE : currentPage * PAGE_SIZE;
+  const end = Math.min(itemsToShow, filtered.length);
+  appendMarketCards(listEl, filtered, 0, end);
+  if (resetPage) currentPage = 1;
+  else currentPage = Math.max(1, Math.ceil(end / PAGE_SIZE));
+
+  // Add footer (count + load more)
+  appendListFooter(listEl, end, filtered.length);
+}
+
+/** Append market cards for a range of filteredMarkets */
+function appendMarketCards(listEl, markets, start, end) {
+  for (let i = start; i < end; i++) {
+    const { pubkey, account } = markets[i];
     const card = ui.renderMarketCard(pubkey, account);
     card.addEventListener('click', (e) => {
-      // Don't navigate if clicking the star
       if (e.target.closest('.watchlist-star')) return;
       openMarketDetail(pubkey);
     });
     listEl.appendChild(card);
   }
 
-  // Attach watchlist star handlers
-  listEl.querySelectorAll('.watchlist-star').forEach(btn => {
+  // Attach watchlist star handlers for newly added cards
+  listEl.querySelectorAll('.watchlist-star:not([data-bound])').forEach(btn => {
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const addr = btn.dataset.addr;
+      handleWatchlistStarClick(addr, (nowWatched) => {
+        btn.textContent = nowWatched ? '★' : '☆';
+        btn.classList.toggle('active', nowWatched);
+      });
+    });
+  });
+}
+
+/** Add or update the list footer with count and load more button */
+function appendListFooter(listEl, shown, total) {
+  // Remove existing footer
+  listEl.querySelector('.markets-list-footer')?.remove();
+  cleanupLoadMoreObserver();
+
+  const hasMore = shown < total;
+
+  const footer = document.createElement('div');
+  footer.className = 'markets-list-footer';
+  footer.innerHTML = `
+    <span class="markets-count">Showing ${Math.min(shown, total)} of ${total} market${total !== 1 ? 's' : ''}</span>
+    ${hasMore ? `<button class="load-more-btn">Load More</button>` : ''}
+    ${hasMore ? `<div class="load-more-sentinel"></div>` : ''}
+  `;
+  listEl.appendChild(footer);
+
+  if (hasMore) {
+    // Load more button
+    footer.querySelector('.load-more-btn').addEventListener('click', loadMoreMarkets);
+
+    // IntersectionObserver for auto-loading
+    const sentinel = footer.querySelector('.load-more-sentinel');
+    _loadMoreObserver = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) loadMoreMarkets();
+    }, { rootMargin: '200px' });
+    _loadMoreObserver.observe(sentinel);
+  }
+}
+
+function loadMoreMarkets() {
+  const listEl = document.getElementById('markets-list');
+  const start = currentPage * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, filteredMarkets.length);
+  if (start >= filteredMarkets.length) return;
+
+  // Insert cards before footer
+  const footer = listEl.querySelector('.markets-list-footer');
+  const fragment = document.createDocumentFragment();
+  for (let i = start; i < end; i++) {
+    const { pubkey, account } = filteredMarkets[i];
+    const card = ui.renderMarketCard(pubkey, account);
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.watchlist-star')) return;
+      openMarketDetail(pubkey);
+    });
+    fragment.appendChild(card);
+  }
+  listEl.insertBefore(fragment, footer);
+
+  // Bind stars for new cards
+  listEl.querySelectorAll('.watchlist-star:not([data-bound])').forEach(btn => {
+    btn.dataset.bound = '1';
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const addr = btn.dataset.addr;
@@ -190,7 +285,15 @@ function renderMarketsList() {
     });
   });
 
-  // Volume chart is rendered on demand via toggle
+  currentPage++;
+  appendListFooter(listEl, end, filteredMarkets.length);
+}
+
+function cleanupLoadMoreObserver() {
+  if (_loadMoreObserver) {
+    _loadMoreObserver.disconnect();
+    _loadMoreObserver = null;
+  }
 }
 
 // Explore chart toggle
