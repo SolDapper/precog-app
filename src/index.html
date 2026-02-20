@@ -365,28 +365,32 @@
             <span class="admin-stat-label">Paused</span>
             <span id="admin-paused" class="admin-stat-value">—</span>
           </div>
+          <div class="admin-stat">
+            <span class="admin-stat-label">Treasury</span>
+            <span id="admin-treasury" class="admin-stat-value" style="font-size:0.72rem">—</span>
+          </div>
         </div>
       </div>
 
       <!-- Protocol Update Controls (only visible to admin) -->
       <div id="admin-update-panel" class="card hidden" style="margin-top:14px">
         <div class="bet-section-title">Update Protocol</div>
-        <div class="form-row" style="margin-bottom:14px">
-          <div class="form-group-half">
-            <label class="form-label">Protocol Paused</label>
-            <div style="display:flex;gap:8px;align-items:center">
-              <button id="admin-toggle-pause-btn" class="action-btn secondary-btn" style="flex:1">—</button>
-            </div>
-            <span class="form-hint">When paused, no new markets or bets can be created.</span>
-          </div>
-          <div class="form-group-half">
-            <label class="form-label">Default Fee (bps)</label>
-            <div style="display:flex;gap:8px;align-items:center">
-              <input id="admin-update-fee" type="number" class="form-input" placeholder="200" min="0" max="10000" style="flex:1">
-              <button id="admin-update-fee-btn" class="action-btn primary-btn" style="white-space:nowrap">Update Fee</button>
-            </div>
-            <span class="form-hint">Basis points (100 = 1%). Applied to new markets.</span>
-          </div>
+        <div class="form-group">
+          <label class="form-label">Protocol Paused</label>
+          <button id="admin-toggle-pause-btn" class="action-btn secondary-btn" style="width:100%">—</button>
+          <span class="form-hint">When paused, no new markets or bets can be created.</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Default Fee (bps)</label>
+          <input id="admin-update-fee" type="number" class="form-input" placeholder="200" min="0" max="10000">
+          <span class="form-hint">Basis points (100 = 1%). Applied to new markets.</span>
+          <button id="admin-update-fee-btn" class="action-btn primary-btn" style="width:100%;margin-top:8px">Update Fee</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Treasury Address</label>
+          <input id="admin-update-treasury" type="text" class="form-input" placeholder="">
+          <span class="form-hint">Wallet address that receives protocol fees from winning claims.</span>
+          <button id="admin-update-treasury-btn" class="action-btn primary-btn" style="width:100%;margin-top:8px">Update Treasury</button>
         </div>
       </div>
     </main>

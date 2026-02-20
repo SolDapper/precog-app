@@ -1100,6 +1100,7 @@ async function loadAdmin() {
     document.getElementById('admin-total-volume').textContent = ui.formatSol(config.totalVolume);
     document.getElementById('admin-default-fee').textContent = `${config.defaultFeeBps / 100}%`;
     document.getElementById('admin-paused').textContent = config.paused ? 'Yes' : 'No';
+    document.getElementById('admin-treasury').textContent = config.treasury.toBase58();
 
     // Show update panel only if connected wallet is the admin
     const isAdmin = w && config.admin.toBase58() === w.publicKey.toBase58();
@@ -1114,6 +1115,9 @@ async function loadAdmin() {
       // Pre-fill fee input with current value
       const feeInput = document.getElementById('admin-update-fee');
       feeInput.placeholder = String(config.defaultFeeBps);
+      // Pre-fill treasury input with current address
+      const treasuryInput = document.getElementById('admin-update-treasury');
+      treasuryInput.placeholder = config.treasury.toBase58();
     } else {
       updatePanel.classList.add('hidden');
     }
@@ -1181,6 +1185,44 @@ document.getElementById('admin-update-fee-btn')?.addEventListener('click', async
   } catch (err) {
     ui.hideTxOverlay();
     ui.showStatus(err.message || 'Failed to update fee', 'error');
+  }
+});
+
+// Update treasury handler
+document.getElementById('admin-update-treasury-btn')?.addEventListener('click', async () => {
+  const w = wallet.getWallet();
+  const p = wallet.getProvider();
+  if (!w || !p) return;
+
+  const input = document.getElementById('admin-update-treasury').value.trim();
+  if (!input) {
+    ui.showStatus('Enter a treasury address', 'error');
+    return;
+  }
+
+  let newTreasury;
+  try { newTreasury = new PublicKey(input); }
+  catch {
+    ui.showStatus('Invalid treasury address', 'error');
+    return;
+  }
+
+  try {
+    ui.showTxOverlay('Updating treasury…');
+    const [protocolConfig] = await sdk.findProtocolConfig();
+    const ix = sdk.buildUpdateProtocolConfig(
+      { protocolConfig, admin: w.publicKey },
+      { newTreasury }
+    );
+    ui.updateTxOverlay('Please approve…');
+    await sdk.signAndSend(ix, w.publicKey, p);
+    ui.hideTxOverlay();
+    ui.showStatus('Treasury updated', 'success');
+    document.getElementById('admin-update-treasury').value = '';
+    loadAdmin();
+  } catch (err) {
+    ui.hideTxOverlay();
+    ui.showStatus(err.message || 'Failed to update treasury', 'error');
   }
 });
 
