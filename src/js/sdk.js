@@ -293,8 +293,21 @@ export async function signAndSend(instructionOrArray, signerPublicKey, walletPro
   if (feeIx) tx.add(feeIx);
   for (const ix of instructions) tx.add(ix);
 
-  tx.recentBlockhash = (await conn.getLatestBlockhash('confirmed')).blockhash;
+  const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+  tx.recentBlockhash = blockhash;
   tx.feePayer = signerPublicKey;
+
+  // Simulate before signing to catch errors early
+  const simResult = await conn.simulateTransaction(tx);
+  if (simResult.value.err) {
+    const logs = simResult.value.logs || [];
+    // Find the most descriptive error log
+    const errorLog = logs.filter(l => l.includes('Error') || l.includes('error') || l.includes('failed')).pop();
+    const errMsg = errorLog
+      ? errorLog.replace(/^Program log: /, '')
+      : JSON.stringify(simResult.value.err);
+    throw new Error(`Simulation failed: ${errMsg}`);
+  }
 
   // Sign via wallet adapter
   const signedTx = await walletProvider.signTransaction(tx);
@@ -305,7 +318,7 @@ export async function signAndSend(instructionOrArray, signerPublicKey, walletPro
     maxRetries: 0,
   });
 
-  await conn.confirmTransaction(sig, 'confirmed');
+  await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
   return sig;
 }
 
