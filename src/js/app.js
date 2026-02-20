@@ -6,7 +6,7 @@ import { Buffer } from 'buffer';
 window.Buffer = Buffer;
 
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { PROGRAM_ID, MARKET_POLL_MS } from './config.js';
+import { PROGRAM_ID, MARKET_POLL_MS, RPC_URL } from './config.js';
 import * as wallet from './wallet.js';
 import * as sdk from './sdk.js';
 import * as ui from './ui.js';
@@ -475,14 +475,27 @@ let _tokenIconCache = new Map(); // mint → icon URL
 async function fetchTokenIcon(mint) {
   if (_tokenIconCache.has(mint)) return _tokenIconCache.get(mint);
   try {
-    const resp = await fetch(`https://tokens.jup.ag/token/${mint}`);
+    const resp = await fetch(RPC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0', id: 1,
+        method: 'getAsset',
+        params: { id: mint },
+      }),
+    });
     if (resp.ok) {
-      const data = await resp.json();
-      const icon = data.logoURI || '';
-      const name = data.name || '';
-      const symbol = data.symbol || '';
-      _tokenIconCache.set(mint, { icon, name, symbol });
-      return { icon, name, symbol };
+      const { result } = await resp.json();
+      if (result) {
+        const content = result.content || {};
+        const meta = content.metadata || {};
+        const links = content.links || {};
+        const icon = links.image || content.json_uri || '';
+        const name = meta.name || '';
+        const symbol = meta.symbol || '';
+        _tokenIconCache.set(mint, { icon, name, symbol });
+        return { icon, name, symbol };
+      }
     }
   } catch {}
   _tokenIconCache.set(mint, { icon: '', name: '', symbol: '' });
@@ -1051,7 +1064,9 @@ function updateCreateForm() {
 
 function showCreateError(msg) {
   const el = document.getElementById('create-status');
-  el.textContent = msg; el.className = 'form-status error'; el.classList.remove('hidden');
+  el.innerHTML = `<span class="status-msg">${msg}</span><button class="status-dismiss" aria-label="Dismiss">&times;</button>`;
+  el.className = 'form-status error'; el.classList.remove('hidden');
+  el.querySelector('.status-dismiss').addEventListener('click', () => el.classList.add('hidden'));
 }
 
 document.getElementById('add-outcome-btn')?.addEventListener('click', addOutcomeRow);
@@ -1281,7 +1296,9 @@ async function handleCreateMarket() {
     document.getElementById('create-title-count').textContent = '0';
     document.getElementById('create-desc-count').textContent = '0';
     const el = document.getElementById('create-status');
-    el.textContent = `Market created: ${market.toBase58()}`; el.className = 'form-status success'; el.classList.remove('hidden');
+    el.innerHTML = `<span class="status-msg">Market created: ${market.toBase58()}</span><button class="status-dismiss" aria-label="Dismiss">&times;</button>`;
+    el.className = 'form-status success'; el.classList.remove('hidden');
+    el.querySelector('.status-dismiss').addEventListener('click', () => el.classList.add('hidden'));
   } catch (err) {
     ui.hideTxOverlay();
     showCreateError(err.message || 'Failed to create market');

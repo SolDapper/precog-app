@@ -265,6 +265,9 @@ body::before {
 
 /* ── Status Bar ─────────────────────────────────────────────────── */
 .status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
@@ -272,6 +275,20 @@ body::before {
   margin-bottom: 12px;
   transition: all 0.3s ease;
 }
+.status-msg { flex: 1; }
+.status-dismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+  padding: 0 2px;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+.status-dismiss:hover { opacity: 1; }
 .status-bar.info { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(68,138,255,0.2); }
 .status-bar.success { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
 .status-bar.error { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,82,82,0.2); }
@@ -1104,6 +1121,9 @@ body::before {
   color: var(--red);
 }
 .form-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 12px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);

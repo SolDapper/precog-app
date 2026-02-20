@@ -92,9 +92,10 @@ const statusBar = () => document.getElementById('status-bar');
 
 export function showStatus(msg, type = 'info') {
   const el = statusBar();
-  el.textContent = msg;
+  el.innerHTML = `<span class="status-msg">${msg}</span><button class="status-dismiss" aria-label="Dismiss">&times;</button>`;
   el.className = `status-bar ${type}`;
   el.classList.remove('hidden');
+  el.querySelector('.status-dismiss').addEventListener('click', () => el.classList.add('hidden'));
   if (type !== 'error') {
     setTimeout(() => el.classList.add('hidden'), 5000);
   }
