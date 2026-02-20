@@ -471,7 +471,7 @@ const SOL_ICON = 'https://raw.githubusercontent.com/solana-labs/token-list/main/
 let _lastTokenSet = '';
 let _tokenIconCache = new Map(); // mint → icon URL
 
-/** Fetch token icon from Jupiter token list API */
+/** Fetch token metadata via Helius DAS getAsset */
 async function fetchTokenIcon(mint) {
   if (_tokenIconCache.has(mint)) return _tokenIconCache.get(mint);
   try {
@@ -796,11 +796,11 @@ async function handlePlaceBet() {
     ui.updateTxOverlay('Please approve…');
     const sig = await sdk.signAndSend(ix, w.publicKey, p);
     ui.hideTxOverlay();
-    ui.showStatus(`Bet placed! ${sig.slice(0, 8)}…`, 'success');
+    ui.showStatus(`Position confirmed! ${sig.slice(0, 8)}…`, 'success');
     openMarketDetail(currentMarketPubkey);
   } catch (err) {
     ui.hideTxOverlay();
-    ui.showStatus(err.message || 'Bet failed', 'error');
+    ui.showStatus(err.message || 'Position failed', 'error');
   }
 }
 
@@ -821,7 +821,7 @@ async function handleResolve() {
 async function handleVoid() {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p || !currentMarketPubkey) return;
-  if (!confirm('Void this market? All bets refunded.')) return;
+  if (!confirm('Void this market? All positions refunded.')) return;
   try {
     ui.showTxOverlay('Voiding…');
     const ix = sdk.buildVoidMarket({ market: currentMarketPubkey, authority: w.publicKey });
@@ -869,7 +869,7 @@ async function loadPositions() {
   try {
     const positions = await sdk.fetchPositionsByOwner(w.publicKey);
     if (positions.length === 0) {
-      listEl.innerHTML = '<div class="empty-state">No positions found. Place a bet to get started!</div>';
+      listEl.innerHTML = '<div class="empty-state">No positions found. Choose a position to get started!</div>';
       return;
     }
     const marketAddrs = [...new Set(positions.map(p => p.account.market.toBase58()))];
@@ -1891,7 +1891,7 @@ document.querySelector('.logo-btn')?.addEventListener('click', () => switchView(
  * Supported routes:
  *   #/explore          → Explore view
  *   #/market/<address> → Market detail for the given address
- *   #/positions        → My Bets view
+ *   #/positions        → My Positions view
  *   #/watchlist        → Watchlist view
  *   #/info             → Info / Manual view
  *   #/create           → Create Market view

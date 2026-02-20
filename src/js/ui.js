@@ -249,7 +249,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
     `;
   }).join('');
 
-  // Bet section (only if market is open)
+  // Position section (only if market is open)
   let betSectionHtml = '';
   if (market.status === 0) {
     const outcomeBtns = market.outcomeLabels.map((label, i) => `
@@ -426,7 +426,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Position Card (for My Bets view)
+// Position Card (for My Positions view)
 // ═══════════════════════════════════════════════════════════════════
 
 export function renderPositionCard(positionPubkey, position, market, marketPubkey) {
@@ -550,7 +550,7 @@ export function renderVolumeChart(markets, onClickMarket) {
       msg.style.cssText = 'text-align:center;padding:32px 0;color:var(--text-muted);font-size:0.82rem;';
       canvas.parentElement.appendChild(msg);
     }
-    msg.textContent = sorted.length === 0 ? 'No markets found.' : 'No volume yet — place the first bet!';
+    msg.textContent = sorted.length === 0 ? 'No markets found.' : 'No volume yet — place the first position!';
     return;
   }
 

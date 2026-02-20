@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="/.well-known/icon.png" type="image/png">
   <meta name="theme-color" content="#010101">
-  <meta name="description" content="Pelfmont Markets — Trustless prediction markets on Solana. Bet on outcomes, claim winnings, fully non-custodial.">
+  <meta name="description" content="Pelfmont Markets — Trustless prediction markets on Solana. Choose outcomes, claim winnings, fully non-custodial.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Pelfmont Markets</title>
@@ -42,7 +42,7 @@
       <button class="nav-btn" data-view="watchlist">Watchlist</button>
       <button class="nav-btn" data-view="positions">Positions</button>
       <button class="nav-btn" data-view="create">Create</button>
-      <button class="nav-btn" data-view="info">Help</button>
+      <button class="nav-btn" data-view="info">WUT?</button>
     </nav>
 
     <!-- Status Bar -->
@@ -304,7 +304,7 @@
         <div class="manual-section">
           <h3 class="manual-heading">Getting Started</h3>
           <p class="manual-text">Pelfmont Markets is a fully non-custodial prediction market built on Solana. Everything happens on-chain — no accounts, no databases, no middlemen.</p>
-          <p class="manual-text">Tap <strong>Connect</strong> in the top-right corner. Phantom, Solflare, and Jupiter wallets are supported on desktop. On mobile, the app uses the Solana Mobile Wallet Adapter. If you have a .sol domain, it will display in the wallet button and throughout the app.</p>
+          <p class="manual-text">Tap <strong>Connect</strong> in the top-right corner. Phantom and Solflare wallets are supported on desktop. On mobile, the app uses the Solana Mobile Wallet Adapter. If you have a .sol domain, it will display in the wallet button and throughout the app.</p>
         </div>
 
         <div class="manual-section">
@@ -323,28 +323,28 @@
         </div>
 
         <div class="manual-section">
-          <h3 class="manual-heading">Placing a Bet</h3>
-          <p class="manual-text">On the market detail page, select the outcome you want to bet on, enter your amount, and review the estimated payout. The estimate updates live based on current pool sizes and the total fee.</p>
+          <h3 class="manual-heading">Choosing a Position</h3>
+          <p class="manual-text">On the market detail page, select the outcome you want to take a position on, enter your amount, and review the estimated payout. The estimate updates live based on current pool sizes and the total fee.</p>
           <p class="manual-text">Tap <strong>Confirm Position</strong> and approve the transaction in your wallet. Your funds go directly into the on-chain vault — not to any company or individual.</p>
           <p class="manual-text">Markets can be denominated in native SOL, SPL tokens, or Token-2022 tokens. The denomination is shown on the market card and detail page.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Market Lifecycle</h3>
-          <p class="manual-text"><strong>Open</strong> — Accepting bets. Anyone can place a bet on any outcome.</p>
-          <p class="manual-text"><strong>Resolved</strong> — The authority declared a winning outcome. A 24-hour dispute window begins. No new bets.</p>
+          <p class="manual-text"><strong>Open</strong> — Accepting positions. Anyone can take a position on any outcome.</p>
+          <p class="manual-text"><strong>Resolved</strong> — The authority declared a winning outcome. A 24-hour dispute window begins. No new positions.</p>
           <p class="manual-text"><strong>Finalized</strong> — The dispute window has passed. Winners can claim payouts.</p>
           <p class="manual-text"><strong>Voided</strong> — The authority cancelled the market. All participants can claim full refunds.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Positions — Filtering &amp; Sorting</h3>
-          <p class="manual-text">The <strong>Positions</strong> tab shows all your bets across every market. Use the filters to zero in on what you need:</p>
+          <p class="manual-text">The <strong>Positions</strong> tab shows all your positions across every market. Use the filters to zero in on what you need:</p>
           <p class="manual-text"><strong>Category</strong> — Filter by the market's on-chain category.</p>
           <p class="manual-text"><strong>Status</strong> — Show only positions in Open, Resolved, Finalized, or Voided markets.</p>
           <p class="manual-text"><strong>Result</strong> — Filter by Unclaimed, Claimed, Winning, or Losing. Use "Winning + Unclaimed" together to quickly find everything you need to claim.</p>
-          <p class="manual-text"><strong>Sort</strong> — Order by deadline, bet amount, estimated payout, or group by market status.</p>
-          <p class="manual-text">If a market is finalized and you bet on the winning outcome, a <strong>Claim Winnings</strong> button appears. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
+          <p class="manual-text"><strong>Sort</strong> — Order by deadline, position size, estimated payout, or group by market status.</p>
+          <p class="manual-text">If a market is finalized and you hold the winning outcome, a <strong>Claim Winnings</strong> button appears. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
         </div>
 
         <div class="manual-section">
@@ -370,13 +370,13 @@
 
         <div class="manual-section">
           <h3 class="manual-heading">Fees</h3>
-          <p class="manual-text">Fees are charged on winning claims only — never on losing bets, voided refunds, or market creation.</p>
+          <p class="manual-text">Fees are charged on winning claims only — never on losing positions, voided refunds, or market creation.</p>
           <p class="manual-text">The total fee is split between the protocol treasury (the default fee set by the admin) and the market creator (any additional fee they set). The fee breakdown is visible on each market's detail page.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Tips</h3>
-          <p class="manual-text">• Outcome bars show implied probabilities based on pool sizes — they update live as bets come in.</p>
+          <p class="manual-text">• Outcome bars show implied probabilities based on pool sizes — they update live as positions come in.</p>
           <p class="manual-text">• Payout estimates appear on both market cards and position cards when you have an active position.</p>
           <p class="manual-text">• Data refreshes automatically every 20 seconds on the Explore page.</p>
           <p class="manual-text">• This app has zero backend infrastructure. If the website goes down, your funds are always safe on-chain and recoverable with any Solana program explorer.</p>
@@ -442,7 +442,7 @@
         <div class="form-group">
           <label class="form-label">Protocol Paused</label>
           <button id="admin-toggle-pause-btn" class="action-btn secondary-btn" style="width:100%">—</button>
-          <span class="form-hint">When paused, no new markets or bets can be created.</span>
+          <span class="form-hint">When paused, no new markets or positions can be created.</span>
         </div>
         <div class="form-group">
           <label class="form-label">Default Fee (bps)</label>
