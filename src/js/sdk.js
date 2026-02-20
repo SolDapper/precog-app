@@ -8,6 +8,7 @@ import {
   Connection,
   PublicKey,
   Transaction,
+  TransactionInstruction,
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import { RPC_URL, PROGRAM_ID } from './config.js';
@@ -41,6 +42,8 @@ import {
 
   // Constants
   ACCOUNT_DISCRIMINATORS,
+  TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
 
   // Client
   PrecogMarketsClient,
@@ -92,6 +95,42 @@ export function findMultisig(creator, nonce) {
 }
 export function findProposal(multisig, proposalId) {
   return findProposalAddress(multisig, proposalId, PROGRAM_ID);
+}
+
+// Re-export token program constants
+export { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID };
+
+const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+
+/**
+ * Derive the Associated Token Account address.
+ */
+export function getAssociatedTokenAddress(mint, owner, tokenProgramId = TOKEN_PROGRAM_ID) {
+  return PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), tokenProgramId.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  );
+}
+
+/**
+ * Build a createAssociatedTokenAccountIdempotent instruction.
+ * Returns { ata: PublicKey, ix: TransactionInstruction }
+ */
+export function buildCreateATA(payer, owner, mint, tokenProgramId = TOKEN_PROGRAM_ID) {
+  const [ata] = getAssociatedTokenAddress(mint, owner, tokenProgramId);
+  const ix = new TransactionInstruction({
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: ata, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: false, isWritable: false },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: new PublicKey('11111111111111111111111111111111'), isSigner: false, isWritable: false },
+      { pubkey: tokenProgramId, isSigner: false, isWritable: false },
+    ],
+    data: Buffer.from([1]), // 1 = CreateIdempotent
+  });
+  return { ata, ix };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -229,10 +268,10 @@ export async function fetchProtocolConfig() {
  * @param {Object} walletProvider - Wallet adapter provider (.signTransaction)
  * @returns {Promise<string>} transaction signature
  */
-export async function signAndSend(instruction, signerPublicKey, walletProvider) {
+export async function signAndSend(instructionOrArray, signerPublicKey, walletProvider) {
   const conn = getConnection();
   const client = getClient();
-  const instructions = [instruction];
+  const instructions = Array.isArray(instructionOrArray) ? instructionOrArray : [instructionOrArray];
 
   let cuIx, feeIx;
   try {
@@ -252,7 +291,7 @@ export async function signAndSend(instruction, signerPublicKey, walletProvider) 
   const tx = new Transaction();
   if (cuIx) tx.add(cuIx);
   if (feeIx) tx.add(feeIx);
-  tx.add(instruction);
+  for (const ix of instructions) tx.add(ix);
 
   tx.recentBlockhash = (await conn.getLatestBlockhash('confirmed')).blockhash;
   tx.feePayer = signerPublicKey;

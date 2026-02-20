@@ -1279,12 +1279,36 @@ async function handleCreateMarket() {
     const [market] = await sdk.findMarket(w.publicKey, marketId);
     const [vault] = await sdk.findVault(market);
     const [protocolConfig] = await sdk.findProtocolConfig();
-    const ix = sdk.buildCreateMarket(
-      { market, vault, authority: w.publicKey, payer: w.publicKey, protocolConfig },
+
+    const accounts = { market, vault, authority: w.publicKey, payer: w.publicKey, protocolConfig };
+    const ixList = [];
+
+    // For SPL/Token-2022 markets, add token accounts and create the vault ATA
+    if (denomination === 1 || denomination === 2) {
+      const mintAddr = document.getElementById('create-token-mint')?.value.trim();
+      if (!mintAddr || mintAddr.length < 32) return showCreateError('Token mint address is required');
+      const tokenMint = new PublicKey(mintAddr);
+      const tokenProgramId = denomination === 1 ? sdk.TOKEN_PROGRAM_ID : sdk.TOKEN_2022_PROGRAM_ID;
+      const [vaultAuthority] = await sdk.findVaultAuthority(market);
+
+      // Create the vault's ATA (idempotent — safe if it already exists)
+      const { ata: tokenVault, ix: createAtaIx } = sdk.buildCreateATA(w.publicKey, vaultAuthority, tokenMint, tokenProgramId);
+      ixList.push(createAtaIx);
+
+      accounts.tokenMint = tokenMint;
+      accounts.vaultAuthority = vaultAuthority;
+      accounts.tokenVault = tokenVault;
+      accounts.tokenProgram = tokenProgramId;
+    }
+
+    const createIx = sdk.buildCreateMarket(
+      accounts,
       { marketId, title, description, outcomeLabels, resolutionDeadline: deadline, feeBpsOverride, denomination, authorityIsMultisig: false }
     );
+    ixList.push(createIx);
+
     ui.updateTxOverlay('Please approve…');
-    const sig = await sdk.signAndSend(ix, w.publicKey, p);
+    const sig = await sdk.signAndSend(ixList, w.publicKey, p);
     ui.hideTxOverlay();
     ui.showStatus(`Market created! ${sig.slice(0, 8)}…`, 'success');
     // Reset form
