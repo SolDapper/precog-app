@@ -920,9 +920,12 @@ async function claimWinnings(posAddr, mktAddr) {
     const [pc] = await sdk.findProtocolConfig();
     const config = await sdk.fetchProtocolConfig();
     if (!config) throw new Error('Protocol config not found');
+    const market = await sdk.fetchMarket(mk);
+    if (!market) throw new Error('Market not found');
     const ix = sdk.buildClaimWinnings({
       market: mk, vault, position: new PublicKey(posAddr),
       claimant: w.publicKey, protocolConfig: pc, treasury: config.treasury,
+      creator: market.creator,
     });
     ui.updateTxOverlay('Please approve…');
     await sdk.signAndSend(ix, w.publicKey, p);
@@ -1000,7 +1003,107 @@ function removeOutcomeRow(row) {
 
 document.getElementById('create-denomination')?.addEventListener('change', (e) => {
   document.getElementById('token-fields')?.classList.toggle('hidden', e.target.value === '0');
+  if (e.target.value === '0') {
+    showSolPreview();
+  } else {
+    // If there's already a mint entered, preview it; otherwise show placeholder
+    const mint = document.getElementById('create-token-mint')?.value.trim();
+    if (mint && mint.length >= 32) {
+      previewTokenMint(mint);
+    } else {
+      showTokenPreviewPlaceholder();
+    }
+  }
 });
+
+// Token preview helpers
+const SOL_WRAPPED_MINT = 'So11111111111111111111111111111111111111112';
+
+function showSolPreview() {
+  const icon = document.getElementById('token-preview-icon');
+  const symbol = document.getElementById('token-preview-symbol');
+  const fullname = document.getElementById('token-preview-fullname');
+  const link = document.getElementById('token-preview-link');
+  const loader = document.getElementById('token-preview-loader');
+  icon.src = SOL_ICON;
+  icon.alt = 'SOL';
+  icon.style.display = '';
+  symbol.textContent = 'SOL';
+  fullname.textContent = 'Solana';
+  link.href = `https://solscan.io/token/${SOL_WRAPPED_MINT}`;
+  link.textContent = SOL_WRAPPED_MINT.slice(0, 5) + '…' + SOL_WRAPPED_MINT.slice(-4);
+  loader.classList.add('hidden');
+}
+
+function showTokenPreviewPlaceholder() {
+  const icon = document.getElementById('token-preview-icon');
+  const symbol = document.getElementById('token-preview-symbol');
+  const fullname = document.getElementById('token-preview-fullname');
+  const link = document.getElementById('token-preview-link');
+  const loader = document.getElementById('token-preview-loader');
+  icon.src = '';
+  icon.alt = '';
+  icon.style.display = 'none';
+  symbol.textContent = 'Enter mint address';
+  fullname.textContent = '';
+  link.href = '#';
+  link.textContent = '';
+  loader.classList.add('hidden');
+}
+
+let _previewDebounce = null;
+
+function previewTokenMint(mint) {
+  const icon = document.getElementById('token-preview-icon');
+  const symbol = document.getElementById('token-preview-symbol');
+  const fullname = document.getElementById('token-preview-fullname');
+  const link = document.getElementById('token-preview-link');
+  const loader = document.getElementById('token-preview-loader');
+
+  // Show loader
+  loader.classList.remove('hidden');
+  symbol.textContent = 'Loading…';
+  fullname.textContent = '';
+  icon.style.display = 'none';
+
+  const shortMint = mint.slice(0, 5) + '…' + mint.slice(-4);
+  link.href = `https://solscan.io/token/${mint}`;
+  link.textContent = shortMint;
+
+  fetchTokenIcon(mint).then(({ icon: iconUrl, name, symbol: sym }) => {
+    loader.classList.add('hidden');
+    if (iconUrl) {
+      icon.src = iconUrl;
+      icon.alt = sym || mint;
+      icon.style.display = '';
+    } else {
+      icon.style.display = 'none';
+    }
+    symbol.textContent = sym || shortMint;
+    fullname.textContent = name || '';
+  }).catch(() => {
+    loader.classList.add('hidden');
+    symbol.textContent = shortMint;
+    fullname.textContent = '';
+    icon.style.display = 'none';
+  });
+}
+
+document.getElementById('create-token-mint')?.addEventListener('input', (e) => {
+  clearTimeout(_previewDebounce);
+  const val = e.target.value.trim();
+  if (!val || val.length < 32) {
+    showTokenPreviewPlaceholder();
+    return;
+  }
+  // Show loading immediately
+  document.getElementById('token-preview-loader')?.classList.remove('hidden');
+  document.getElementById('token-preview-symbol').textContent = 'Loading…';
+  _previewDebounce = setTimeout(() => previewTokenMint(val), 500);
+});
+
+// Initialize with SOL preview on page load
+showSolPreview?.();
 
 document.getElementById('create-title')?.addEventListener('input', (e) => {
   document.getElementById('create-title-count').textContent = new TextEncoder().encode(e.target.value).length;
@@ -1030,19 +1133,23 @@ async function handleCreateMarket() {
   if (!deadlineInput) return showCreateError('Deadline is required');
   const deadline = BigInt(Math.floor(new Date(deadlineInput).getTime() / 1000));
   if (deadline <= BigInt(Math.floor(Date.now() / 1000))) return showCreateError('Deadline must be in the future');
-  const feeBps = feeInput ? parseInt(feeInput) : null;
-  if (feeBps !== null && (feeBps < 0 || feeBps > 500)) return showCreateError('Fee must be 0–500 bps');
+  const creatorFee = feeInput ? parseInt(feeInput) : 0;
+  if (creatorFee < 0 || creatorFee > 500) return showCreateError('Creator fee must be 0–500 bps');
 
   try {
     ui.showTxOverlay('Creating market…');
     const config = await sdk.fetchProtocolConfig();
     const marketId = config ? config.totalMarketsCreated + 1n : 1n;
+    // Total fee = protocol default + creator's additional fee
+    const feeBpsOverride = creatorFee > 0 && config
+      ? config.defaultFeeBps + creatorFee
+      : null;
     const [market] = await sdk.findMarket(w.publicKey, marketId);
     const [vault] = await sdk.findVault(market);
     const [protocolConfig] = await sdk.findProtocolConfig();
     const ix = sdk.buildCreateMarket(
       { market, vault, authority: w.publicKey, payer: w.publicKey, protocolConfig },
-      { marketId, title, description, outcomeLabels, resolutionDeadline: deadline, feeBpsOverride: feeBps, denomination, authorityIsMultisig: false }
+      { marketId, title, description, outcomeLabels, resolutionDeadline: deadline, feeBpsOverride, denomination, authorityIsMultisig: false }
     );
     ui.updateTxOverlay('Please approve…');
     const sig = await sdk.signAndSend(ix, w.publicKey, p);

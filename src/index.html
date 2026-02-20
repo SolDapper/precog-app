@@ -216,9 +216,9 @@
             <input id="create-deadline" type="datetime-local" class="form-input">
           </div>
           <div class="form-group form-group-half">
-            <label class="form-label">Fee Override (bps)</label>
-            <input id="create-fee" type="number" class="form-input" placeholder="Default" min="0" max="500">
-            <span class="form-hint">0–500 bps (5% max). Leave blank for protocol default.</span>
+            <label class="form-label">Creator Fee (bps)</label>
+            <input id="create-fee" type="number" class="form-input" placeholder="0" min="0" max="500">
+            <span class="form-hint">Your additional fee on top of the protocol default. 0–500 bps (5% max). Leave blank or 0 for no extra fee.</span>
           </div>
         </div>
 
@@ -235,6 +235,24 @@
           <div class="form-group">
             <label class="form-label">Token Mint Address</label>
             <input id="create-token-mint" type="text" class="form-input" placeholder="Token mint public key">
+          </div>
+        </div>
+
+        <div id="token-preview" class="token-preview">
+          <div class="token-preview-inner">
+            <img id="token-preview-icon" class="token-preview-icon" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="">
+            <div class="token-preview-details">
+              <div class="token-preview-name">
+                <span id="token-preview-symbol" class="token-preview-symbol">SOL</span>
+                <span id="token-preview-fullname" class="token-preview-fullname">Solana</span>
+              </div>
+              <a id="token-preview-link" class="token-preview-mint" href="https://solscan.io/token/So11111111111111111111111111111111111111112" target="_blank" rel="noopener">
+                So111…1112
+              </a>
+            </div>
+          </div>
+          <div id="token-preview-loader" class="token-preview-loader hidden">
+            <div class="spinner" style="width:16px;height:16px;border-width:2px"></div>
           </div>
         </div>
 
@@ -284,12 +302,12 @@
         <div class="manual-section">
           <h3 class="manual-heading">Claiming Winnings &amp; Refunds</h3>
           <p class="manual-text">Go to the <strong>Positions</strong> tab to see all your bets. If a market has been finalized and you bet on the winning outcome, a <strong>Claim Winnings</strong> button will appear. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
-          <p class="manual-text">Payouts are proportional: your share of the total pool equals your share of the winning outcome's pool, minus the protocol fee.</p>
+          <p class="manual-text">Payouts are proportional: your share of the total pool equals your share of the winning outcome's pool, minus the protocol and creator fees.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Creating a Market</h3>
-          <p class="manual-text">Go to the <strong>Create</strong> tab. Fill in a title, optional category, description, and define 2–10 outcomes. Set a resolution deadline and an optional fee override (0–500 basis points).</p>
+          <p class="manual-text">Go to the <strong>Create</strong> tab. Fill in a title, optional category, description, and define 2–10 outcomes. Set a resolution deadline and an optional creator fee (0–500 basis points) — this is the additional fee you earn on top of the protocol default.</p>
           <p class="manual-text">The category you set is stored on-chain inside the description field and displayed as a badge on market cards.</p>
           <p class="manual-text">As the market creator (authority), you are responsible for resolving the market with the correct outcome before or after the deadline. You can also void the market if needed.</p>
         </div>
@@ -307,7 +325,7 @@
 
         <div class="manual-section">
           <h3 class="manual-heading">Fees &amp; Protocol</h3>
-          <p class="manual-text">The protocol charges a fee (in basis points) on winning claims. Market creators can override the default fee up to 5%. Fees go to the protocol treasury. There are no fees on losing bets, voided refunds, or market creation.</p>
+          <p class="manual-text">Fees are charged on winning claims only. The protocol takes its default fee (set by the admin) which goes to the protocol treasury. Market creators can add an additional creator fee (up to 5%) which goes directly to the creator's wallet. There are no fees on losing bets, voided refunds, or market creation.</p>
         </div>
 
         <div class="manual-section">

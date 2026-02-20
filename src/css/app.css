@@ -999,6 +999,76 @@ body::before {
 .add-outcome-btn:hover { border-color: var(--gold); color: var(--gold); }
 
 .token-fields { margin-bottom: 14px; }
+
+/* Token Preview */
+.token-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  min-height: 56px;
+  transition: border-color 0.2s;
+}
+.token-preview:hover { border-color: var(--gold-dim); }
+.token-preview-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.token-preview-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06);
+  object-fit: cover;
+}
+.token-preview-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.token-preview-name {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.token-preview-symbol {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.token-preview-fullname {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.token-preview-mint {
+  font-size: 0.7rem;
+  font-family: var(--font-display);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.token-preview-mint:hover { color: var(--gold-dim); text-decoration: underline; }
+.token-preview-loader {
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.token-preview-error {
+  font-size: 0.75rem;
+  color: var(--red);
+}
 .form-status {
   margin-top: 12px;
   padding: 10px 14px;
