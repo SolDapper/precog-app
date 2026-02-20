@@ -301,6 +301,9 @@ export async function signAndSend(instructionOrArray, signerPublicKey, walletPro
   const simResult = await conn.simulateTransaction(tx);
   if (simResult.value.err) {
     const logs = simResult.value.logs || [];
+    console.error('Transaction simulation failed');
+    console.error('Error:', JSON.stringify(simResult.value.err, null, 2));
+    console.error('Logs:', logs);
     // Find the most descriptive error log
     const errorLog = logs.filter(l => l.includes('Error') || l.includes('error') || l.includes('failed')).pop();
     const errMsg = errorLog
