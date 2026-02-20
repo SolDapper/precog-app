@@ -12,7 +12,7 @@ export const PROGRAM_ID = new PublicKey(
 
 export const APP_IDENTITY = {
   name: 'Pelfmont Markets',
-  uri: 'https://pelfmont.com/',
+  uri: 'https://www.pelfmont.com/',
   icon: '/.well-known/icon.png',
 };
 
