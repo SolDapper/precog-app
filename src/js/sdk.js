@@ -1,8 +1,8 @@
 /**
  * @module sdk
  * Bridge between the Pelfmont app and the precog-markets SDK.
- * Re-exports SDK functions and adds app-specific helpers
- * (connection management, wallet signing, utilities).
+ * Uses PrecogMarketsClient for smart transactions (CU estimation,
+ * priority fees, SWQoS-optimized sending).
  */
 import {
   Connection,
@@ -40,16 +40,31 @@ import {
 
   // Constants
   ACCOUNT_DISCRIMINATORS,
+
+  // Client
+  PrecogMarketsClient,
 } from 'precog-markets';
 
 // ═══════════════════════════════════════════════════════════════════
-// Connection singleton
+// Connection & Client singletons
 // ═══════════════════════════════════════════════════════════════════
 
 let _connection = null;
 export function getConnection() {
   if (!_connection) _connection = new Connection(RPC_URL, 'confirmed');
   return _connection;
+}
+
+let _client = null;
+function getClient() {
+  if (!_client) {
+    _client = new PrecogMarketsClient(getConnection(), {
+      programId: PROGRAM_ID,
+      computeUnitMargin: 1.1,
+      priorityLevel: 'Medium',
+    });
+  }
+  return _client;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -197,19 +212,55 @@ export async function fetchProtocolConfig() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Transaction signing (browser wallet adapter)
+// Smart transaction signing (browser wallet adapter)
 // ═══════════════════════════════════════════════════════════════════
 
-/** Send a transaction with wallet signing */
+/**
+ * Build a smart transaction with CU estimation + priority fee,
+ * sign via wallet adapter, and send with SWQoS settings.
+ *
+ * @param {TransactionInstruction} instruction - The program instruction
+ * @param {PublicKey} signerPublicKey - Fee payer / signer
+ * @param {Object} walletProvider - Wallet adapter provider (.signTransaction)
+ * @returns {Promise<string>} transaction signature
+ */
 export async function signAndSend(instruction, signerPublicKey, walletProvider) {
   const conn = getConnection();
-  const tx = new Transaction().add(instruction);
-  tx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
+  const client = getClient();
+  const instructions = [instruction];
+
+  let cuIx, feeIx;
+  try {
+    // Estimate CU and priority fee in parallel
+    const [cuResult, feeResult] = await Promise.allSettled([
+      client.estimateComputeUnits(instructions, signerPublicKey),
+      client.estimatePriorityFee(instructions, signerPublicKey),
+    ]);
+
+    if (cuResult.status === 'fulfilled') cuIx = cuResult.value.instruction;
+    if (feeResult.status === 'fulfilled') feeIx = feeResult.value.instruction;
+  } catch (err) {
+    console.warn('Fee estimation failed, sending without compute budget:', err);
+  }
+
+  // Build transaction: [CU limit, priority fee, ...instructions]
+  const tx = new Transaction();
+  if (cuIx) tx.add(cuIx);
+  if (feeIx) tx.add(feeIx);
+  tx.add(instruction);
+
+  tx.recentBlockhash = (await conn.getLatestBlockhash('confirmed')).blockhash;
   tx.feePayer = signerPublicKey;
 
+  // Sign via wallet adapter
   const signedTx = await walletProvider.signTransaction(tx);
-  const rawTx = signedTx.serialize();
-  const sig = await conn.sendRawTransaction(rawTx, { skipPreflight: false });
+
+  // Send with SWQoS-optimized settings
+  const sig = await conn.sendRawTransaction(signedTx.serialize(), {
+    skipPreflight: true,
+    maxRetries: 0,
+  });
+
   await conn.confirmTransaction(sig, 'confirmed');
   return sig;
 }
