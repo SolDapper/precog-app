@@ -358,6 +358,10 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
           <span>${isWatched ? '★' : '☆'}</span>
           <span>${isWatched ? 'Watching' : 'Add to Watchlist'}</span>
         </button>
+        <button class="detail-share-btn" id="detail-share-btn" title="Share this market">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          <span>Share</span>
+        </button>
         ${positionBadges ? positionBadges.replace(/position-estimate-badge/g, 'detail-estimate-btn') : ''}
       </div>
     </div>
@@ -533,7 +537,7 @@ export function renderVolumeChart(markets, onClickMarket) {
   if (!canvas || !Chart) return;
   if (_volumeChart) { _volumeChart.destroy(); _volumeChart = null; }
 
-  const sorted = [...markets].sort((a, b) => Number(b.account.totalPool - a.account.totalPool)).slice(0, 10);
+  const sorted = [...markets].filter(m => m.account.status !== 3).sort((a, b) => Number(b.account.totalPool - a.account.totalPool)).slice(0, 10);
   const hasVolume = sorted.some(m => m.account.totalPool > 0n);
 
   if (sorted.length === 0 || !hasVolume) {

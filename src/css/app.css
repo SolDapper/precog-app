@@ -180,6 +180,25 @@ body::before {
   color: var(--bg-primary);
 }
 
+/* Nav share button */
+.nav-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.nav-share-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+.nav-share-btn:active { transform: scale(0.92); }
+.nav-share-btn svg { display: block; }
+
 /* Wallet dropdown */
 .wallet-dropdown { position: relative; }
 .wallet-options {
@@ -1330,6 +1349,25 @@ body::before {
   border-color: var(--red);
   color: #fff;
 }
+.detail-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.detail-share-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+.detail-share-btn:active { transform: scale(0.95); }
+.detail-share-btn svg { display: block; flex-shrink: 0; }
 
 /* Category tabs */
 .watchlist-category-tabs {
@@ -1546,6 +1584,11 @@ body::before {
   .logo-text { font-size: 0.88rem; letter-spacing: 0.04em; }
   .logo-glyph { width: 27px; height: 27px; font-size: 0.95rem; }
   .wallet-btn { font-size: 0.68rem; padding: 7px 10px; }
+  .nav-share-btn { width: 30px; height: 30px; }
+  .nav-share-btn svg { width: 14px; height: 14px; }
+  .top-bar-right { gap: 6px; }
+  .detail-share-btn span { display: none; }
+  .detail-share-btn { padding: 8px; }
 
   /* Nav: compact, allow text to shrink */
   .main-nav { gap: 2px; padding: 3px; }

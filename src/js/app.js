@@ -670,6 +670,11 @@ async function openMarketDetail(pubkey) {
 }
 
 function attachDetailListeners(pubkey, market) {
+  // Share
+  document.getElementById('detail-share-btn')?.addEventListener('click', () => {
+    const url = window.location.origin + window.location.pathname + '#/market/' + pubkey.toBase58();
+    shareContent(market.title, market.title + ' — Pelfmont Markets', url);
+  });
   // Copy
   document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
     btn.addEventListener('click', async (e) => {
@@ -1385,6 +1390,47 @@ async function handleInitProtocol() {
 
 // Footer admin link
 document.querySelector('.footer-admin-link')?.addEventListener('click', () => switchView('admin'));
+
+// ═══════════════════════════════════════════════════════════════════
+// Share
+// ═══════════════════════════════════════════════════════════════════
+
+async function shareContent(title, text, url) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text, url });
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        fallbackCopy(url);
+      }
+    }
+  } else {
+    fallbackCopy(url);
+  }
+}
+
+function fallbackCopy(text) {
+  navigator.clipboard?.writeText(text).then(() => {
+    ui.showStatus('Link copied to clipboard', 'success');
+  }).catch(() => {
+    ui.showStatus('Could not copy link', 'error');
+  });
+}
+
+// Nav bar share — shares current page URL
+document.getElementById('nav-share-btn')?.addEventListener('click', () => {
+  const url = window.location.href;
+  const hash = window.location.hash;
+  let title = 'Pelfmont Markets';
+  let text = 'Check out Pelfmont Markets';
+  if (hash.startsWith('#/market/') && currentMarketData) {
+    title = currentMarketData.title;
+    text = currentMarketData.title + ' — Pelfmont Markets';
+  }
+  shareContent(title, text, url);
+});
+
+// Detail share — wired up in attachDetailListeners
 
 // ═══════════════════════════════════════════════════════════════════
 // Watchlist View
