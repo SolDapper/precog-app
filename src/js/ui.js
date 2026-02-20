@@ -262,7 +262,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
     betSectionHtml = `
       <div class="bet-section">
         <div class="card">
-          <div class="bet-section-title">Place a Bet</div>
+          <div class="bet-section-title">Choose Position</div>
           <div class="bet-outcomes">${outcomeBtns}</div>
           <div class="bet-amount-row">
             <input id="bet-amount-input" type="number" class="bet-amount-input"

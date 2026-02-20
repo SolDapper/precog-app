@@ -766,7 +766,7 @@ function updateBetUI() {
   if (!w) { btn.textContent = 'Connect Wallet'; btn.disabled = true; }
   else if (selectedOutcome === null) { btn.textContent = 'Select an Outcome'; btn.disabled = true; }
   else if (!amount || amount <= 0) { btn.textContent = 'Enter Amount'; btn.disabled = true; }
-  else { btn.textContent = 'Place Bet'; btn.disabled = false; }
+  else { btn.textContent = 'Confirm Position'; btn.disabled = false; }
   // Payout estimate
   const est = document.getElementById('bet-payout-estimate');
   if (!est || !currentMarketData || selectedOutcome === null || !amount || amount <= 0) { est?.classList.add('hidden'); return; }

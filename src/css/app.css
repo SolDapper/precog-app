@@ -1129,6 +1129,14 @@ body::before {
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-weight: 500;
+  overflow: hidden;
+}
+.form-status .status-msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 .form-status.success { background: var(--green-dim); color: var(--green); }
 .form-status.error { background: var(--red-dim); color: var(--red); }
