@@ -5,6 +5,8 @@
 import { lamportsToSol, getImpliedProbabilities } from './sdk.js';
 import { resolveDisplayName, shortAddress } from './sns.js';
 import * as watchlist from './watchlist.js';
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
 // ═══════════════════════════════════════════════════════════════════
 // Category Parser
@@ -122,7 +124,7 @@ export function hideTxOverlay() {
 // Market Card (for explore list)
 // ═══════════════════════════════════════════════════════════════════
 
-export function renderMarketCard(pubkey, market) {
+export function renderMarketCard(pubkey, market, userPositions = null) {
   const probs = getImpliedProbabilities(market.outcomePools, market.totalPool);
   const statusClass = market.statusName.toLowerCase();
 
@@ -150,6 +152,38 @@ export function renderMarketCard(pubkey, market) {
   const isWatched = watchlist.has(addr);
   const { category: marketCategory } = parseDescription(market.description);
 
+  // User position estimate badges
+  let positionBadges = '';
+  if (userPositions && userPositions.length > 0) {
+    const isSol = market.denominationName === 'NativeSol';
+    const badges = userPositions.filter(p => !p.claimed).map(p => {
+      const outcomeLabel = market.outcomeLabels[p.outcomeIndex] ?? `#${p.outcomeIndex}`;
+      const amountStr = isSol ? formatSol(p.amount) : formatTokenAmount(p.amount, market.tokenDecimals);
+      const pool = market.outcomePools[p.outcomeIndex];
+      if (market.status < 2 && pool > 0n && market.totalPool > 0n) {
+        const gross = (BigInt(p.amount) * market.totalPool) / pool;
+        const fee = (gross * BigInt(market.feeBps)) / 10000n;
+        const net = gross - fee;
+        const payStr = isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals);
+        return `<span class="position-estimate-badge" title="${amountStr} on ${outcomeLabel}">Est. ${payStr}</span>`;
+      } else if (market.status === 2 && market.winningOutcome === p.outcomeIndex) {
+        const winPool = market.outcomePools[market.winningOutcome];
+        if (winPool > 0n) {
+          const gross = (BigInt(p.amount) * market.totalPool) / winPool;
+          const fee = (gross * BigInt(market.feeBps)) / 10000n;
+          const payStr = isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals);
+          return `<span class="position-estimate-badge win" title="${amountStr} on ${outcomeLabel}">Win ${payStr}</span>`;
+        }
+      } else if (market.status === 2 && market.winningOutcome !== p.outcomeIndex) {
+        return `<span class="position-estimate-badge lost" title="${amountStr} on ${outcomeLabel}">Lost</span>`;
+      }
+      return '';
+    }).filter(Boolean);
+    positionBadges = badges.join('');
+  }
+
+  const hasBadgeRow = marketCategory || positionBadges;
+
   const card = document.createElement('div');
   card.className = 'market-card';
   card.dataset.pubkey = addr;
@@ -159,7 +193,10 @@ export function renderMarketCard(pubkey, market) {
       <button class="watchlist-star ${isWatched ? 'active' : ''}" data-addr="${addr}" title="Toggle watchlist">${isWatched ? '★' : '☆'}</button>
       <span class="market-status-badge ${statusClass}">${market.statusName}</span>
     </div>
-    ${marketCategory ? `<span class="market-category-badge">${escapeHtml(marketCategory)}</span>` : ''}
+    ${hasBadgeRow ? `<div class="market-badge-row">
+      ${marketCategory ? `<span class="position-category-badge">${escapeHtml(marketCategory)}</span>` : ''}
+      ${positionBadges}
+    </div>` : ''}
     <div class="outcome-bars">${outcomeBarsHtml}</div>
     <div class="market-card-stats">
       <div class="market-stat">
@@ -188,7 +225,7 @@ export function renderMarketCard(pubkey, market) {
 // Market Detail
 // ═══════════════════════════════════════════════════════════════════
 
-export function renderMarketDetail(pubkey, market, connectedWallet = null) {
+export function renderMarketDetail(pubkey, market, connectedWallet = null, userPositions = null) {
   const probs = getImpliedProbabilities(market.outcomePools, market.totalPool);
   const statusClass = market.statusName.toLowerCase();
   const denomLabel = market.denominationName === 'NativeSol' ? 'SOL' : market.denominationName;
@@ -276,18 +313,53 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null) {
   const isWatched = watchlist.has(addr);
   const { category: marketCategory, description: cleanDesc } = parseDescription(market.description);
 
+  // User position estimate badges for detail view
+  const isSol = market.denominationName === 'NativeSol';
+  let positionBadges = '';
+  if (userPositions && userPositions.length > 0) {
+    const badges = userPositions.filter(p => !p.claimed).map(p => {
+      const outcomeLabel = market.outcomeLabels[p.outcomeIndex] ?? `#${p.outcomeIndex}`;
+      const amountStr = isSol ? formatSol(p.amount) : formatTokenAmount(p.amount, market.tokenDecimals);
+      const pool = market.outcomePools[p.outcomeIndex];
+      if (market.status < 2 && pool > 0n && market.totalPool > 0n) {
+        const gross = (BigInt(p.amount) * market.totalPool) / pool;
+        const fee = (gross * BigInt(market.feeBps)) / 10000n;
+        const payStr = isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals);
+        return `<span class="position-estimate-badge" title="${amountStr} on ${escapeHtml(outcomeLabel)}">Est. ${payStr}</span>`;
+      } else if (market.status === 2 && market.winningOutcome === p.outcomeIndex) {
+        const winPool = market.outcomePools[market.winningOutcome];
+        if (winPool > 0n) {
+          const gross = (BigInt(p.amount) * market.totalPool) / winPool;
+          const fee = (gross * BigInt(market.feeBps)) / 10000n;
+          return `<span class="position-estimate-badge win" title="${amountStr} on ${escapeHtml(outcomeLabel)}">Win ${isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals)}</span>`;
+        }
+      } else if (market.status === 2 && market.winningOutcome !== p.outcomeIndex) {
+        return `<span class="position-estimate-badge lost" title="${amountStr} on ${escapeHtml(outcomeLabel)}">Lost</span>`;
+      }
+      return '';
+    }).filter(Boolean);
+    positionBadges = badges.join('');
+  }
+
+  const hasBadgeRow = marketCategory || positionBadges;
+
   return `
     <div class="market-detail-header">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <h1 class="market-detail-title">${escapeHtml(market.title)}</h1>
-        <span class="market-status-badge ${statusClass}">${market.statusName}</span>
+        <span class="detail-header-badges">
+          ${marketCategory ? `<span class="position-category-badge">${escapeHtml(marketCategory)}</span>` : ''}
+          <span class="market-status-badge ${statusClass}">${market.statusName}</span>
+        </span>
       </div>
-      ${marketCategory ? `<span class="market-category-badge" style="margin-bottom:6px">${escapeHtml(marketCategory)}</span>` : ''}
       ${cleanDesc ? `<p class="market-detail-desc">${escapeHtml(cleanDesc)}</p>` : ''}
-      <button class="watchlist-detail-btn ${isWatched ? 'active' : ''}" id="detail-watchlist-btn" data-addr="${addr}">
-        <span>${isWatched ? '★' : '☆'}</span>
-        <span>${isWatched ? 'Watching' : 'Add to Watchlist'}</span>
-      </button>
+      <div class="detail-action-row">
+        <button class="watchlist-detail-btn ${isWatched ? 'active' : ''}" id="detail-watchlist-btn" data-addr="${addr}">
+          <span>${isWatched ? '★' : '☆'}</span>
+          <span>${isWatched ? 'Watching' : 'Add to Watchlist'}</span>
+        </button>
+        ${positionBadges ? positionBadges.replace(/position-estimate-badge/g, 'detail-estimate-btn') : ''}
+      </div>
     </div>
 
     <div class="market-detail-meta">
@@ -319,8 +391,8 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null) {
 
     <div class="outcome-bars" style="margin-top:12px">${outcomeBarsHtml}</div>
 
-    <button class="chart-toggle-btn" id="detail-chart-toggle">▸ Show Charts</button>
-    <div class="detail-charts-row hidden" id="detail-charts-wrap">
+    <button class="chart-toggle-btn open" id="detail-chart-toggle">▾ Hide Charts</button>
+    <div class="detail-charts-row" id="detail-charts-wrap">
       <div class="chart-container card">
         <div class="chart-title">Outcome Distribution</div>
         <canvas id="detail-donut-chart" height="200"></canvas>
@@ -358,6 +430,8 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
     ? formatSol(position.amount) : formatTokenAmount(position.amount, market.tokenDecimals);
   const outcomeLabel = market.outcomeLabels[position.outcomeIndex] ?? `Outcome ${position.outcomeIndex}`;
   const statusClass = market.statusName.toLowerCase();
+  const { category } = parseDescription(market.description);
+  const deadlineStr = market.status === 0 ? formatCountdown(market.resolutionDeadline) : formatDate(market.resolutionDeadline);
 
   // Determine action buttons
   let actionsHtml = '';
@@ -377,6 +451,30 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
     actionsHtml = `<div style="margin-top:10px;font-size:0.78rem;color:var(--green)">✓ Claimed</div>`;
   }
 
+  // Payout estimate badge
+  const isSol = market.denominationName === 'NativeSol';
+  let payoutBadge = '';
+  if (!position.claimed) {
+    const pool = market.outcomePools[position.outcomeIndex];
+    if (market.status < 2 && pool > 0n && market.totalPool > 0n) {
+      const gross = (BigInt(position.amount) * market.totalPool) / pool;
+      const fee = (gross * BigInt(market.feeBps)) / 10000n;
+      const net = gross - fee;
+      payoutBadge = `<span class="position-estimate-badge">Est. ${isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals)}</span>`;
+    } else if (market.status === 2 && market.winningOutcome === position.outcomeIndex) {
+      const winPool = market.outcomePools[market.winningOutcome];
+      if (winPool > 0n) {
+        const gross = (BigInt(position.amount) * market.totalPool) / winPool;
+        const fee = (gross * BigInt(market.feeBps)) / 10000n;
+        payoutBadge = `<span class="position-estimate-badge win">Win ${isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals)}</span>`;
+      }
+    } else if (market.status === 2 && market.winningOutcome !== position.outcomeIndex) {
+      payoutBadge = `<span class="position-estimate-badge lost">Lost</span>`;
+    }
+  }
+
+  const hasBadgeRow = category || payoutBadge;
+
   const card = document.createElement('div');
   card.className = 'position-card';
   card.innerHTML = `
@@ -384,6 +482,10 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       <span class="position-market-title" data-market-pubkey="${marketPubkey.toBase58()}">${escapeHtml(market.title)}</span>
       <span class="market-status-badge ${statusClass}">${market.statusName}</span>
     </div>
+    ${hasBadgeRow ? `<div class="position-badge-row">
+      ${category ? `<span class="position-category-badge">${escapeHtml(category)}</span>` : ''}
+      ${payoutBadge}
+    </div>` : ''}
     <div class="position-details">
       <div class="position-detail">
         <span class="position-detail-label">Outcome</span>
@@ -396,6 +498,10 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       <div class="position-detail">
         <span class="position-detail-label">Deposited</span>
         <span class="position-detail-value">${formatDate(position.lastDepositAt)}</span>
+      </div>
+      <div class="position-detail">
+        <span class="position-detail-label">Deadline</span>
+        <span class="position-detail-value">${deadlineStr}</span>
       </div>
     </div>
     ${actionsHtml}
@@ -417,15 +523,31 @@ let _volumeChart = null;
 let _donutChart = null;
 let _poolBarChart = null;
 
-/** Render the explore view volume bar chart (top 8 markets) */
-export function renderVolumeChart(markets) {
+/** Render the explore view volume bar chart (top 10 markets) */
+export function renderVolumeChart(markets, onClickMarket) {
   const canvas = document.getElementById('explore-volume-chart');
-  if (!canvas || typeof Chart === 'undefined') return;
+  if (!canvas || !Chart) return;
   if (_volumeChart) { _volumeChart.destroy(); _volumeChart = null; }
 
   const sorted = [...markets].sort((a, b) => Number(b.account.totalPool - a.account.totalPool)).slice(0, 10);
-  if (sorted.length === 0) { canvas.parentElement.style.display = 'none'; return; }
-  canvas.parentElement.style.display = '';
+  const hasVolume = sorted.some(m => m.account.totalPool > 0n);
+
+  if (sorted.length === 0 || !hasVolume) {
+    canvas.style.display = 'none';
+    let msg = canvas.parentElement.querySelector('.chart-empty');
+    if (!msg) {
+      msg = document.createElement('div');
+      msg.className = 'chart-empty';
+      msg.style.cssText = 'text-align:center;padding:32px 0;color:var(--text-muted);font-size:0.82rem;';
+      canvas.parentElement.appendChild(msg);
+    }
+    msg.textContent = sorted.length === 0 ? 'No markets found.' : 'No volume yet — place the first bet!';
+    return;
+  }
+
+  // Remove empty state if present
+  canvas.parentElement.querySelector('.chart-empty')?.remove();
+  canvas.style.display = '';
 
   const labels = sorted.map(m => m.account.title.length > 28 ? m.account.title.slice(0, 28) + '…' : m.account.title);
   const data = sorted.map(m => lamportsToSol(m.account.totalPool));
@@ -443,13 +565,23 @@ export function renderVolumeChart(markets) {
       }],
     },
     options: {
+      animation: false,
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
+      onHover: (event, elements) => {
+        canvas.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+      },
+      onClick: (event, elements) => {
+        if (elements.length > 0 && onClickMarket) {
+          const idx = elements[0].index;
+          onClickMarket(sorted[idx].pubkey);
+        }
+      },
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.parsed.x.toFixed(4) + ' SOL' } } },
       scales: {
         x: { beginAtZero: true, grid: { color: 'rgba(255,210,12,0.08)' }, ticks: { color: 'rgba(255,188,12,0.6)', font: { size: 10 } } },
-        y: { grid: { display: false }, ticks: { color: 'rgba(255,188,12,0.8)', font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: '#ffffff', font: { size: 11 } } },
       },
     },
   });
@@ -457,7 +589,7 @@ export function renderVolumeChart(markets) {
 
 /** Render outcome donut chart on market detail. Call after detail HTML is in DOM. */
 export function renderDetailCharts(market) {
-  if (typeof Chart === 'undefined') return;
+  if (!Chart) return;
 
   // Donut — outcome distribution
   const donutCanvas = document.getElementById('detail-donut-chart');
@@ -477,6 +609,7 @@ export function renderDetailCharts(market) {
         }],
       },
       options: {
+        animation: false,
         responsive: true,
         maintainAspectRatio: false,
         cutout: '60%',
@@ -506,6 +639,7 @@ export function renderDetailCharts(market) {
         }],
       },
       options: {
+        animation: false,
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.parsed.y.toFixed(4) + ' SOL' } } },

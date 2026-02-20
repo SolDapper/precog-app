@@ -398,10 +398,16 @@ body::before {
 
 .market-card-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.market-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 .market-card-title {
   font-family: var(--font-body);
@@ -529,6 +535,12 @@ body::before {
 
 .market-detail { display: flex; flex-direction: column; gap: 16px; }
 .market-detail-header { margin-bottom: 4px; }
+.detail-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
 .market-detail-title {
   font-family: var(--font-body);
   font-size: 1.3rem;
@@ -728,7 +740,40 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+.position-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 10px;
+}
+.position-category-badge {
+  font-size: 0.68rem;
+  color: var(--gold-dim);
+  background: rgba(255, 188, 12, 0.08);
+  border: 1px solid rgba(255, 188, 12, 0.15);
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+.position-estimate-badge {
+  font-size: 0.68rem;
+  color: #111;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.position-estimate-badge.win {
+  background: var(--green);
+  color: #111;
+}
+.position-estimate-badge.lost {
+  background: var(--red);
+  color: #fff;
 }
 .position-market-title {
   font-size: 0.88rem;
@@ -767,6 +812,103 @@ body::before {
   padding: 10px 14px;
   font-size: 0.75rem;
   flex: 1;
+}
+.payout-value { color: var(--green) !important; }
+
+/* ── User Position Banner (on market cards) ────────────────────── */
+.user-position-banner {
+  background: rgba(255, 188, 12, 0.15);
+  border: 1px solid rgba(255, 188, 12, 0.35);
+  border-radius: 4px;
+  padding: 3px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: right;
+}
+.user-pos-line {
+  font-size: 0.7rem;
+  color: #111;
+  font-weight: 500;
+}
+.user-pos-line b { color: #000; font-weight: 700; }
+
+/* ── Token Chooser ─────────────────────────────────────────────── */
+.token-chooser {
+  position: relative;
+  display: inline-block;
+}
+.token-chooser-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: border-color 0.15s ease;
+}
+.token-chooser-btn:hover { border-color: var(--gold-dim); }
+.token-chooser-btn.token-active { border-color: var(--gold-dim); color: var(--gold); }
+.token-icon-sm { width: 14px; height: 14px; border-radius: 50%; }
+.token-chooser-dropdown {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  width: 320px;
+  max-width: 90vw;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #0a0a0a;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+}
+.token-chooser-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0,0,0,0.6);
+}
+.token-chooser-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.1s;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.token-chooser-item:hover { background: rgba(255,188,12,0.06); }
+.token-chooser-item.active { background: rgba(255,188,12,0.1); color: var(--gold); }
+.token-icon { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; }
+.token-chooser-label { flex: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
+.token-symbol-name { font-weight: 600; color: var(--text-primary); }
+.token-chooser-item.active .token-symbol-name { color: var(--gold); }
+.token-mint-link {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-family: var(--font-display);
+}
+.token-mint-link:hover { color: var(--gold-dim); text-decoration: underline; }
+.token-chooser-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+.token-chooser-count {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 /* ── Create Form ────────────────────────────────────────────────── */
@@ -988,19 +1130,6 @@ body::before {
 }
 
 /* ── Watchlist Star ─────────────────────────────────────────────── */
-.market-category-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  background: rgba(68, 138, 255, 0.12);
-  color: var(--blue);
-  border: 1px solid rgba(68, 138, 255, 0.2);
-  margin-bottom: 4px;
-}
-
 /* Watchlist star picker popup */
 .watchlist-picker-overlay {
   position: fixed;
@@ -1079,6 +1208,13 @@ body::before {
 .watchlist-star.active { filter: drop-shadow(0 0 4px #fff); color: #fff; }
 
 /* Detail watchlist button */
+.detail-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
 .watchlist-detail-btn {
   display: inline-flex;
   align-items: center;
@@ -1094,13 +1230,35 @@ body::before {
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: all 0.15s ease;
-  margin-top: 8px;
 }
 .watchlist-detail-btn:hover { border-color: var(--gold); color: var(--gold); }
 .watchlist-detail-btn.active {
   background: var(--gold-ghost);
   border-color: var(--gold);
   color: var(--gold);
+}
+.detail-estimate-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.8);
+  color: #111;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.detail-estimate-btn.win {
+  background: var(--green);
+  border-color: var(--green);
+  color: #111;
+}
+.detail-estimate-btn.lost {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
 }
 
 /* Category tabs */

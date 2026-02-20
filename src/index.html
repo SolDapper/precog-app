@@ -13,7 +13,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/app.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
 </head>
 <body>
   <div id="app" class="precog-app">
@@ -61,8 +60,8 @@
         </div>
       </div>
 
-      <button id="explore-chart-toggle" class="chart-toggle-btn">▸ Show Hot Markets</button>
-      <div id="explore-chart-wrap" class="chart-container card hidden" style="margin-bottom:14px">
+      <button id="explore-chart-toggle" class="chart-toggle-btn open">▾ Hide Hot Markets</button>
+      <div id="explore-chart-wrap" class="chart-container card" style="margin-bottom:14px">
         <div class="chart-title">Volume by Market (Top 10)</div>
         <canvas id="explore-volume-chart" height="260"></canvas>
       </div>
@@ -84,6 +83,12 @@
         <select id="explore-category-filter" class="sort-select">
           <option value="all">All Categories</option>
         </select>
+
+        <label class="sort-label" style="margin-left:12px">Token</label>
+        <div id="token-chooser" class="token-chooser">
+          <button id="token-chooser-btn" class="token-chooser-btn">All Tokens ▾</button>
+          <div id="token-chooser-dropdown" class="token-chooser-dropdown hidden"></div>
+        </div>
       </div>
 
       <div id="markets-list" class="markets-list">
@@ -144,6 +149,12 @@
     <!-- ═══════════════════════════════════════════════ -->
     <main id="view-positions" class="view hidden">
       <h2 class="section-title">My Positions</h2>
+      <div class="explore-sort" style="margin-bottom:12px">
+        <label class="sort-label">Category</label>
+        <select id="positions-category-filter" class="sort-select">
+          <option value="all">All Categories</option>
+        </select>
+      </div>
       <div id="positions-list" class="positions-list">
         <div class="empty-state">Connect your wallet to view positions.</div>
       </div>
@@ -353,6 +364,28 @@
           <div class="admin-stat">
             <span class="admin-stat-label">Paused</span>
             <span id="admin-paused" class="admin-stat-value">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Protocol Update Controls (only visible to admin) -->
+      <div id="admin-update-panel" class="card hidden" style="margin-top:14px">
+        <div class="bet-section-title">Update Protocol</div>
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group-half">
+            <label class="form-label">Protocol Paused</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="admin-toggle-pause-btn" class="action-btn secondary-btn" style="flex:1">—</button>
+            </div>
+            <span class="form-hint">When paused, no new markets or bets can be created.</span>
+          </div>
+          <div class="form-group-half">
+            <label class="form-label">Default Fee (bps)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="admin-update-fee" type="number" class="form-input" placeholder="200" min="0" max="10000" style="flex:1">
+              <button id="admin-update-fee-btn" class="action-btn primary-btn" style="white-space:nowrap">Update Fee</button>
+            </div>
+            <span class="form-hint">Basis points (100 = 1%). Applied to new markets.</span>
           </div>
         </div>
       </div>

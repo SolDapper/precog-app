@@ -29,7 +29,34 @@ const PAGE_SIZE = 20;
 let currentPage = 0;
 let filteredMarkets = [];   // current filtered+sorted list
 let _loadMoreObserver = null;
+let currentTokenFilter = 'all';
 let pollInterval = null;
+
+// User positions cache — Map<marketAddress, Array<{outcomeIndex, amount}>>
+let userPositionsMap = new Map();
+let _positionsLoading = false;
+
+/** Fetch all positions for the connected wallet and index by market address */
+async function refreshUserPositions() {
+  const w = wallet.getWallet();
+  if (!w) { userPositionsMap = new Map(); return; }
+  if (_positionsLoading) return;
+  _positionsLoading = true;
+  try {
+    const positions = await sdk.fetchPositionsByOwner(w.publicKey);
+    const map = new Map();
+    for (const { account: pos } of positions) {
+      const mktAddr = pos.market.toBase58();
+      if (!map.has(mktAddr)) map.set(mktAddr, []);
+      map.get(mktAddr).push({ outcomeIndex: pos.outcomeIndex, amount: pos.amount, claimed: pos.claimed });
+    }
+    userPositionsMap = map;
+  } catch (err) {
+    console.warn('Failed to refresh user positions:', err);
+  } finally {
+    _positionsLoading = false;
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // View Router
@@ -119,7 +146,8 @@ async function loadMarkets() {
     if (allMarkets.length === 0) {
       listEl.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading markets…</span></div>';
     }
-    allMarkets = await sdk.fetchAllMarkets();
+    const [markets] = await Promise.all([sdk.fetchAllMarkets(), refreshUserPositions()]);
+    allMarkets = markets;
     // On poll refresh, don't reset the page — show same amount user has scrolled to
     const isInitialLoad = listEl.querySelector('.loading-state') !== null;
     renderMarketsList(isInitialLoad);
@@ -135,6 +163,7 @@ function renderMarketsList(resetPage = true) {
   // Populate filter dropdowns from all markets
   populateCreatorFilter();
   populateCategoryFilter();
+  populateTokenFilter();
 
   // Reset page when filters/sort change
   if (resetPage) currentPage = 0;
@@ -153,6 +182,15 @@ function renderMarketsList(resetPage = true) {
       if (currentCategoryFilter === '__none') return !category;
       return category === currentCategoryFilter;
     });
+  }
+
+  // Token filter
+  if (currentTokenFilter !== 'all') {
+    if (currentTokenFilter === NATIVE_SOL_MINT) {
+      filtered = filtered.filter(m => m.account.denomination === 0);
+    } else {
+      filtered = filtered.filter(m => m.account.tokenMint.toBase58() === currentTokenFilter);
+    }
   }
 
   // Status / mine filter
@@ -194,13 +232,20 @@ function renderMarketsList(resetPage = true) {
 
   // Add footer (count + load more)
   appendListFooter(listEl, end, filtered.length);
+
+  // Refresh chart if the panel is already open
+  const chartWrap = document.getElementById('explore-chart-wrap');
+  if (chartWrap && !chartWrap.classList.contains('hidden') && allMarkets.length > 0) {
+    requestAnimationFrame(() => ui.renderVolumeChart(allMarkets, openMarketDetail));
+  }
 }
 
 /** Append market cards for a range of filteredMarkets */
 function appendMarketCards(listEl, markets, start, end) {
   for (let i = start; i < end; i++) {
     const { pubkey, account } = markets[i];
-    const card = ui.renderMarketCard(pubkey, account);
+    const positions = userPositionsMap.get(pubkey.toBase58()) || null;
+    const card = ui.renderMarketCard(pubkey, account, positions);
     card.addEventListener('click', (e) => {
       if (e.target.closest('.watchlist-star')) return;
       openMarketDetail(pubkey);
@@ -263,7 +308,8 @@ function loadMoreMarkets() {
   const fragment = document.createDocumentFragment();
   for (let i = start; i < end; i++) {
     const { pubkey, account } = filteredMarkets[i];
-    const card = ui.renderMarketCard(pubkey, account);
+    const positions = userPositionsMap.get(pubkey.toBase58()) || null;
+    const card = ui.renderMarketCard(pubkey, account, positions);
     card.addEventListener('click', (e) => {
       if (e.target.closest('.watchlist-star')) return;
       openMarketDetail(pubkey);
@@ -297,16 +343,15 @@ function cleanupLoadMoreObserver() {
 }
 
 // Explore chart toggle
-let exploreChartRendered = false;
 document.getElementById('explore-chart-toggle')?.addEventListener('click', () => {
   const wrap = document.getElementById('explore-chart-wrap');
   const btn = document.getElementById('explore-chart-toggle');
   const isHidden = wrap.classList.toggle('hidden');
   btn.textContent = isHidden ? '▸ Show Hot Markets' : '▾ Hide Hot Markets';
   btn.classList.toggle('open', !isHidden);
-  if (!isHidden && !exploreChartRendered && allMarkets.length > 0) {
-    ui.renderVolumeChart(allMarkets);
-    exploreChartRendered = true;
+  if (!isHidden && allMarkets.length > 0) {
+    // Defer render so the container has dimensions after unhiding
+    requestAnimationFrame(() => ui.renderVolumeChart(allMarkets, openMarketDetail));
   }
 });
 
@@ -420,6 +465,185 @@ document.getElementById('explore-category-filter')?.addEventListener('change', (
   renderMarketsList();
 });
 
+// Token chooser (custom HTML dropdown with icons)
+const NATIVE_SOL_MINT = '11111111111111111111111111111111';
+const SOL_ICON = 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png';
+let _lastTokenSet = '';
+let _tokenIconCache = new Map(); // mint → icon URL
+
+/** Fetch token icon from Jupiter token list API */
+async function fetchTokenIcon(mint) {
+  if (_tokenIconCache.has(mint)) return _tokenIconCache.get(mint);
+  try {
+    const resp = await fetch(`https://tokens.jup.ag/token/${mint}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      const icon = data.logoURI || '';
+      const name = data.name || '';
+      const symbol = data.symbol || '';
+      _tokenIconCache.set(mint, { icon, name, symbol });
+      return { icon, name, symbol };
+    }
+  } catch {}
+  _tokenIconCache.set(mint, { icon: '', name: '', symbol: '' });
+  return { icon: '', name: '', symbol: '' };
+}
+
+function populateTokenFilter() {
+  const dropdown = document.getElementById('token-chooser-dropdown');
+  if (!dropdown) return;
+
+  // Gather unique token mints from markets
+  const tokens = new Map(); // mint address → { count, denomination, denominationName }
+  for (const { account } of allMarkets) {
+    const mint = account.denomination === 0 ? NATIVE_SOL_MINT : account.tokenMint.toBase58();
+    if (!tokens.has(mint)) {
+      tokens.set(mint, { count: 0, denomination: account.denomination, denominationName: account.denominationName, tokenDecimals: account.tokenDecimals });
+    }
+    tokens.get(mint).count++;
+  }
+
+  const key = [...tokens.keys()].sort().join(',');
+  if (key === _lastTokenSet) return;
+  _lastTokenSet = key;
+
+  // Build dropdown items
+  dropdown.innerHTML = '';
+
+  // "All Tokens" option
+  const allItem = document.createElement('div');
+  allItem.className = `token-chooser-item${currentTokenFilter === 'all' ? ' active' : ''}`;
+  allItem.dataset.mint = 'all';
+  allItem.innerHTML = `<span class="token-chooser-label">All Tokens</span>`;
+  dropdown.appendChild(allItem);
+
+  // Native SOL
+  if (tokens.has(NATIVE_SOL_MINT)) {
+    const info = tokens.get(NATIVE_SOL_MINT);
+    const item = document.createElement('div');
+    item.className = `token-chooser-item${currentTokenFilter === NATIVE_SOL_MINT ? ' active' : ''}`;
+    item.dataset.mint = NATIVE_SOL_MINT;
+    item.innerHTML = `
+      <img class="token-icon" src="${SOL_ICON}" alt="SOL" onerror="this.style.display='none'">
+      <span class="token-chooser-label">SOL <span class="token-chooser-sub">Native</span></span>
+      <span class="token-chooser-count">${info.count}</span>
+    `;
+    dropdown.appendChild(item);
+    tokens.delete(NATIVE_SOL_MINT);
+  }
+
+  // SPL / Token-2022 tokens — fetch icons async
+  const sorted = [...tokens.entries()].sort((a, b) => b[1].count - a[1].count);
+  for (const [mint, info] of sorted) {
+    const shortMint = mint.slice(0, 4) + '…' + mint.slice(-4);
+    const typeLabel = info.denominationName === 'Token2022' ? 'Token-2022' : 'SPL';
+    const item = document.createElement('div');
+    item.className = `token-chooser-item${currentTokenFilter === mint ? ' active' : ''}`;
+    item.dataset.mint = mint;
+    item.innerHTML = `
+      <img class="token-icon" src="" alt="" style="display:none">
+      <span class="token-chooser-label">
+        <span class="token-symbol-name">Loading…</span>
+        <a class="token-mint-link" href="https://solscan.io/token/${mint}" target="_blank" rel="noopener" title="${mint}">${shortMint}</a>
+        <span class="token-chooser-sub">${typeLabel}</span>
+      </span>
+      <span class="token-chooser-count">${info.count}</span>
+    `;
+    dropdown.appendChild(item);
+
+    // Fetch icon async
+    fetchTokenIcon(mint).then(({ icon, name, symbol }) => {
+      const img = item.querySelector('.token-icon');
+      const label = item.querySelector('.token-symbol-name');
+      if (icon) { img.src = icon; img.style.display = ''; }
+      label.textContent = symbol ? `${symbol}${name ? ' — ' + name : ''}` : shortMint;
+    });
+  }
+
+  // Click handlers
+  dropdown.querySelectorAll('.token-chooser-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      // Don't close dropdown if clicking the Solscan link
+      if (e.target.closest('.token-mint-link')) return;
+      e.stopPropagation();
+      currentTokenFilter = item.dataset.mint;
+      updateTokenChooserButton();
+      dropdown.classList.add('hidden');
+      document.querySelector('.token-chooser-backdrop')?.remove();
+      _lastTokenSet = ''; // force re-render of active state
+      populateTokenFilter();
+      renderMarketsList();
+    });
+  });
+}
+
+function updateTokenChooserButton() {
+  const btn = document.getElementById('token-chooser-btn');
+  if (!btn) return;
+  if (currentTokenFilter === 'all') {
+    btn.textContent = 'All Tokens ▾';
+    btn.classList.remove('token-active');
+  } else if (currentTokenFilter === NATIVE_SOL_MINT) {
+    btn.innerHTML = `<img class="token-icon-sm" src="${SOL_ICON}" alt="SOL"> SOL ▾`;
+    btn.classList.add('token-active');
+  } else {
+    const cached = _tokenIconCache.get(currentTokenFilter);
+    const short = currentTokenFilter.slice(0, 4) + '…' + currentTokenFilter.slice(-4);
+    const label = cached?.symbol || short;
+    if (cached?.icon) {
+      btn.innerHTML = `<img class="token-icon-sm" src="${cached.icon}" alt="${label}"> ${label} ▾`;
+    } else {
+      btn.textContent = `${label} ▾`;
+    }
+    btn.classList.add('token-active');
+  }
+}
+
+// Toggle dropdown with backdrop
+document.getElementById('token-chooser-btn')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const dd = document.getElementById('token-chooser-dropdown');
+  const isHidden = dd.classList.toggle('hidden');
+  // Manage backdrop
+  let backdrop = document.querySelector('.token-chooser-backdrop');
+  if (!isHidden) {
+    // Move dropdown to body so it renders above everything
+    if (dd.parentElement !== document.body) document.body.appendChild(dd);
+    if (!backdrop) {
+      backdrop = document.createElement('div');
+      backdrop.className = 'token-chooser-backdrop';
+      backdrop.addEventListener('click', () => {
+        dd.classList.add('hidden');
+        backdrop.remove();
+      });
+    }
+    // Insert backdrop before dropdown so dropdown is on top
+    document.body.insertBefore(backdrop, dd);
+  } else if (backdrop) {
+    backdrop.remove();
+  }
+});
+
+// Close dropdown on outside click
+document.addEventListener('click', () => {
+  document.getElementById('token-chooser-dropdown')?.classList.add('hidden');
+  document.querySelector('.token-chooser-backdrop')?.remove();
+});
+
+// Stop propagation inside dropdown
+document.getElementById('token-chooser-dropdown')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+});
+
+// Positions category filter
+document.getElementById('positions-category-filter')?.addEventListener('change', (e) => {
+  currentPositionsCategoryFilter = e.target.value;
+  const listEl = document.getElementById('positions-list');
+  if (_positionEntries.length > 0) {
+    renderPositionsList(_positionEntries, listEl);
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════
 // Market Detail
 // ═══════════════════════════════════════════════════════════════════
@@ -435,7 +659,8 @@ async function openMarketDetail(pubkey) {
     if (!market) { el.innerHTML = '<div class="empty-state">Market not found.</div>'; return; }
     currentMarketData = market;
     const w = wallet.getWallet();
-    el.innerHTML = ui.renderMarketDetail(pubkey, market, w?.publicKey);
+    const positions = userPositionsMap.get(pubkey.toBase58()) || null;
+    el.innerHTML = ui.renderMarketDetail(pubkey, market, w?.publicKey, positions);
     // Charts render on demand via toggle
     attachDetailListeners(pubkey, market);
   } catch (err) {
@@ -488,17 +713,16 @@ function attachDetailListeners(pubkey, market) {
     });
   });
 
-  // Detail charts toggle
-  let detailChartsRendered = false;
+  // Detail charts — render immediately (visible by default)
+  requestAnimationFrame(() => ui.renderDetailCharts(market));
   document.getElementById('detail-chart-toggle')?.addEventListener('click', () => {
     const wrap = document.getElementById('detail-charts-wrap');
     const btn = document.getElementById('detail-chart-toggle');
     const isHidden = wrap.classList.toggle('hidden');
     btn.textContent = isHidden ? '▸ Show Charts' : '▾ Hide Charts';
     btn.classList.toggle('open', !isHidden);
-    if (!isHidden && !detailChartsRendered) {
-      ui.renderDetailCharts(market);
-      detailChartsRendered = true;
+    if (!isHidden) {
+      requestAnimationFrame(() => ui.renderDetailCharts(market));
     }
   });
 }
@@ -598,6 +822,8 @@ document.getElementById('back-to-explore')?.addEventListener('click', () => {
 // ═══════════════════════════════════════════════════════════════════
 // My Positions View
 // ═══════════════════════════════════════════════════════════════════
+let currentPositionsCategoryFilter = 'all';
+
 async function loadPositions() {
   const listEl = document.getElementById('positions-list');
   const w = wallet.getWallet();
@@ -617,27 +843,72 @@ async function loadPositions() {
     for (const addr of marketAddrs) {
       try { const mk = await sdk.fetchMarket(new PublicKey(addr)); if (mk) marketMap[addr] = mk; } catch {}
     }
-    listEl.innerHTML = '';
-    for (const { pubkey: posPk, account: pos } of positions) {
+
+    // Build position entries with market data attached
+    const entries = positions.map(({ pubkey: posPk, account: pos }) => {
       const mk = marketMap[pos.market.toBase58()] || null;
-      const card = ui.renderPositionCard(posPk, pos, mk, pos.market);
-      listEl.appendChild(card);
+      const { category } = mk ? ui.parseDescription(mk.description) : { category: null };
+      return { posPk, pos, mk, market: pos.market, category, deadline: mk ? mk.resolutionDeadline : 0n };
+    });
+
+    // Populate category filter dropdown
+    const categories = [...new Set(entries.map(e => e.category).filter(Boolean))].sort();
+    const filterEl = document.getElementById('positions-category-filter');
+    if (filterEl) {
+      const prev = filterEl.value;
+      filterEl.innerHTML = '<option value="all">All Categories</option>'
+        + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      if (prev && [...filterEl.options].some(o => o.value === prev)) filterEl.value = prev;
+      else { filterEl.value = 'all'; currentPositionsCategoryFilter = 'all'; }
     }
-    // Claim listeners
-    document.querySelectorAll('.claim-winnings-btn').forEach(btn => {
-      btn.addEventListener('click', () => claimWinnings(btn.dataset.position, btn.dataset.market));
-    });
-    document.querySelectorAll('.claim-refund-btn').forEach(btn => {
-      btn.addEventListener('click', () => claimRefund(btn.dataset.position, btn.dataset.market));
-    });
-    document.querySelectorAll('.position-market-title[data-market-pubkey]').forEach(el => {
-      el.addEventListener('click', () => openMarketDetail(new PublicKey(el.dataset.marketPubkey)));
-    });
+
+    renderPositionsList(entries, listEl);
+    _positionEntries = entries;
   } catch (err) {
     console.error(err);
     listEl.innerHTML = '<div class="empty-state">Failed to load positions.</div>';
   }
 }
+
+function renderPositionsList(entries, listEl) {
+  // Apply category filter
+  let filtered = entries;
+  if (currentPositionsCategoryFilter !== 'all') {
+    filtered = filtered.filter(e =>
+      currentPositionsCategoryFilter === '__none' ? !e.category : e.category === currentPositionsCategoryFilter
+    );
+  }
+
+  // Sort by deadline descending (newest deadline first)
+  filtered.sort((a, b) => Number(b.deadline - a.deadline));
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<div class="empty-state">No positions match the selected filter.</div>';
+    return;
+  }
+
+  listEl.innerHTML = '';
+  for (const { posPk, pos, mk, market } of filtered) {
+    const card = ui.renderPositionCard(posPk, pos, mk, market);
+    listEl.appendChild(card);
+  }
+
+  // Claim listeners
+  document.querySelectorAll('.claim-winnings-btn').forEach(btn => {
+    btn.addEventListener('click', () => claimWinnings(btn.dataset.position, btn.dataset.market));
+  });
+  document.querySelectorAll('.claim-refund-btn').forEach(btn => {
+    btn.addEventListener('click', () => claimRefund(btn.dataset.position, btn.dataset.market));
+  });
+  document.querySelectorAll('.position-market-title[data-market-pubkey]').forEach(el => {
+    el.addEventListener('click', () => openMarketDetail(new PublicKey(el.dataset.marketPubkey)));
+  });
+}
+
+// Positions category filter — store entries globally for re-render
+let _positionEntries = [];
+
+// We handle re-render in the filter handler instead
 
 async function claimWinnings(posAddr, mktAddr) {
   const w = wallet.getWallet(); const p = wallet.getProvider();
@@ -799,6 +1070,7 @@ async function handleCreateMarket() {
 async function loadAdmin() {
   const initPanel = document.getElementById('admin-init-panel');
   const statsPanel = document.getElementById('admin-panel');
+  const updatePanel = document.getElementById('admin-update-panel');
   const initBtn = document.getElementById('init-protocol-btn');
   const w = wallet.getWallet();
 
@@ -807,6 +1079,7 @@ async function loadAdmin() {
     if (!config) {
       // Not initialized — show init form
       initPanel.classList.remove('hidden');
+      updatePanel.classList.add('hidden');
       statsPanel.innerHTML = '<div class="empty-state">Protocol not initialized yet.</div>';
       if (w) {
         initBtn.textContent = 'Initialize Protocol';
@@ -827,6 +1100,23 @@ async function loadAdmin() {
     document.getElementById('admin-total-volume').textContent = ui.formatSol(config.totalVolume);
     document.getElementById('admin-default-fee').textContent = `${config.defaultFeeBps / 100}%`;
     document.getElementById('admin-paused').textContent = config.paused ? 'Yes' : 'No';
+
+    // Show update panel only if connected wallet is the admin
+    const isAdmin = w && config.admin.toBase58() === w.publicKey.toBase58();
+    if (isAdmin) {
+      updatePanel.classList.remove('hidden');
+      // Set toggle pause button state
+      const pauseBtn = document.getElementById('admin-toggle-pause-btn');
+      pauseBtn.textContent = config.paused ? 'Unpause Protocol' : 'Pause Protocol';
+      pauseBtn.className = config.paused
+        ? 'action-btn primary-btn'
+        : 'action-btn danger-btn';
+      // Pre-fill fee input with current value
+      const feeInput = document.getElementById('admin-update-fee');
+      feeInput.placeholder = String(config.defaultFeeBps);
+    } else {
+      updatePanel.classList.add('hidden');
+    }
   } catch (err) {
     console.error('Admin load error:', err);
   }
@@ -834,6 +1124,65 @@ async function loadAdmin() {
 
 // Initialize protocol handler
 document.getElementById('init-protocol-btn')?.addEventListener('click', handleInitProtocol);
+
+// Toggle pause handler
+document.getElementById('admin-toggle-pause-btn')?.addEventListener('click', async () => {
+  const w = wallet.getWallet();
+  const p = wallet.getProvider();
+  if (!w || !p) return;
+
+  try {
+    const config = await sdk.fetchProtocolConfig();
+    if (!config) return;
+    const newPaused = !config.paused;
+    ui.showTxOverlay(newPaused ? 'Pausing protocol…' : 'Unpausing protocol…');
+    const [protocolConfig] = await sdk.findProtocolConfig();
+    const ix = sdk.buildUpdateProtocolConfig(
+      { protocolConfig, admin: w.publicKey },
+      { paused: newPaused }
+    );
+    ui.updateTxOverlay('Please approve…');
+    await sdk.signAndSend(ix, w.publicKey, p);
+    ui.hideTxOverlay();
+    ui.showStatus(newPaused ? 'Protocol paused' : 'Protocol unpaused', 'success');
+    loadAdmin();
+  } catch (err) {
+    ui.hideTxOverlay();
+    ui.showStatus(err.message || 'Failed to update', 'error');
+  }
+});
+
+// Update fee handler
+document.getElementById('admin-update-fee-btn')?.addEventListener('click', async () => {
+  const w = wallet.getWallet();
+  const p = wallet.getProvider();
+  if (!w || !p) return;
+
+  const feeInput = document.getElementById('admin-update-fee');
+  const feeBps = parseInt(feeInput.value);
+  if (isNaN(feeBps) || feeBps < 0 || feeBps > 10000) {
+    ui.showStatus('Fee must be 0–10000 bps', 'error');
+    return;
+  }
+
+  try {
+    ui.showTxOverlay('Updating default fee…');
+    const [protocolConfig] = await sdk.findProtocolConfig();
+    const ix = sdk.buildUpdateProtocolConfig(
+      { protocolConfig, admin: w.publicKey },
+      { newDefaultFeeBps: feeBps }
+    );
+    ui.updateTxOverlay('Please approve…');
+    await sdk.signAndSend(ix, w.publicKey, p);
+    ui.hideTxOverlay();
+    ui.showStatus(`Default fee updated to ${feeBps / 100}%`, 'success');
+    feeInput.value = '';
+    loadAdmin();
+  } catch (err) {
+    ui.hideTxOverlay();
+    ui.showStatus(err.message || 'Failed to update fee', 'error');
+  }
+});
 
 async function handleInitProtocol() {
   const w = wallet.getWallet();
@@ -1042,7 +1391,8 @@ async function loadWatchlist() {
     const categories = watchlist.getCategories();
     listEl.innerHTML = '';
     for (const { pubkey, account, address: addr } of cards) {
-      const card = ui.renderMarketCard(pubkey, account);
+      const positions = userPositionsMap.get(addr) || null;
+      const card = ui.renderMarketCard(pubkey, account, positions);
 
       // Add category selector row
       const currentCat = watchlist.getCategory(addr) || '';
@@ -1116,12 +1466,16 @@ function setupWallet() {
       document.getElementById('network-indicator')?.classList.remove('connected');
     }
     // Refresh current view
-    const activeNav = document.querySelector('.nav-btn.active');
-    if (activeNav) {
-      const view = activeNav.dataset.view;
-      if (view === 'positions') loadPositions();
-      if (view === 'create') updateCreateForm();
-    }
+    refreshUserPositions().then(() => {
+      const activeNav = document.querySelector('.nav-btn.active');
+      if (activeNav) {
+        const view = activeNav.dataset.view;
+        if (view === 'explore') renderMarketsList(false);
+        if (view === 'positions') loadPositions();
+        if (view === 'create') updateCreateForm();
+        if (view === 'watchlist') loadWatchlist();
+      }
+    });
     // Update detail view bet button
     updateBetUI();
   });

@@ -37,6 +37,7 @@ import {
   claimWinnings,
   voidMarket,
   claimRefund,
+  updateProtocolConfig,
 
   // Constants
   ACCOUNT_DISCRIMINATORS,
@@ -127,6 +128,10 @@ export function buildVoidMarket(accounts) {
 
 export function buildClaimRefund(accounts) {
   return claimRefund(accounts, PROGRAM_ID);
+}
+
+export function buildUpdateProtocolConfig(accounts, args) {
+  return updateProtocolConfig(accounts, args, PROGRAM_ID);
 }
 
 // ═══════════════════════════════════════════════════════════════════
