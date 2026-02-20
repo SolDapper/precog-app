@@ -1,0 +1,37 @@
+{
+  "name": "pelfmont",
+  "version": "1.0.0",
+  "description": "Pelfmont Markets — Trustless prediction markets on Solana",
+  "source": "src/index.html",
+  "type": "module",
+  "scripts": {
+    "start": "parcel ./src/index.html",
+    "build": "parcel build ./src/index.html"
+  },
+  "dependencies": {
+    "@bonfida/spl-name-service": "^3.0.19",
+    "@parcel/packager-raw-url": "^2.16.4",
+    "@parcel/transformer-webmanifest": "^2.16.4",
+    "@solana-mobile/mobile-wallet-adapter-protocol-web3js": "^2.2.5",
+    "@solana/web3.js": "^1.95.0",
+    "bs58": "^5.0.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
+    "events": "^3.3.0",
+    "os-browserify": "^0.3.0",
+    "parcel": "^2.15.0",
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "stream-browserify": "^3.0.0",
+    "vm-browserify": "^1.1.2"
+  },
+  "staticFiles": {
+    "staticPath": ".well-known",
+    "staticOutPath": ".well-known"
+  },
+  "devDependencies": {
+    "parcel-reporter-static-files-copy": "^1.5.3",
+    "punycode": "^2.3.1",
+    "url": "^0.11.4"
+  }
+}

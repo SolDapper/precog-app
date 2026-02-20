@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#010101">
+  <meta name="description" content="Pelfmont Markets — Trustless prediction markets on Solana. Bet on outcomes, claim winnings, fully non-custodial.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Pelfmont Markets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/app.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="app" class="precog-app">
+
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="logo-btn" data-view="explore">
+          <span class="logo-glyph">P</span>
+          <span class="logo-text">PELFMONT</span>
+        </button>
+      </div>
+      <div class="top-bar-right">
+        <div id="network-indicator" class="network-indicator" title="Network status"></div>
+        <div id="wallet-section" class="wallet-section">
+          <button id="connect-wallet-btn" class="wallet-btn">Connect</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="main-nav">
+      <button class="nav-btn active" data-view="explore">Explore</button>
+      <button class="nav-btn" data-view="watchlist">Watchlist</button>
+      <button class="nav-btn" data-view="positions">Positions</button>
+      <button class="nav-btn" data-view="create">Create</button>
+      <button class="nav-btn" data-view="info">Help</button>
+    </nav>
+
+    <!-- Status Bar -->
+    <div id="status-bar" class="status-bar hidden"></div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VIEW: Explore (Home) -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main id="view-explore" class="view">
+      <div class="explore-header">
+        <h2 class="section-title">Markets</h2>
+        <div class="explore-filters">
+          <button class="filter-btn active" data-filter="open">Open</button>
+          <button class="filter-btn" data-filter="resolved">Resolved</button>
+          <button class="filter-btn" data-filter="finalized">Finalized</button>
+          <button class="filter-btn" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="mine">My Markets</button>
+        </div>
+      </div>
+
+      <button id="explore-chart-toggle" class="chart-toggle-btn">▸ Show Hot Markets</button>
+      <div id="explore-chart-wrap" class="chart-container card hidden" style="margin-bottom:14px">
+        <div class="chart-title">Volume by Market (Top 10)</div>
+        <canvas id="explore-volume-chart" height="260"></canvas>
+      </div>
+
+      <div class="explore-sort">
+        <label class="sort-label">Sort by</label>
+        <select id="explore-sort-select" class="sort-select">
+          <option value="volume">Volume (High → Low)</option>
+          <option value="deadline" selected>Closing Soon</option>
+          <option value="positions">Most Positions</option>
+        </select>
+
+        <label class="sort-label" style="margin-left:12px">Creator</label>
+        <select id="explore-creator-filter" class="sort-select">
+          <option value="all">All Creators</option>
+        </select>
+
+        <label class="sort-label" style="margin-left:12px">Category</label>
+        <select id="explore-category-filter" class="sort-select">
+          <option value="all">All Categories</option>
+        </select>
+      </div>
+
+      <div id="markets-list" class="markets-list">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <span>Loading markets…</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VIEW: Watchlist -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main id="view-watchlist" class="view hidden">
+      <div class="explore-header">
+        <h2 class="section-title">Watchlist</h2>
+        <div class="explore-filters" style="gap:6px">
+          <button id="manage-categories-btn" class="filter-btn" title="Manage categories">⚙</button>
+          <button id="clear-watchlist-btn" class="filter-btn">Clear All</button>
+        </div>
+      </div>
+
+      <!-- Category filter tabs -->
+      <div id="watchlist-category-tabs" class="watchlist-category-tabs">
+        <button class="category-tab active" data-category="all">All</button>
+        <button class="category-tab" data-category="__uncategorized">Uncategorized</button>
+        <!-- dynamic category tabs injected here -->
+      </div>
+
+      <!-- Category management panel (hidden by default) -->
+      <div id="category-manager" class="category-manager card hidden">
+        <div class="bet-section-title">Manage Categories</div>
+        <div id="category-list" class="category-list"></div>
+        <div class="category-add-row">
+          <input id="new-category-input" type="text" class="form-input" placeholder="New category name" maxlength="32">
+          <button id="add-category-btn" class="action-btn primary-btn" style="width:auto;padding:10px 18px">Add</button>
+        </div>
+      </div>
+
+      <div id="watchlist-list" class="markets-list">
+        <div class="empty-state">No markets in your watchlist yet. Browse markets and tap ☆ to add them.</div>
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VIEW: Market Detail -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main id="view-market" class="view hidden">
+      <button id="back-to-explore" class="back-btn">← Back</button>
+
+      <div id="market-detail" class="market-detail">
+        <!-- Populated dynamically -->
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VIEW: My Positions -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main id="view-positions" class="view hidden">
+      <h2 class="section-title">My Positions</h2>
+      <div id="positions-list" class="positions-list">
+        <div class="empty-state">Connect your wallet to view positions.</div>
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VIEW: Create Market -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main id="view-create" class="view hidden">
+      <h2 class="section-title">Create Market</h2>
+
+      <div class="create-form card">
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input id="create-title" type="text" class="form-input" placeholder="Will $PELF hit 10m MC by Jun?" maxlength="128">
+          <span class="form-hint"><span id="create-title-count">0</span>/128 bytes</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <input id="create-category" type="text" class="form-input" placeholder="e.g. Crypto, Politics, Sports" maxlength="32" list="category-suggestions">
+          <datalist id="category-suggestions">
+            <option value="Crypto">
+            <option value="Politics">
+            <option value="Sports">
+            <option value="Culture">
+            <option value="Finance">
+            <option value="Technology">
+            <option value="Entertainment">
+            <option value="Science">
+            <option value="Other">
+          </datalist>
+          <span class="form-hint">Stored on-chain. Helps others find your market.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="create-description" class="form-textarea" placeholder="Detailed description of the market resolution criteria…" maxlength="512"></textarea>
+          <span class="form-hint"><span id="create-desc-count">0</span>/512 bytes</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Outcomes</label>
+          <div id="outcomes-container" class="outcomes-inputs">
+            <div class="outcome-row">
+              <input type="text" class="form-input outcome-input" placeholder="Outcome 1 (e.g. Yes)" maxlength="64" data-index="0">
+            </div>
+            <div class="outcome-row">
+              <input type="text" class="form-input outcome-input" placeholder="Outcome 2 (e.g. No)" maxlength="64" data-index="1">
+            </div>
+          </div>
+          <button id="add-outcome-btn" class="add-outcome-btn">+ Add Outcome</button>
+          <span class="form-hint">2–10 outcomes, max 64 bytes each</span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group form-group-half">
+            <label class="form-label">Resolution Deadline</label>
+            <input id="create-deadline" type="datetime-local" class="form-input">
+          </div>
+          <div class="form-group form-group-half">
+            <label class="form-label">Fee Override (bps)</label>
+            <input id="create-fee" type="number" class="form-input" placeholder="Default" min="0" max="500">
+            <span class="form-hint">0–500 bps (5% max). Leave blank for protocol default.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Denomination</label>
+          <select id="create-denomination" class="form-select">
+            <option value="0">Native SOL</option>
+            <option value="1">SPL Token</option>
+            <option value="2">Token-2022</option>
+          </select>
+        </div>
+
+        <div id="token-fields" class="token-fields hidden">
+          <div class="form-group">
+            <label class="form-label">Token Mint Address</label>
+            <input id="create-token-mint" type="text" class="form-input" placeholder="Token mint public key">
+          </div>
+        </div>
+
+        <button id="create-market-btn" class="action-btn primary-btn" disabled>
+          Connect Wallet to Create
+        </button>
+        <div id="create-status" class="form-status hidden"></div>
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VIEW: Info / Manual -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main id="view-info" class="view hidden">
+      <h2 class="section-title">How to Use Pelfmont Markets</h2>
+
+      <div class="manual-card card">
+        <div class="manual-section">
+          <h3 class="manual-heading">Getting Started</h3>
+          <p class="manual-text">Pelfmont Markets is a fully non-custodial prediction market built on Solana. Everything happens on-chain — no accounts, no databases, no middlemen. Connect your Solana wallet to start.</p>
+          <p class="manual-text">Tap <strong>Connect</strong> in the top-right corner. Phantom, Solflare, and Jupiter wallets are supported on desktop. On mobile, the app uses the Solana Mobile Wallet Adapter.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Exploring Markets</h3>
+          <p class="manual-text">The <strong>Explore</strong> tab is your home screen. It lists all on-chain markets with outcome probability bars, volume, position count, and time remaining.</p>
+          <p class="manual-text"><strong>Filters:</strong> Use the status tabs (Open, Resolved, Finalized, All) to narrow by market state. The "My Markets" filter shows only markets you created.</p>
+          <p class="manual-text"><strong>Sort:</strong> Choose between Closing Soon (default), Volume, or Most Positions.</p>
+          <p class="manual-text"><strong>Creator filter:</strong> Use the Creator dropdown to see markets from a specific creator. Creators with .sol names will display their SNS identity.</p>
+          <p class="manual-text"><strong>Hot Markets:</strong> Toggle the chart to see the top 10 markets by volume at a glance.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Placing a Bet</h3>
+          <p class="manual-text">Tap any market card to open its detail page. Select the outcome you want to bet on, enter your amount in SOL, and review the estimated payout. The payout estimate updates live based on current pool sizes and the protocol fee.</p>
+          <p class="manual-text">Tap <strong>Place Bet</strong> and approve the transaction in your wallet. Your SOL goes directly into the on-chain vault — not to any company or individual.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Market Lifecycle</h3>
+          <p class="manual-text"><strong>Open</strong> — Accepting bets. Anyone can place a bet on any outcome.</p>
+          <p class="manual-text"><strong>Resolved</strong> — The market authority has declared a winning outcome. A 24-hour dispute window begins. No new bets accepted.</p>
+          <p class="manual-text"><strong>Finalized</strong> — The dispute window has passed. Winners can now claim their payouts.</p>
+          <p class="manual-text"><strong>Voided</strong> — The authority cancelled the market. All bettors can claim full refunds.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Claiming Winnings &amp; Refunds</h3>
+          <p class="manual-text">Go to the <strong>Positions</strong> tab to see all your bets. If a market has been finalized and you bet on the winning outcome, a <strong>Claim Winnings</strong> button will appear. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
+          <p class="manual-text">Payouts are proportional: your share of the total pool equals your share of the winning outcome's pool, minus the protocol fee.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Creating a Market</h3>
+          <p class="manual-text">Go to the <strong>Create</strong> tab. Fill in a title, optional category, description, and define 2–10 outcomes. Set a resolution deadline and an optional fee override (0–500 basis points).</p>
+          <p class="manual-text">The category you set is stored on-chain inside the description field and displayed as a badge on market cards.</p>
+          <p class="manual-text">As the market creator (authority), you are responsible for resolving the market with the correct outcome before or after the deadline. You can also void the market if needed.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Watchlist</h3>
+          <p class="manual-text">Tap the ☆ star on any market card to add it to your watchlist. A popup lets you choose a category for your personal organization. Your watchlist is stored locally in your browser.</p>
+          <p class="manual-text">In the <strong>Watchlist</strong> tab you can filter by category, reassign categories, and manage your custom categories using the ⚙ button.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Deep Links</h3>
+          <p class="manual-text">Every market has a shareable URL. When viewing a market, the browser URL updates to <code>#/market/&lt;address&gt;</code>. Copy and share this link — anyone who opens it will land directly on that market's detail page.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Fees &amp; Protocol</h3>
+          <p class="manual-text">The protocol charges a fee (in basis points) on winning claims. Market creators can override the default fee up to 5%. Fees go to the protocol treasury. There are no fees on losing bets, voided refunds, or market creation.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Tips</h3>
+          <p class="manual-text">• The outcome bars show implied probabilities based on pool sizes — they update as bets come in.</p>
+          <p class="manual-text">• Your .sol domain name will display in the wallet button and on market authority fields if you have one set.</p>
+          <p class="manual-text">• All data refreshes automatically every 20 seconds on the Explore page.</p>
+          <p class="manual-text">• This app has zero backend infrastructure. If the website goes down, your funds are always safe on-chain and recoverable with any Solana explorer.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VIEW: Admin -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main id="view-admin" class="view hidden">
+      <h2 class="section-title">Protocol Admin</h2>
+
+      <!-- Initialize Protocol (shown when not yet initialized) -->
+      <div id="admin-init-panel" class="card hidden" style="margin-bottom:14px">
+        <div class="bet-section-title">Initialize Protocol</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:14px">
+          The protocol has not been initialized yet. Fill in the details below and submit to create the on-chain ProtocolConfig account. This only needs to be done once.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Treasury Address</label>
+          <input id="init-treasury" type="text" class="form-input" placeholder="Wallet address to receive protocol fees">
+          <span class="form-hint">SOL fees from winning claims go here. Defaults to your connected wallet if left blank.</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Default Fee (bps)</label>
+          <input id="init-fee-bps" type="number" class="form-input" placeholder="200" min="0" max="10000" value="200">
+          <span class="form-hint">Basis points (100 = 1%). Market creators can override up to 500 bps.</span>
+        </div>
+        <button id="init-protocol-btn" class="action-btn primary-btn" disabled>Connect Wallet to Initialize</button>
+        <div id="init-status" class="form-status hidden"></div>
+      </div>
+
+      <!-- Protocol stats (shown when initialized) -->
+      <div id="admin-panel" class="admin-panel card">
+        <div class="admin-info">
+          <div class="admin-stat">
+            <span class="admin-stat-label">Total Markets</span>
+            <span id="admin-total-markets" class="admin-stat-value">—</span>
+          </div>
+          <div class="admin-stat">
+            <span class="admin-stat-label">Total Volume</span>
+            <span id="admin-total-volume" class="admin-stat-value">—</span>
+          </div>
+          <div class="admin-stat">
+            <span class="admin-stat-label">Default Fee</span>
+            <span id="admin-default-fee" class="admin-stat-value">—</span>
+          </div>
+          <div class="admin-stat">
+            <span class="admin-stat-label">Paused</span>
+            <span id="admin-paused" class="admin-stat-value">—</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Overlay for transaction confirmations -->
+  <div id="tx-overlay" class="tx-overlay hidden">
+    <div class="tx-overlay-content">
+      <div class="spinner"></div>
+      <span id="tx-overlay-status">Processing transaction…</span>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span class="footer-text"><span class="accent">P</span> PELFMONT</span>
+    <span class="footer-text">Trustless · Non-Custodial · On-Chain</span>
+  </footer>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
