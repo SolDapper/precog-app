@@ -561,6 +561,10 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
         <span class="position-detail-label">Deadline</span>
         <span class="position-detail-value">${deadlineStr}</span>
       </div>
+      <div class="position-detail">
+        <span class="position-detail-label">Creator</span>
+        <span class="position-detail-value sns-resolve" data-address="${market.creator.toBase58()}">${shortAddress(market.creator.toBase58())}</span>
+      </div>
     </div>
     ${actionsHtml}
   `;

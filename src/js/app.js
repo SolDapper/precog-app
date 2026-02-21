@@ -1186,6 +1186,9 @@ function renderPositionsList(entries, listEl) {
   document.querySelectorAll('.position-market-title[data-market-pubkey]').forEach(el => {
     el.addEventListener('click', () => openMarketDetail(new PublicKey(el.dataset.marketPubkey)));
   });
+
+  // Resolve SNS names for creator addresses
+  ui.resolveSnsElements(listEl);
 }
 
 // Positions category filter — store entries globally for re-render
