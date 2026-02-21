@@ -158,7 +158,8 @@ async function loadMarkets() {
     }
     await Promise.all([...mints].map(m => fetchTokenIcon(m)));
 
-    // Augment each market with resolved token info
+    // Augment each market with resolved token info + deadline check
+    const nowSec = BigInt(Math.floor(Date.now() / 1000));
     for (const { account } of allMarkets) {
       if (account.denomination === 0) {
         account._tokenSymbol = 'SOL';
@@ -171,6 +172,8 @@ async function loadMarkets() {
         account._tokenName = meta.name || mint.slice(0, 6) + '…';
         account._tokenIcon = meta.icon || '';
       }
+      // Mark open markets past their deadline
+      account._expired = account.status === 0 && account.resolutionDeadline <= nowSec;
     }
 
     // Fetch USD prices for all unique mints (SOL + tokens) — non-blocking for chart
@@ -804,6 +807,10 @@ async function openMarketDetail(pubkey) {
     const detDecimals = market.denomination === 0 ? 9 : (market.tokenDecimals || 9);
     market._usdVolume = (Number(market.totalPool) / (10 ** detDecimals)) * tokenUsdPrice;
 
+    // Mark open markets past their deadline
+    const nowSec = BigInt(Math.floor(Date.now() / 1000));
+    market._expired = market.status === 0 && market.resolutionDeadline <= nowSec;
+
     currentMarketData = market;
     const w = wallet.getWallet();
     const positions = userPositionsMap.get(pubkey.toBase58()) || null;
@@ -917,6 +924,7 @@ function updateBetUI() {
 async function handlePlaceBet() {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p || selectedOutcome === null || !currentMarketPubkey || !currentMarketData) return;
+  if (currentMarketData.status !== 0 || currentMarketData._expired) { ui.showStatus('This market is no longer open for positions.', 'error'); return; }
   const amount = parseFloat(document.getElementById('bet-amount-input').value);
   if (!amount || amount <= 0) return;
   try {
@@ -1058,6 +1066,12 @@ async function loadPositions() {
         const decimals = mk.tokenDecimals || 9;
         mk._usdVolume = (Number(mk.totalPool) / (10 ** decimals)) * (tokenPrice || 1);
       }
+    }
+
+    // Mark open markets past their deadline
+    const posNowSec = BigInt(Math.floor(Date.now() / 1000));
+    for (const mk of Object.values(marketMap)) {
+      mk._expired = mk.status === 0 && mk.resolutionDeadline <= posNowSec;
     }
 
     // Build position entries with market data attached
@@ -1999,6 +2013,12 @@ async function loadWatchlist() {
         const decimals = account.tokenDecimals || 9;
         account._usdVolume = (Number(account.totalPool) / (10 ** decimals)) * (tokenPrice || 1);
       }
+    }
+
+    // Mark open markets past their deadline
+    const wlNowSec = BigInt(Math.floor(Date.now() / 1000));
+    for (const { account } of cards) {
+      account._expired = account.status === 0 && account.resolutionDeadline <= wlNowSec;
     }
 
     const categories = watchlist.getCategories();

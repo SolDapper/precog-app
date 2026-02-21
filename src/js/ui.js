@@ -127,7 +127,8 @@ export function hideTxOverlay() {
 
 export function renderMarketCard(pubkey, market, userPositions = null) {
   const probs = getImpliedProbabilities(market.outcomePools, market.totalPool);
-  const statusClass = market.statusName.toLowerCase();
+  const displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
+  const statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
 
   const outcomeBarsHtml = market.outcomeLabels.map((label, i) => {
     const pct = probs[i] * 100;
@@ -208,7 +209,7 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
     <div class="market-card-header">
       <span class="market-card-title">${escapeHtml(market.title)}</span>
       <button class="watchlist-star ${isWatched ? 'active' : ''}" data-addr="${addr}" title="Toggle watchlist">${isWatched ? '★' : '☆'}</button>
-      <span class="market-status-badge ${statusClass}">${market.statusName}</span>
+      <span class="market-status-badge ${statusClass}">${displayStatus}</span>
     </div>
     ${hasBadgeRow ? `<div class="market-badge-row">
       ${marketCategory ? `<span class="position-category-badge">${escapeHtml(marketCategory)}</span>` : ''}
@@ -248,7 +249,8 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
 
 export function renderMarketDetail(pubkey, market, connectedWallet = null, userPositions = null) {
   const probs = getImpliedProbabilities(market.outcomePools, market.totalPool);
-  const statusClass = market.statusName.toLowerCase();
+  const displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
+  const statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
   const denomLabel = market._tokenSymbol || (market.denominationName === 'NativeSol' ? 'SOL' : market.denominationName);
   const tokenIcon = market._tokenIcon || '';
   const tokenName = market._tokenName || denomLabel;
@@ -271,9 +273,9 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
     `;
   }).join('');
 
-  // Position section (only if market is open)
+  // Position section (only if market is open and not past deadline)
   let betSectionHtml = '';
-  if (market.status === 0) {
+  if (market.status === 0 && !market._expired) {
     const outcomeBtns = market.outcomeLabels.map((label, i) => `
       <button class="bet-outcome-btn" data-outcome="${i}">
         <span>${escapeHtml(label)}</span>
@@ -386,7 +388,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
         <h1 class="market-detail-title">${escapeHtml(market.title)}</h1>
         <span class="detail-header-badges">
           ${marketCategory ? `<span class="position-category-badge">${escapeHtml(marketCategory)}</span>` : ''}
-          <span class="market-status-badge ${statusClass}">${market.statusName}</span>
+          <span class="market-status-badge ${statusClass}">${displayStatus}</span>
         </span>
       </div>
       ${cleanDesc ? `<p class="market-detail-desc">${escapeHtml(cleanDesc)}</p>` : ''}
@@ -475,7 +477,8 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
   const amountStr = market.denominationName === 'NativeSol'
     ? formatSol(position.amount) : formatTokenAmount(position.amount, market.tokenDecimals) + ' ' + denomLabel;
   const outcomeLabel = market.outcomeLabels[position.outcomeIndex] ?? `Outcome ${position.outcomeIndex}`;
-  const statusClass = market.statusName.toLowerCase();
+  const displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
+  const statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
   const { category } = parseDescription(market.description);
   const deadlineStr = market.status === 0 ? formatCountdown(market.resolutionDeadline) : formatDate(market.resolutionDeadline);
 
@@ -538,7 +541,7 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
   card.innerHTML = `
     <div class="position-card-header">
       <span class="position-market-title" data-market-pubkey="${marketPubkey.toBase58()}">${escapeHtml(market.title)}</span>
-      <span class="market-status-badge ${statusClass}">${market.statusName}</span>
+      <span class="market-status-badge ${statusClass}">${displayStatus}</span>
     </div>
     ${hasBadgeRow ? `<div class="position-badge-row">
       ${category ? `<span class="position-category-badge">${escapeHtml(category)}</span>` : ''}
@@ -592,7 +595,7 @@ export function renderVolumeChart(markets, onClickMarket) {
   if (_volumeChart) { _volumeChart.destroy(); _volumeChart = null; }
 
   // Sort by USD volume (fallback to raw pool for markets without price)
-  const withVolume = [...markets].filter(m => m.account.status === 0);
+  const withVolume = [...markets].filter(m => m.account.status === 0 && !m.account._expired);
   const sorted = withVolume.sort((a, b) => (b.account._usdVolume || 0) - (a.account._usdVolume || 0)).slice(0, 10);
   const hasVolume = sorted.some(m => (m.account._usdVolume || 0) > 0 || m.account.totalPool > 0n);
 

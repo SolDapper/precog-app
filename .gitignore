@@ -1,5 +1,7 @@
 *package-lock.json
 *test.js
+*dev.js
+*manager.js
 # Logs
 logs
 *.log
@@ -8,6 +10,7 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
+scripts
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
