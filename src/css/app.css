@@ -503,16 +503,16 @@ body::before {
   transition: width 0.5s ease;
   min-width: 2px;
 }
-.outcome-bar-fill.idx-0 { background: linear-gradient(90deg, #00e676, #00c853); }
-.outcome-bar-fill.idx-1 { background: linear-gradient(90deg, #ff5252, #d50000); }
-.outcome-bar-fill.idx-2 { background: linear-gradient(90deg, #448aff, #2962ff); }
-.outcome-bar-fill.idx-3 { background: linear-gradient(90deg, #b388ff, #7c4dff); }
-.outcome-bar-fill.idx-4 { background: linear-gradient(90deg, #ffbc0c, #ff8f00); }
-.outcome-bar-fill.idx-5 { background: linear-gradient(90deg, #18ffff, #00b8d4); }
-.outcome-bar-fill.idx-6 { background: linear-gradient(90deg, #ff80ab, #f50057); }
-.outcome-bar-fill.idx-7 { background: linear-gradient(90deg, #69f0ae, #00e676); }
-.outcome-bar-fill.idx-8 { background: linear-gradient(90deg, #ffd740, #ffc400); }
-.outcome-bar-fill.idx-9 { background: linear-gradient(90deg, #8c9eff, #536dfe); }
+.outcome-bar-fill.idx-0 { background: linear-gradient(90deg, #e8eaed, #ffffff); }
+.outcome-bar-fill.idx-1 { background: linear-gradient(90deg, #448aff, #2962ff); }
+.outcome-bar-fill.idx-2 { background: linear-gradient(90deg, #90caf9, #64b5f6); }
+.outcome-bar-fill.idx-3 { background: linear-gradient(90deg, #b0bec5, #90a4ae); }
+.outcome-bar-fill.idx-4 { background: linear-gradient(90deg, #82b1ff, #448aff); }
+.outcome-bar-fill.idx-5 { background: linear-gradient(90deg, #cfd8dc, #b0bec5); }
+.outcome-bar-fill.idx-6 { background: linear-gradient(90deg, #bbdefb, #90caf9); }
+.outcome-bar-fill.idx-7 { background: linear-gradient(90deg, #e0e0e0, #bdbdbd); }
+.outcome-bar-fill.idx-8 { background: linear-gradient(90deg, #8c9eff, #536dfe); }
+.outcome-bar-fill.idx-9 { background: linear-gradient(90deg, #eceff1, #cfd8dc); }
 
 .outcome-bar-pct {
   position: absolute;
@@ -797,20 +797,21 @@ body::before {
 }
 .position-estimate-badge {
   font-size: 0.68rem;
-  color: #111;
-  background: rgba(255, 255, 255, 0.8);
+  color: #f1f1f1;
+  background: #010101;
   border-radius: 4px;
   padding: 2px 7px;
   white-space: nowrap;
   font-weight: 600;
+  opacity: 0.6;
 }
 .position-estimate-badge.win {
-  background: var(--green);
-  color: #111;
+  background: #010101;
+  color: #f1f1f1;
 }
 .position-estimate-badge.lost {
-  background: var(--red);
-  color: #fff;
+  background: #010101;
+  color: #f1f1f1;
 }
 .position-market-title {
   font-size: 0.88rem;

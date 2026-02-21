@@ -190,14 +190,15 @@ async function loadMarkets() {
           const tokenPrice = prices.get(mint) || 0;
           const decimals = account.tokenDecimals || 9;
           const tokenAmount = Number(account.totalPool) / (10 ** decimals);
-          account._usdVolume = tokenAmount * tokenPrice;
+          account._usdVolume = tokenAmount * (tokenPrice || 1);
         }
       }
-      // Re-render chart with USD values
+      // Re-render chart and list cards with USD values
       const chartWrap = document.getElementById('explore-chart-wrap');
       if (chartWrap && !chartWrap.classList.contains('hidden') && allMarkets.length > 0) {
         requestAnimationFrame(() => ui.renderVolumeChart(allMarkets, openMarketDetail));
       }
+      renderMarketsList(false);
     }).catch(() => {});
 
     // On poll refresh, don't reset the page — show same amount user has scrolled to
@@ -788,19 +789,26 @@ async function openMarketDetail(pubkey) {
       market._tokenIcon = meta.icon || '';
     }
 
+    // Fetch USD price for chart display
+    const priceMint = market.denomination === 0 ? SOL_MINT : market.tokenMint.toBase58();
+    await fetchTokenPrices([priceMint]);
+    // If Jupiter has no price for this token (e.g. devnet), assume $1 for SPL tokens
+    const rawPrice = getTokenPrice(priceMint);
+    const tokenUsdPrice = rawPrice || (market.denomination !== 0 ? 1 : 0);
+
     currentMarketData = market;
     const w = wallet.getWallet();
     const positions = userPositionsMap.get(pubkey.toBase58()) || null;
     el.innerHTML = ui.renderMarketDetail(pubkey, market, w?.publicKey, positions);
     // Charts render on demand via toggle
-    attachDetailListeners(pubkey, market);
+    attachDetailListeners(pubkey, market, tokenUsdPrice);
   } catch (err) {
     console.error(err);
     el.innerHTML = '<div class="empty-state">Failed to load market.</div>';
   }
 }
 
-function attachDetailListeners(pubkey, market) {
+function attachDetailListeners(pubkey, market, tokenUsdPrice = 0) {
   // Share
   document.getElementById('detail-share-btn')?.addEventListener('click', () => {
     const url = window.location.origin + window.location.pathname + '#/market/' + pubkey.toBase58();
@@ -850,7 +858,7 @@ function attachDetailListeners(pubkey, market) {
   });
 
   // Detail charts — render immediately (visible by default)
-  requestAnimationFrame(() => ui.renderDetailCharts(market));
+  requestAnimationFrame(() => ui.renderDetailCharts(market, tokenUsdPrice));
   document.getElementById('detail-chart-toggle')?.addEventListener('click', () => {
     const wrap = document.getElementById('detail-charts-wrap');
     const btn = document.getElementById('detail-chart-toggle');
@@ -858,7 +866,7 @@ function attachDetailListeners(pubkey, market) {
     btn.textContent = isHidden ? '▸ Show Charts' : '▾ Hide Charts';
     btn.classList.toggle('open', !isHidden);
     if (!isHidden) {
-      requestAnimationFrame(() => ui.renderDetailCharts(market));
+      requestAnimationFrame(() => ui.renderDetailCharts(market, tokenUsdPrice));
     }
   });
 }
@@ -1908,6 +1916,36 @@ async function loadWatchlist() {
     if (cards.length === 0) {
       listEl.innerHTML = '<div class="empty-state">Watchlisted markets could not be loaded.</div>';
       return;
+    }
+
+    // Resolve token metadata + USD prices for watchlist markets
+    const mintSet = new Set();
+    mintSet.add(SOL_MINT);
+    for (const { account } of cards) {
+      if (account.denomination === 0) {
+        account._tokenSymbol = 'SOL';
+        account._tokenName = 'Solana';
+        account._tokenIcon = SOL_ICON;
+      } else {
+        const mint = account.tokenMint.toBase58();
+        mintSet.add(mint);
+        const meta = await fetchTokenIcon(mint);
+        account._tokenSymbol = meta.symbol || 'Token';
+        account._tokenName = meta.name || mint.slice(0, 6) + '…';
+        account._tokenIcon = meta.icon || '';
+      }
+    }
+    const prices = await fetchTokenPrices([...mintSet]);
+    const solPrice = prices.get(SOL_MINT) || 0;
+    for (const { account } of cards) {
+      if (account.denomination === 0) {
+        account._usdVolume = (Number(account.totalPool) / 1e9) * solPrice;
+      } else {
+        const mint = account.tokenMint.toBase58();
+        const tokenPrice = prices.get(mint) || 0;
+        const decimals = account.tokenDecimals || 9;
+        account._usdVolume = (Number(account.totalPool) / (10 ** decimals)) * (tokenPrice || 1);
+      }
     }
 
     const categories = watchlist.getCategories();

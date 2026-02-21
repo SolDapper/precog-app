@@ -187,6 +187,9 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
 
   const hasBadgeRow = marketCategory || positionBadges;
 
+  const usdVolume = market._usdVolume || 0;
+  const usdStr = usdVolume > 0 ? '$' + (usdVolume >= 1 ? usdVolume.toFixed(2) : usdVolume.toFixed(4)) : '—';
+
   const card = document.createElement('div');
   card.className = 'market-card';
   card.dataset.pubkey = addr;
@@ -207,16 +210,16 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
         <span class="market-stat-label">Volume</span>
       </div>
       <div class="market-stat">
+        <span class="market-stat-value">${usdStr}</span>
+        <span class="market-stat-label">Value</span>
+      </div>
+      <div class="market-stat">
         <span class="market-stat-value">${Number(market.totalPositions)}</span>
         <span class="market-stat-label">Positions</span>
       </div>
       <div class="market-stat">
         <span class="market-stat-value">${deadlineStr}</span>
         <span class="market-stat-label">${market.status === 0 ? 'Closes In' : 'Deadline'}</span>
-      </div>
-      <div class="market-stat">
-        <span class="market-stat-value">${market.feeBps / 100}%</span>
-        <span class="market-stat-label">Fee</span>
       </div>
     </div>
   `;
@@ -532,8 +535,8 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
 // ═══════════════════════════════════════════════════════════════════
 
 const CHART_COLORS = [
-  '#00e676','#ff5252','#448aff','#b388ff','#ffbc0c',
-  '#18ffff','#ff80ab','#69f0ae','#ffd740','#8c9eff'
+  '#ffffff','#448aff','#90caf9','#b0bec5','#82b1ff',
+  '#cfd8dc','#bbdefb','#e0e0e0','#8c9eff','#eceff1'
 ];
 
 let _volumeChart = null;
@@ -568,7 +571,10 @@ export function renderVolumeChart(markets, onClickMarket) {
   canvas.parentElement.querySelector('.chart-empty')?.remove();
   canvas.style.display = '';
 
-  const labels = sorted.map(m => m.account.title.length > 28 ? m.account.title.slice(0, 28) + '…' : m.account.title);
+  const labels = sorted.map(m => {
+    const sym = m.account._tokenSymbol || (m.account.denominationName === 'NativeSol' ? 'SOL' : '?');
+    return `[${sym}] ${m.account.title}`;
+  });
   const data = sorted.map(m => m.account._usdVolume || 0);
 
   _volumeChart = new Chart(canvas, {
@@ -583,11 +589,33 @@ export function renderVolumeChart(markets, onClickMarket) {
         borderRadius: 4,
       }],
     },
+    plugins: [{
+      id: 'barLabels',
+      afterDraw(chart) {
+        const ctx = chart.ctx;
+        const meta = chart.getDatasetMeta(0);
+        ctx.save();
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textBaseline = 'middle';
+        meta.data.forEach((bar, i) => {
+          const label = chart.data.labels[i];
+          const barWidth = bar.width;
+          const x = bar.x - barWidth + 14;
+          const y = bar.y;
+          // Use dark text on the bar for readability
+          ctx.fillStyle = barWidth > 60 ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
+          const textX = barWidth > 60 ? x + 4 : bar.x + 6;
+          ctx.fillText(label, textX, y);
+        });
+        ctx.restore();
+      }
+    }],
     options: {
       animation: false,
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { left: 15, right: 10 } },
       onHover: (event, elements) => {
         canvas.style.cursor = elements.length > 0 ? 'pointer' : 'default';
       },
@@ -600,15 +628,28 @@ export function renderVolumeChart(markets, onClickMarket) {
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => '$' + c.parsed.x.toFixed(2) + ' USD' } } },
       scales: {
         x: { beginAtZero: true, grid: { color: 'rgba(255,210,12,0.08)' }, ticks: { color: 'rgba(255,188,12,0.6)', font: { size: 10 }, callback: (v) => '$' + v.toLocaleString() } },
-        y: { grid: { display: false }, ticks: { color: '#ffffff', font: { size: 11 } } },
+        y: { display: false },
       },
     },
   });
 }
 
 /** Render outcome donut chart on market detail. Call after detail HTML is in DOM. */
-export function renderDetailCharts(market) {
+export function renderDetailCharts(market, tokenUsdPrice = 0) {
   if (!Chart) return;
+
+  const isSol = market.denominationName === 'NativeSol';
+  const decimals = isSol ? 9 : (market.tokenDecimals || 9);
+  const symbol = market._tokenSymbol || (isSol ? 'SOL' : 'Token');
+  const useUsd = tokenUsdPrice > 0;
+
+  /** Convert raw pool bigint to display value */
+  const toDisplay = (raw) => {
+    const tokenAmount = Number(raw) / (10 ** decimals);
+    return useUsd ? tokenAmount * tokenUsdPrice : tokenAmount;
+  };
+  const unitLabel = useUsd ? 'USD' : symbol;
+  const fmtValue = (v) => useUsd ? '$' + v.toFixed(2) : v.toFixed(4) + ' ' + symbol;
 
   // Donut — outcome distribution
   const donutCanvas = document.getElementById('detail-donut-chart');
@@ -635,8 +676,8 @@ export function renderDetailCharts(market) {
         plugins: {
           legend: { position: 'bottom', labels: { color: 'rgba(255,255,255,0.7)', font: { size: 11 }, padding: 10, usePointStyle: true, pointStyleWidth: 8 } },
           tooltip: { callbacks: { label: (c) => {
-            const sol = lamportsToSol(BigInt(market.outcomePools[c.dataIndex]));
-            return `${c.label}: ${sol.toFixed(4)} SOL`;
+            const val = toDisplay(BigInt(market.outcomePools[c.dataIndex]));
+            return `${c.label}: ${fmtValue(val)}`;
           } } },
         },
       },
@@ -652,7 +693,7 @@ export function renderDetailCharts(market) {
       data: {
         labels: market.outcomeLabels,
         datasets: [{
-          data: market.outcomePools.map(p => lamportsToSol(p)),
+          data: market.outcomePools.map(p => toDisplay(p)),
           backgroundColor: CHART_COLORS.slice(0, market.numOutcomes),
           borderRadius: 4,
         }],
@@ -661,10 +702,10 @@ export function renderDetailCharts(market) {
         animation: false,
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.parsed.y.toFixed(4) + ' SOL' } } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => fmtValue(c.parsed.y) } } },
         scales: {
           x: { grid: { display: false }, ticks: { color: 'rgba(255,188,12,0.8)', font: { size: 11 } } },
-          y: { beginAtZero: true, grid: { color: 'rgba(255,210,12,0.08)' }, ticks: { color: 'rgba(255,188,12,0.6)', font: { size: 10 } } },
+          y: { beginAtZero: true, grid: { color: 'rgba(255,210,12,0.08)' }, ticks: { color: 'rgba(255,188,12,0.6)', font: { size: 10 }, callback: (v) => useUsd ? '$' + v.toLocaleString() : v } },
         },
       },
     });
