@@ -989,6 +989,10 @@ body::before {
 .form-input::placeholder, .form-textarea::placeholder {
   color: var(--text-muted);
 }
+.form-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
 .form-textarea {
   min-height: 100px;
   resize: vertical;

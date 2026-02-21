@@ -6,7 +6,7 @@ import { Buffer } from 'buffer';
 window.Buffer = Buffer;
 
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { PROGRAM_ID, MARKET_POLL_MS, RPC_URL } from './config.js';
+import { PROGRAM_ID, MARKET_POLL_MS, RPC_URL, PRICE_CACHE_MS, SOL_MINT } from './config.js';
 import * as wallet from './wallet.js';
 import * as sdk from './sdk.js';
 import * as ui from './ui.js';
@@ -172,6 +172,33 @@ async function loadMarkets() {
         account._tokenIcon = meta.icon || '';
       }
     }
+
+    // Fetch USD prices for all unique mints (SOL + tokens) — non-blocking for chart
+    const allMints = new Set();
+    allMints.add(SOL_MINT); // wrapped SOL for price lookup
+    for (const { account } of allMarkets) {
+      if (account.denomination !== 0) allMints.add(account.tokenMint.toBase58());
+    }
+    fetchTokenPrices([...allMints]).then(prices => {
+      const solPrice = prices.get(SOL_MINT) || 0;
+      for (const { account } of allMarkets) {
+        if (account.denomination === 0) {
+          const solAmount = Number(account.totalPool) / 1e9;
+          account._usdVolume = solAmount * solPrice;
+        } else {
+          const mint = account.tokenMint.toBase58();
+          const tokenPrice = prices.get(mint) || 0;
+          const decimals = account.tokenDecimals || 9;
+          const tokenAmount = Number(account.totalPool) / (10 ** decimals);
+          account._usdVolume = tokenAmount * tokenPrice;
+        }
+      }
+      // Re-render chart with USD values
+      const chartWrap = document.getElementById('explore-chart-wrap');
+      if (chartWrap && !chartWrap.classList.contains('hidden') && allMarkets.length > 0) {
+        requestAnimationFrame(() => ui.renderVolumeChart(allMarkets, openMarketDetail));
+      }
+    }).catch(() => {});
 
     // On poll refresh, don't reset the page — show same amount user has scrolled to
     const isInitialLoad = listEl.querySelector('.loading-state') !== null;
@@ -527,6 +554,41 @@ async function fetchTokenIcon(mint) {
   return { icon: '', name: '', symbol: '' };
 }
 
+// ── Token USD price cache (Jupiter Price API v2) ──────────────────
+let _priceCache = new Map(); // mint → { price, ts }
+
+/** Fetch USD prices for a list of mints via Jupiter. Returns Map<mint, price>. */
+async function fetchTokenPrices(mints) {
+  if (mints.length === 0) return new Map();
+  const now = Date.now();
+  const stale = mints.filter(m => {
+    const c = _priceCache.get(m);
+    return !c || (now - c.ts > PRICE_CACHE_MS);
+  });
+  if (stale.length > 0) {
+    try {
+      const ids = stale.join(',');
+      const resp = await fetch(`https://api.jup.ag/price/v2?ids=${ids}`);
+      if (resp.ok) {
+        const json = await resp.json();
+        const data = json.data || {};
+        for (const mint of stale) {
+          const entry = data[mint];
+          const price = entry?.price ? parseFloat(entry.price) : 0;
+          _priceCache.set(mint, { price, ts: now });
+        }
+      }
+    } catch (e) {
+      console.warn('Jupiter price fetch failed:', e);
+    }
+  }
+  const result = new Map();
+  for (const m of mints) {
+    result.set(m, _priceCache.get(m)?.price || 0);
+  }
+  return result;
+}
+
 function populateTokenFilter() {
   const dropdown = document.getElementById('token-chooser-dropdown');
   if (!dropdown) return;
@@ -833,14 +895,14 @@ async function handlePlaceBet() {
     const lam = BigInt(Math.round(amount * (10 ** decimals)));
     const [vault] = await sdk.findVault(currentMarketPubkey);
     const [position] = await sdk.findPosition(currentMarketPubkey, w.publicKey, selectedOutcome);
+    const [protocolConfig] = await sdk.findProtocolConfig();
 
-    const accounts = { market: currentMarketPubkey, vault, position, bettor: w.publicKey };
+    const accounts = { market: currentMarketPubkey, vault, position, bettor: w.publicKey, protocolConfig };
 
     // For SPL/Token-2022 markets, add token accounts
     if (!isSol) {
       const tokenMint = currentMarketData.tokenMint;
       const tokenProgramId = currentMarketData.denomination === 1 ? sdk.TOKEN_PROGRAM_ID : sdk.TOKEN_2022_PROGRAM_ID;
-      const [vaultAuthority] = await sdk.findVaultAuthority(currentMarketPubkey);
       // Bettor's ATA for this token
       const [bettorAta] = sdk.getAssociatedTokenAddress(tokenMint, w.publicKey, tokenProgramId);
 
@@ -848,7 +910,6 @@ async function handlePlaceBet() {
       accounts.tokenVault = vault; // Same PDA as SOL vault
       accounts.tokenMint = tokenMint;
       accounts.tokenProgram = tokenProgramId;
-      accounts.vaultAuthority = vaultAuthority;
     }
 
     const ix = sdk.buildPlaceBet(accounts, { outcomeIndex: selectedOutcome, amount: lam });
@@ -871,7 +932,7 @@ async function handleResolve() {
     ui.showTxOverlay('Resolving…');
     const ix = sdk.buildResolveMarket({ market: currentMarketPubkey, authority: w.publicKey }, { winningOutcome: outcome });
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p);
+    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
     ui.hideTxOverlay(); ui.showStatus('Market resolved!', 'success');
     openMarketDetail(currentMarketPubkey);
   } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Resolve failed', 'error'); }
@@ -885,7 +946,7 @@ async function handleVoid() {
     ui.showTxOverlay('Voiding…');
     const ix = sdk.buildVoidMarket({ market: currentMarketPubkey, authority: w.publicKey });
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p);
+    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
     ui.hideTxOverlay(); ui.showStatus('Market voided.', 'success');
     openMarketDetail(currentMarketPubkey);
   } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Void failed', 'error'); }
@@ -898,7 +959,7 @@ async function handleFinalize() {
     ui.showTxOverlay('Finalizing…');
     const ix = sdk.buildFinalizeMarket(currentMarketPubkey);
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p);
+    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
     ui.hideTxOverlay(); ui.showStatus('Market finalized!', 'success');
     openMarketDetail(currentMarketPubkey);
   } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Finalize failed', 'error'); }
@@ -1501,12 +1562,26 @@ document.getElementById('admin-toggle-pause-btn')?.addEventListener('click', asy
     const newPaused = !config.paused;
     ui.showTxOverlay(newPaused ? 'Pausing protocol…' : 'Unpausing protocol…');
     const [protocolConfig] = await sdk.findProtocolConfig();
+
+    // Diagnostic: log raw account data
+    const conn = sdk.getConnection();
+    const acctInfo = await conn.getAccountInfo(protocolConfig);
+    if (acctInfo) {
+      console.log('ProtocolConfig account size:', acctInfo.data.length, 'bytes');
+      console.log('ProtocolConfig owner:', acctInfo.owner.toBase58());
+      console.log('ProtocolConfig first 32 bytes:', Buffer.from(acctInfo.data.slice(0, 32)).toString('hex'));
+    }
+
     const ix = sdk.buildUpdateProtocolConfig(
       { protocolConfig, admin: w.publicKey },
       { paused: newPaused }
     );
+    console.log('UpdateProtocolConfig IX data:', Buffer.from(ix.data).toString('hex'));
+    console.log('UpdateProtocolConfig IX keys:');
+    ix.keys.forEach((k, i) => console.log(`  [${i}] ${k.pubkey.toBase58()} signer=${k.isSigner} writable=${k.isWritable}`));
+
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p);
+    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
     ui.hideTxOverlay();
     ui.showStatus(newPaused ? 'Protocol paused' : 'Protocol unpaused', 'success');
     loadAdmin();
@@ -1537,7 +1612,7 @@ document.getElementById('admin-update-fee-btn')?.addEventListener('click', async
       { newDefaultFeeBps: feeBps }
     );
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p);
+    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
     ui.hideTxOverlay();
     ui.showStatus(`Default fee updated to ${feeBps / 100}%`, 'success');
     feeInput.value = '';
@@ -1575,7 +1650,7 @@ document.getElementById('admin-update-treasury-btn')?.addEventListener('click', 
       { newTreasury }
     );
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p);
+    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
     ui.hideTxOverlay();
     ui.showStatus('Treasury updated', 'success');
     document.getElementById('admin-update-treasury').value = '';

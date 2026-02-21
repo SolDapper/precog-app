@@ -9,6 +9,7 @@ import {
   PublicKey,
   Transaction,
   TransactionInstruction,
+  ComputeBudgetProgram,
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import { RPC_URL, PROGRAM_ID } from './config.js';
@@ -170,7 +171,40 @@ export function buildClaimRefund(accounts) {
 }
 
 export function buildUpdateProtocolConfig(accounts, args) {
-  return updateProtocolConfig(accounts, args, PROGRAM_ID);
+  // Hand-craft the instruction data to match exact wire format
+  const parts = [0x08]; // discriminator
+
+  // Option<u16> new_default_fee_bps
+  if (args.newDefaultFeeBps != null) {
+    parts.push(1, args.newDefaultFeeBps & 0xff, (args.newDefaultFeeBps >> 8) & 0xff);
+  } else {
+    parts.push(0);
+  }
+
+  // Option<[u8; 32]> new_treasury
+  if (args.newTreasury != null) {
+    parts.push(1);
+    const buf = args.newTreasury instanceof PublicKey ? args.newTreasury.toBuffer() : args.newTreasury;
+    for (let i = 0; i < 32; i++) parts.push(buf[i]);
+  } else {
+    parts.push(0);
+  }
+
+  // Option<bool> paused
+  if (args.paused != null) {
+    parts.push(1, args.paused ? 1 : 0);
+  } else {
+    parts.push(0);
+  }
+
+  return new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      { pubkey: accounts.protocolConfig, isSigner: false, isWritable: true },
+      { pubkey: accounts.admin, isSigner: true, isWritable: false },
+    ],
+    data: Buffer.from(parts),
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -268,30 +302,36 @@ export async function fetchProtocolConfig() {
  * @param {Object} walletProvider - Wallet adapter provider (.signTransaction)
  * @returns {Promise<string>} transaction signature
  */
-export async function signAndSend(instructionOrArray, signerPublicKey, walletProvider) {
+export async function signAndSend(instructionOrArray, signerPublicKey, walletProvider, opts = {}) {
   const conn = getConnection();
   const client = getClient();
   const instructions = Array.isArray(instructionOrArray) ? instructionOrArray : [instructionOrArray];
 
   let cuIx, feeIx;
-  try {
-    // Estimate CU and priority fee in parallel
-    const [cuResult, feeResult] = await Promise.allSettled([
-      client.estimateComputeUnits(instructions, signerPublicKey),
-      client.estimatePriorityFee(instructions, signerPublicKey),
-    ]);
+  if (!opts.skipEstimation) {
+    try {
+      const [cuResult, feeResult] = await Promise.allSettled([
+        client.estimateComputeUnits(instructions, signerPublicKey),
+        client.estimatePriorityFee(instructions, signerPublicKey),
+      ]);
 
-    if (cuResult.status === 'fulfilled') cuIx = cuResult.value.instruction;
-    else console.warn('CU estimation failed:', cuResult.reason);
-    if (feeResult.status === 'fulfilled') feeIx = feeResult.value.instruction;
-    else console.warn('Priority fee estimation failed:', feeResult.reason);
-  } catch (err) {
-    console.warn('Fee estimation failed, sending without compute budget:', err);
+      if (cuResult.status === 'fulfilled') cuIx = cuResult.value.instruction;
+      else console.warn('CU estimation failed:', cuResult.reason);
+      if (feeResult.status === 'fulfilled') feeIx = feeResult.value.instruction;
+      else console.warn('Priority fee estimation failed:', feeResult.reason);
+    } catch (err) {
+      console.warn('Fee estimation failed, sending without compute budget:', err);
+    }
   }
 
   // Build transaction: [CU limit, priority fee, ...instructions]
+  // If CU estimation failed, set a generous default so the real error surfaces
   const tx = new Transaction();
-  if (cuIx) tx.add(cuIx);
+  if (cuIx) {
+    tx.add(cuIx);
+  } else {
+    tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: opts.cuLimit || 1_400_000 }));
+  }
   if (feeIx) tx.add(feeIx);
   for (const ix of instructions) tx.add(ix);
 
@@ -299,26 +339,28 @@ export async function signAndSend(instructionOrArray, signerPublicKey, walletPro
   tx.recentBlockhash = blockhash;
   tx.feePayer = signerPublicKey;
 
-  // Simulate before signing to catch errors early
-  const simResult = await conn.simulateTransaction(tx);
-  if (simResult.value.err) {
-    const logs = simResult.value.logs || [];
-    console.error('=== Transaction simulation failed ===');
-    console.error('Error:', JSON.stringify(simResult.value.err, null, 2));
-    console.error('Logs:');
-    logs.forEach((l, i) => console.error(`  [${i}] ${l}`));
-    console.error('Instruction keys:');
-    instructions.forEach((ix, i) => {
-      console.error(`  IX ${i} program: ${ix.programId.toBase58()}`);
-      ix.keys.forEach((k, j) => console.error(`    [${j}] ${k.pubkey.toBase58()} signer=${k.isSigner} writable=${k.isWritable}`));
-    });
-    console.error('=== End simulation error ===');
-    // Find the most descriptive error log
-    const errorLog = logs.filter(l => l.includes('Error') || l.includes('error') || l.includes('failed')).pop();
-    const errMsg = errorLog
-      ? errorLog.replace(/^Program log: /, '')
-      : JSON.stringify(simResult.value.err);
-    throw new Error(`Simulation failed: ${errMsg}`);
+  if (!opts.skipSimulation) {
+    // Simulate before signing to catch errors early
+    const simResult = await conn.simulateTransaction(tx);
+    if (simResult.value.err) {
+      const logs = simResult.value.logs || [];
+      console.error('=== Transaction simulation failed ===');
+      console.error('Error:', JSON.stringify(simResult.value.err, null, 2));
+      console.error('Logs:');
+      logs.forEach((l, i) => console.error(`  [${i}] ${l}`));
+      console.error('Instruction keys:');
+      instructions.forEach((ix, i) => {
+        console.error(`  IX ${i} program: ${ix.programId.toBase58()}`);
+        console.error(`  IX ${i} data (hex): ${Buffer.from(ix.data).toString('hex')}`);
+        ix.keys.forEach((k, j) => console.error(`    [${j}] ${k.pubkey.toBase58()} signer=${k.isSigner} writable=${k.isWritable}`));
+      });
+      console.error('=== End simulation error ===');
+      const errorLog = logs.filter(l => l.includes('Error') || l.includes('error') || l.includes('failed')).pop();
+      const errMsg = errorLog
+        ? errorLog.replace(/^Program log: /, '')
+        : JSON.stringify(simResult.value.err);
+      throw new Error(`Simulation failed: ${errMsg}`);
+    }
   }
 
   // Sign via wallet adapter

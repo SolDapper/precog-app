@@ -546,8 +546,10 @@ export function renderVolumeChart(markets, onClickMarket) {
   if (!canvas || !Chart) return;
   if (_volumeChart) { _volumeChart.destroy(); _volumeChart = null; }
 
-  const sorted = [...markets].filter(m => m.account.status !== 3).sort((a, b) => Number(b.account.totalPool - a.account.totalPool)).slice(0, 10);
-  const hasVolume = sorted.some(m => m.account.totalPool > 0n);
+  // Sort by USD volume (fallback to raw pool for markets without price)
+  const withVolume = [...markets].filter(m => m.account.status !== 3);
+  const sorted = withVolume.sort((a, b) => (b.account._usdVolume || 0) - (a.account._usdVolume || 0)).slice(0, 10);
+  const hasVolume = sorted.some(m => (m.account._usdVolume || 0) > 0 || m.account.totalPool > 0n);
 
   if (sorted.length === 0 || !hasVolume) {
     canvas.style.display = 'none';
@@ -567,7 +569,7 @@ export function renderVolumeChart(markets, onClickMarket) {
   canvas.style.display = '';
 
   const labels = sorted.map(m => m.account.title.length > 28 ? m.account.title.slice(0, 28) + '…' : m.account.title);
-  const data = sorted.map(m => lamportsToSol(m.account.totalPool));
+  const data = sorted.map(m => m.account._usdVolume || 0);
 
   _volumeChart = new Chart(canvas, {
     type: 'bar',
@@ -595,9 +597,9 @@ export function renderVolumeChart(markets, onClickMarket) {
           onClickMarket(sorted[idx].pubkey);
         }
       },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.parsed.x.toFixed(4) + ' SOL' } } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => '$' + c.parsed.x.toFixed(2) + ' USD' } } },
       scales: {
-        x: { beginAtZero: true, grid: { color: 'rgba(255,210,12,0.08)' }, ticks: { color: 'rgba(255,188,12,0.6)', font: { size: 10 } } },
+        x: { beginAtZero: true, grid: { color: 'rgba(255,210,12,0.08)' }, ticks: { color: 'rgba(255,188,12,0.6)', font: { size: 10 }, callback: (v) => '$' + v.toLocaleString() } },
         y: { grid: { display: false }, ticks: { color: '#ffffff', font: { size: 11 } } },
       },
     },
