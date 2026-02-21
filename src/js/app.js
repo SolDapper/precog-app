@@ -2079,6 +2079,7 @@ function setupWallet() {
         if (view === 'positions') loadPositions();
         if (view === 'create') updateCreateForm();
         if (view === 'watchlist') loadWatchlist();
+        if (view === 'admin') loadAdmin();
       }
     });
     // Update detail view bet button
