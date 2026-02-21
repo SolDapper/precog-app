@@ -797,6 +797,10 @@ async function openMarketDetail(pubkey) {
     const rawPrice = getTokenPrice(priceMint);
     const tokenUsdPrice = rawPrice || (market.denomination !== 0 ? 1 : 0);
 
+    // Set _usdVolume for estimate badge USD display
+    const detDecimals = market.denomination === 0 ? 9 : (market.tokenDecimals || 9);
+    market._usdVolume = (Number(market.totalPool) / (10 ** detDecimals)) * tokenUsdPrice;
+
     currentMarketData = market;
     const w = wallet.getWallet();
     const positions = userPositionsMap.get(pubkey.toBase58()) || null;
