@@ -284,6 +284,9 @@ function renderMarketsList(resetPage = true) {
   if (resetPage) currentPage = 1;
   else currentPage = Math.max(1, Math.ceil(end / PAGE_SIZE));
 
+  // Resolve SNS names for creator addresses
+  ui.resolveSnsElements(listEl);
+
   // Add footer (count + load more)
   appendListFooter(listEl, end, filtered.length);
 
@@ -805,6 +808,8 @@ async function openMarketDetail(pubkey) {
     const w = wallet.getWallet();
     const positions = userPositionsMap.get(pubkey.toBase58()) || null;
     el.innerHTML = ui.renderMarketDetail(pubkey, market, w?.publicKey, positions);
+    // Resolve SNS names for authority/creator
+    ui.resolveSnsElements(el);
     // Charts render on demand via toggle
     attachDetailListeners(pubkey, market, tokenUsdPrice);
   } catch (err) {
@@ -2041,6 +2046,9 @@ async function loadWatchlist() {
         }
       });
     });
+
+    // Resolve SNS names for creator addresses
+    ui.resolveSnsElements(listEl);
   } catch (err) {
     console.error('Watchlist load error:', err);
     listEl.innerHTML = '<div class="empty-state">Failed to load watchlist.</div>';

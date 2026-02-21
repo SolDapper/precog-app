@@ -3,7 +3,7 @@
  * DOM rendering helpers for market cards, detail views, positions, etc.
  */
 import { lamportsToSol, getImpliedProbabilities } from './sdk.js';
-import { resolveDisplayName, shortAddress } from './sns.js';
+import { resolveDisplayName, resolveDisplayNames, shortAddress } from './sns.js';
 import * as watchlist from './watchlist.js';
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
@@ -232,6 +232,10 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
         <span class="market-stat-value">${deadlineStr}</span>
         <span class="market-stat-label">${market.status === 0 ? 'Closes In' : 'Deadline'}</span>
       </div>
+      <div class="market-stat">
+        <span class="market-stat-value sns-resolve" data-address="${market.creator.toBase58()}">${shortAddress(market.creator.toBase58())}</span>
+        <span class="market-stat-label">Creator</span>
+      </div>
     </div>
   `;
 
@@ -422,11 +426,11 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
       </div>
       <div class="meta-item">
         <span class="meta-label">Authority</span>
-        <span class="meta-value" style="font-size:0.72rem">${shortAddress(market.authority.toBase58())}</span>
+        <span class="meta-value sns-resolve" data-address="${market.authority.toBase58()}" style="font-size:0.72rem">${shortAddress(market.authority.toBase58())}</span>
       </div>
       <div class="meta-item">
         <span class="meta-label">Creator</span>
-        <span class="meta-value" style="font-size:0.72rem">${shortAddress(market.creator.toBase58())}</span>
+        <span class="meta-value sns-resolve" data-address="${market.creator.toBase58()}" style="font-size:0.72rem">${shortAddress(market.creator.toBase58())}</span>
       </div>
     </div>
 
@@ -796,4 +800,18 @@ export function renderWalletDisconnected(wallets, isMobileDevice) {
       </div>
     </div>
   `;
+}
+
+/** Resolve all .sns-resolve elements on the page to SNS names */
+export async function resolveSnsElements(container = document) {
+  const els = container.querySelectorAll('.sns-resolve[data-address]');
+  if (els.length === 0) return;
+  const addresses = [...new Set([...els].map(el => el.dataset.address))];
+  const names = await resolveDisplayNames(addresses);
+  const nameMap = {};
+  addresses.forEach((addr, i) => { nameMap[addr] = names[i]; });
+  els.forEach(el => {
+    const name = nameMap[el.dataset.address];
+    if (name) el.textContent = name;
+  });
 }
