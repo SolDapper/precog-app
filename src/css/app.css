@@ -858,11 +858,14 @@ body::before {
 }
 .position-market-title:hover { color: var(--gold); }
 .position-details {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+@media (min-width: 641px) {
+  .position-details {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 .position-detail {
   display: flex;
