@@ -261,7 +261,8 @@ function renderMarketsList(resetPage = true) {
     if (val !== undefined) filtered = filtered.filter(m => m.account.status === val);
   }
   switch (currentSort) {
-    case 'volume': filtered.sort((a, b) => Number(b.account.totalPool - a.account.totalPool)); break;
+    case 'value-desc': filtered.sort((a, b) => (b.account._usdVolume || 0) - (a.account._usdVolume || 0)); break;
+    case 'value-asc': filtered.sort((a, b) => (a.account._usdVolume || 0) - (b.account._usdVolume || 0)); break;
     case 'deadline': filtered.sort((a, b) => Number(a.account.resolutionDeadline - b.account.resolutionDeadline)); break;
     case 'positions': filtered.sort((a, b) => Number(b.account.totalPositions - a.account.totalPositions)); break;
   }
@@ -1008,6 +1009,37 @@ async function loadPositions() {
     const marketMap = {};
     for (const addr of marketAddrs) {
       try { const mk = await sdk.fetchMarket(new PublicKey(addr)); if (mk) marketMap[addr] = mk; } catch {}
+    }
+
+    // Resolve token metadata for position markets
+    const posMintSet = new Set();
+    posMintSet.add(SOL_MINT);
+    for (const mk of Object.values(marketMap)) {
+      if (mk.denomination === 0) {
+        mk._tokenSymbol = 'SOL';
+        mk._tokenName = 'Solana';
+        mk._tokenIcon = SOL_ICON;
+      } else {
+        const mint = mk.tokenMint.toBase58();
+        posMintSet.add(mint);
+        const meta = await fetchTokenIcon(mint);
+        mk._tokenSymbol = meta.symbol || 'Token';
+        mk._tokenName = meta.name || mint.slice(0, 6) + '…';
+        mk._tokenIcon = meta.icon || '';
+      }
+    }
+    // Fetch USD prices for position market tokens
+    const posPrices = await fetchTokenPrices([...posMintSet]);
+    const posSolPrice = posPrices.get(SOL_MINT) || 0;
+    for (const mk of Object.values(marketMap)) {
+      if (mk.denomination === 0) {
+        mk._usdVolume = (Number(mk.totalPool) / 1e9) * posSolPrice;
+      } else {
+        const mint = mk.tokenMint.toBase58();
+        const tokenPrice = posPrices.get(mint) || 0;
+        const decimals = mk.tokenDecimals || 9;
+        mk._usdVolume = (Number(mk.totalPool) / (10 ** decimals)) * (tokenPrice || 1);
+      }
     }
 
     // Build position entries with market data attached

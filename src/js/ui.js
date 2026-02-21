@@ -159,6 +159,16 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
   if (userPositions && userPositions.length > 0) {
     const isSol = market.denominationName === 'NativeSol';
     const sym = denomLabel;
+    const decimals = isSol ? 9 : (market.tokenDecimals || 9);
+    const usdPerToken = (market._usdVolume && market.totalPool > 0n)
+      ? market._usdVolume / (Number(market.totalPool) / (10 ** decimals))
+      : 0;
+    const fmtUsd = (raw) => {
+      if (!usdPerToken) return '';
+      const tokens = Number(raw) / (10 ** decimals);
+      const usd = tokens * usdPerToken;
+      return ` ($${usd >= 1 ? usd.toFixed(2) : usd.toFixed(4)})`;
+    };
     const badges = userPositions.filter(p => !p.claimed).map(p => {
       const outcomeLabel = market.outcomeLabels[p.outcomeIndex] ?? `#${p.outcomeIndex}`;
       const amountStr = isSol ? formatSol(p.amount) : formatTokenAmount(p.amount, market.tokenDecimals) + ' ' + sym;
@@ -168,14 +178,15 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
         const fee = (gross * BigInt(market.feeBps)) / 10000n;
         const net = gross - fee;
         const payStr = isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym;
-        return `<span class="position-estimate-badge" title="${amountStr} on ${outcomeLabel}">Est. ${payStr}</span>`;
+        return `<span class="position-estimate-badge" title="${amountStr} on ${outcomeLabel}">Est. ${payStr}${fmtUsd(net)}</span>`;
       } else if (market.status === 2 && market.winningOutcome === p.outcomeIndex) {
         const winPool = market.outcomePools[market.winningOutcome];
         if (winPool > 0n) {
           const gross = (BigInt(p.amount) * market.totalPool) / winPool;
           const fee = (gross * BigInt(market.feeBps)) / 10000n;
-          const payStr = isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals) + ' ' + sym;
-          return `<span class="position-estimate-badge win" title="${amountStr} on ${outcomeLabel}">Win ${payStr}</span>`;
+          const net = gross - fee;
+          const payStr = isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym;
+          return `<span class="position-estimate-badge win" title="${amountStr} on ${outcomeLabel}">Win ${payStr}${fmtUsd(net)}</span>`;
         }
       } else if (market.status === 2 && market.winningOutcome !== p.outcomeIndex) {
         return `<span class="position-estimate-badge lost" title="${amountStr} on ${outcomeLabel}">Lost</span>`;
@@ -473,6 +484,16 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
   // Payout estimate badge
   const isSol = market.denominationName === 'NativeSol';
   const sym = denomLabel;
+  const posDecimals = isSol ? 9 : (market.tokenDecimals || 9);
+  const posUsdPerToken = (market._usdVolume && market.totalPool > 0n)
+    ? market._usdVolume / (Number(market.totalPool) / (10 ** posDecimals))
+    : 0;
+  const posFmtUsd = (raw) => {
+    if (!posUsdPerToken) return '';
+    const tokens = Number(raw) / (10 ** posDecimals);
+    const usd = tokens * posUsdPerToken;
+    return ` ($${usd >= 1 ? usd.toFixed(2) : usd.toFixed(4)})`;
+  };
   let payoutBadge = '';
   if (!position.claimed) {
     const pool = market.outcomePools[position.outcomeIndex];
@@ -480,13 +501,14 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       const gross = (BigInt(position.amount) * market.totalPool) / pool;
       const fee = (gross * BigInt(market.feeBps)) / 10000n;
       const net = gross - fee;
-      payoutBadge = `<span class="position-estimate-badge">Est. ${isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym}</span>`;
+      payoutBadge = `<span class="position-estimate-badge">Est. ${isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym}${posFmtUsd(net)}</span>`;
     } else if (market.status === 2 && market.winningOutcome === position.outcomeIndex) {
       const winPool = market.outcomePools[market.winningOutcome];
       if (winPool > 0n) {
         const gross = (BigInt(position.amount) * market.totalPool) / winPool;
         const fee = (gross * BigInt(market.feeBps)) / 10000n;
-        payoutBadge = `<span class="position-estimate-badge win">Win ${isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals) + ' ' + sym}</span>`;
+        const net = gross - fee;
+        payoutBadge = `<span class="position-estimate-badge win">Win ${isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym}${posFmtUsd(net)}</span>`;
       }
     } else if (market.status === 2 && market.winningOutcome !== position.outcomeIndex) {
       payoutBadge = `<span class="position-estimate-badge lost">Lost</span>`;

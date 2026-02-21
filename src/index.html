@@ -63,8 +63,8 @@
         </div>
       </div>
 
-      <button id="explore-chart-toggle" class="chart-toggle-btn open">▾ Hide Hot Markets</button>
-      <div id="explore-chart-wrap" class="chart-container card" style="margin-bottom:14px">
+      <button id="explore-chart-toggle" class="chart-toggle-btn">▸ Show Hot Markets</button>
+      <div id="explore-chart-wrap" class="chart-container card hidden" style="margin-bottom:14px">
         <div class="chart-title">Volume by Market (Top 10)</div>
         <canvas id="explore-volume-chart" height="260"></canvas>
       </div>
@@ -72,7 +72,8 @@
       <div class="explore-sort">
         <label class="sort-label">Sort by</label>
         <select id="explore-sort-select" class="sort-select">
-          <option value="volume">Volume (High → Low)</option>
+          <option value="value-desc">Value (High → Low)</option>
+          <option value="value-asc">Value (Low → High)</option>
           <option value="deadline" selected>Closing Soon</option>
           <option value="positions">Most Positions</option>
         </select>
