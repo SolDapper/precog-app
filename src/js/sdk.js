@@ -282,7 +282,9 @@ export async function signAndSend(instructionOrArray, signerPublicKey, walletPro
     ]);
 
     if (cuResult.status === 'fulfilled') cuIx = cuResult.value.instruction;
+    else console.warn('CU estimation failed:', cuResult.reason);
     if (feeResult.status === 'fulfilled') feeIx = feeResult.value.instruction;
+    else console.warn('Priority fee estimation failed:', feeResult.reason);
   } catch (err) {
     console.warn('Fee estimation failed, sending without compute budget:', err);
   }
@@ -301,9 +303,16 @@ export async function signAndSend(instructionOrArray, signerPublicKey, walletPro
   const simResult = await conn.simulateTransaction(tx);
   if (simResult.value.err) {
     const logs = simResult.value.logs || [];
-    console.error('Transaction simulation failed');
+    console.error('=== Transaction simulation failed ===');
     console.error('Error:', JSON.stringify(simResult.value.err, null, 2));
-    console.error('Logs:', logs);
+    console.error('Logs:');
+    logs.forEach((l, i) => console.error(`  [${i}] ${l}`));
+    console.error('Instruction keys:');
+    instructions.forEach((ix, i) => {
+      console.error(`  IX ${i} program: ${ix.programId.toBase58()}`);
+      ix.keys.forEach((k, j) => console.error(`    [${j}] ${k.pubkey.toBase58()} signer=${k.isSigner} writable=${k.isWritable}`));
+    });
+    console.error('=== End simulation error ===');
     // Find the most descriptive error log
     const errorLog = logs.filter(l => l.includes('Error') || l.includes('error') || l.includes('failed')).pop();
     const errMsg = errorLog

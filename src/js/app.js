@@ -823,7 +823,7 @@ function updateBetUI() {
 
 async function handlePlaceBet() {
   const w = wallet.getWallet(); const p = wallet.getProvider();
-  if (!w || !p || selectedOutcome === null || !currentMarketPubkey) return;
+  if (!w || !p || selectedOutcome === null || !currentMarketPubkey || !currentMarketData) return;
   const amount = parseFloat(document.getElementById('bet-amount-input').value);
   if (!amount || amount <= 0) return;
   try {
@@ -833,10 +833,25 @@ async function handlePlaceBet() {
     const lam = BigInt(Math.round(amount * (10 ** decimals)));
     const [vault] = await sdk.findVault(currentMarketPubkey);
     const [position] = await sdk.findPosition(currentMarketPubkey, w.publicKey, selectedOutcome);
-    const ix = sdk.buildPlaceBet(
-      { market: currentMarketPubkey, vault, position, bettor: w.publicKey },
-      { outcomeIndex: selectedOutcome, amount: lam }
-    );
+
+    const accounts = { market: currentMarketPubkey, vault, position, bettor: w.publicKey };
+
+    // For SPL/Token-2022 markets, add token accounts
+    if (!isSol) {
+      const tokenMint = currentMarketData.tokenMint;
+      const tokenProgramId = currentMarketData.denomination === 1 ? sdk.TOKEN_PROGRAM_ID : sdk.TOKEN_2022_PROGRAM_ID;
+      const [vaultAuthority] = await sdk.findVaultAuthority(currentMarketPubkey);
+      // Bettor's ATA for this token
+      const [bettorAta] = sdk.getAssociatedTokenAddress(tokenMint, w.publicKey, tokenProgramId);
+
+      accounts.bettorTokenAccount = bettorAta;
+      accounts.tokenVault = vault; // Same PDA as SOL vault
+      accounts.tokenMint = tokenMint;
+      accounts.tokenProgram = tokenProgramId;
+      accounts.vaultAuthority = vaultAuthority;
+    }
+
+    const ix = sdk.buildPlaceBet(accounts, { outcomeIndex: selectedOutcome, amount: lam });
     ui.updateTxOverlay('Please approve…');
     const sig = await sdk.signAndSend(ix, w.publicKey, p);
     ui.hideTxOverlay();
@@ -1067,11 +1082,32 @@ async function claimWinnings(posAddr, mktAddr) {
     if (!config) throw new Error('Protocol config not found');
     const market = await sdk.fetchMarket(mk);
     if (!market) throw new Error('Market not found');
-    const ix = sdk.buildClaimWinnings({
+
+    const accounts = {
       market: mk, vault, position: new PublicKey(posAddr),
       claimant: w.publicKey, protocolConfig: pc, treasury: config.treasury,
       creator: market.creator,
-    });
+    };
+
+    // For SPL/Token-2022 markets, add token accounts
+    if (market.denomination !== 0) {
+      const tokenMint = market.tokenMint;
+      const tokenProgramId = market.denomination === 1 ? sdk.TOKEN_PROGRAM_ID : sdk.TOKEN_2022_PROGRAM_ID;
+      const [vaultAuthority] = await sdk.findVaultAuthority(mk);
+      const [claimantAta] = sdk.getAssociatedTokenAddress(tokenMint, w.publicKey, tokenProgramId);
+      const [treasuryAta] = sdk.getAssociatedTokenAddress(tokenMint, config.treasury, tokenProgramId);
+      const [creatorAta] = sdk.getAssociatedTokenAddress(tokenMint, market.creator, tokenProgramId);
+
+      accounts.claimantTokenAccount = claimantAta;
+      accounts.treasuryTokenAccount = treasuryAta;
+      accounts.creatorTokenAccount = creatorAta;
+      accounts.tokenVault = vault;
+      accounts.vaultAuthority = vaultAuthority;
+      accounts.tokenMint = tokenMint;
+      accounts.tokenProgram = tokenProgramId;
+    }
+
+    const ix = sdk.buildClaimWinnings(accounts);
     ui.updateTxOverlay('Please approve…');
     await sdk.signAndSend(ix, w.publicKey, p);
     ui.hideTxOverlay(); ui.showStatus('Winnings claimed!', 'success');
@@ -1086,9 +1122,26 @@ async function claimRefund(posAddr, mktAddr) {
     ui.showTxOverlay('Claiming refund…');
     const mk = new PublicKey(mktAddr);
     const [vault] = await sdk.findVault(mk);
-    const ix = sdk.buildClaimRefund({
-      market: mk, vault, position: new PublicKey(posAddr), claimant: w.publicKey,
-    });
+    const market = await sdk.fetchMarket(mk);
+    if (!market) throw new Error('Market not found');
+
+    const accounts = { market: mk, vault, position: new PublicKey(posAddr), claimant: w.publicKey };
+
+    // For SPL/Token-2022 markets, add token accounts
+    if (market.denomination !== 0) {
+      const tokenMint = market.tokenMint;
+      const tokenProgramId = market.denomination === 1 ? sdk.TOKEN_PROGRAM_ID : sdk.TOKEN_2022_PROGRAM_ID;
+      const [vaultAuthority] = await sdk.findVaultAuthority(mk);
+      const [claimantAta] = sdk.getAssociatedTokenAddress(tokenMint, w.publicKey, tokenProgramId);
+
+      accounts.claimantTokenAccount = claimantAta;
+      accounts.tokenVault = vault;
+      accounts.vaultAuthority = vaultAuthority;
+      accounts.tokenMint = tokenMint;
+      accounts.tokenProgram = tokenProgramId;
+    }
+
+    const ix = sdk.buildClaimRefund(accounts);
     ui.updateTxOverlay('Please approve…');
     await sdk.signAndSend(ix, w.publicKey, p);
     ui.hideTxOverlay(); ui.showStatus('Refund claimed!', 'success');
