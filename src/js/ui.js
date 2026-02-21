@@ -143,10 +143,11 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
     `;
   }).join('');
 
-  const denomLabel = market.denominationName === 'NativeSol' ? 'SOL' : market.denominationName;
+  const denomLabel = market._tokenSymbol || (market.denominationName === 'NativeSol' ? 'SOL' : market.denominationName);
+  const tokenIcon = market._tokenIcon || '';
   const volumeStr = market.denominationName === 'NativeSol'
     ? formatSol(market.totalPool)
-    : formatTokenAmount(market.totalPool, market.tokenDecimals) + ' tokens';
+    : formatTokenAmount(market.totalPool, market.tokenDecimals) + ' ' + denomLabel;
   const deadlineStr = market.status === 0 ? formatCountdown(market.resolutionDeadline) : formatDate(market.resolutionDeadline);
 
   const addr = pubkey.toBase58();
@@ -157,22 +158,23 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
   let positionBadges = '';
   if (userPositions && userPositions.length > 0) {
     const isSol = market.denominationName === 'NativeSol';
+    const sym = denomLabel;
     const badges = userPositions.filter(p => !p.claimed).map(p => {
       const outcomeLabel = market.outcomeLabels[p.outcomeIndex] ?? `#${p.outcomeIndex}`;
-      const amountStr = isSol ? formatSol(p.amount) : formatTokenAmount(p.amount, market.tokenDecimals);
+      const amountStr = isSol ? formatSol(p.amount) : formatTokenAmount(p.amount, market.tokenDecimals) + ' ' + sym;
       const pool = market.outcomePools[p.outcomeIndex];
       if (market.status < 2 && pool > 0n && market.totalPool > 0n) {
         const gross = (BigInt(p.amount) * market.totalPool) / pool;
         const fee = (gross * BigInt(market.feeBps)) / 10000n;
         const net = gross - fee;
-        const payStr = isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals);
+        const payStr = isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym;
         return `<span class="position-estimate-badge" title="${amountStr} on ${outcomeLabel}">Est. ${payStr}</span>`;
       } else if (market.status === 2 && market.winningOutcome === p.outcomeIndex) {
         const winPool = market.outcomePools[market.winningOutcome];
         if (winPool > 0n) {
           const gross = (BigInt(p.amount) * market.totalPool) / winPool;
           const fee = (gross * BigInt(market.feeBps)) / 10000n;
-          const payStr = isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals);
+          const payStr = isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals) + ' ' + sym;
           return `<span class="position-estimate-badge win" title="${amountStr} on ${outcomeLabel}">Win ${payStr}</span>`;
         }
       } else if (market.status === 2 && market.winningOutcome !== p.outcomeIndex) {
@@ -201,7 +203,7 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
     <div class="outcome-bars">${outcomeBarsHtml}</div>
     <div class="market-card-stats">
       <div class="market-stat">
-        <span class="market-stat-value">${volumeStr}</span>
+        <span class="market-stat-value">${tokenIcon ? `<img class="token-icon-inline" src="${tokenIcon}" alt="${denomLabel}" onerror="this.style.display='none'">` : ''}${volumeStr}</span>
         <span class="market-stat-label">Volume</span>
       </div>
       <div class="market-stat">
@@ -229,14 +231,16 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
 export function renderMarketDetail(pubkey, market, connectedWallet = null, userPositions = null) {
   const probs = getImpliedProbabilities(market.outcomePools, market.totalPool);
   const statusClass = market.statusName.toLowerCase();
-  const denomLabel = market.denominationName === 'NativeSol' ? 'SOL' : market.denominationName;
+  const denomLabel = market._tokenSymbol || (market.denominationName === 'NativeSol' ? 'SOL' : market.denominationName);
+  const tokenIcon = market._tokenIcon || '';
+  const tokenName = market._tokenName || denomLabel;
   const volumeStr = market.denominationName === 'NativeSol'
-    ? formatSol(market.totalPool) : formatTokenAmount(market.totalPool, market.tokenDecimals);
+    ? formatSol(market.totalPool) : formatTokenAmount(market.totalPool, market.tokenDecimals) + ' ' + denomLabel;
 
   const outcomeBarsHtml = market.outcomeLabels.map((label, i) => {
     const pct = probs[i] * 100;
     const pool = market.denominationName === 'NativeSol'
-      ? formatSol(market.outcomePools[i]) : formatTokenAmount(market.outcomePools[i], market.tokenDecimals);
+      ? formatSol(market.outcomePools[i]) : formatTokenAmount(market.outcomePools[i], market.tokenDecimals) + ' ' + denomLabel;
     const isWinner = market.status >= 2 && market.winningOutcome === i;
     return `
       <div class="outcome-bar-row">
@@ -316,23 +320,25 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
 
   // User position estimate badges for detail view
   const isSol = market.denominationName === 'NativeSol';
+  const sym = denomLabel;
   let positionBadges = '';
   if (userPositions && userPositions.length > 0) {
     const badges = userPositions.filter(p => !p.claimed).map(p => {
       const outcomeLabel = market.outcomeLabels[p.outcomeIndex] ?? `#${p.outcomeIndex}`;
-      const amountStr = isSol ? formatSol(p.amount) : formatTokenAmount(p.amount, market.tokenDecimals);
+      const amountStr = isSol ? formatSol(p.amount) : formatTokenAmount(p.amount, market.tokenDecimals) + ' ' + sym;
       const pool = market.outcomePools[p.outcomeIndex];
       if (market.status < 2 && pool > 0n && market.totalPool > 0n) {
         const gross = (BigInt(p.amount) * market.totalPool) / pool;
         const fee = (gross * BigInt(market.feeBps)) / 10000n;
-        const payStr = isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals);
+        const payStr = isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals) + ' ' + sym;
         return `<span class="position-estimate-badge" title="${amountStr} on ${escapeHtml(outcomeLabel)}">Est. ${payStr}</span>`;
       } else if (market.status === 2 && market.winningOutcome === p.outcomeIndex) {
         const winPool = market.outcomePools[market.winningOutcome];
         if (winPool > 0n) {
           const gross = (BigInt(p.amount) * market.totalPool) / winPool;
           const fee = (gross * BigInt(market.feeBps)) / 10000n;
-          return `<span class="position-estimate-badge win" title="${amountStr} on ${escapeHtml(outcomeLabel)}">Win ${isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals)}</span>`;
+          const payStr = isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals) + ' ' + sym;
+          return `<span class="position-estimate-badge win" title="${amountStr} on ${escapeHtml(outcomeLabel)}">Win ${payStr}</span>`;
         }
       } else if (market.status === 2 && market.winningOutcome !== p.outcomeIndex) {
         return `<span class="position-estimate-badge lost" title="${amountStr} on ${escapeHtml(outcomeLabel)}">Lost</span>`;
@@ -370,7 +376,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
     <div class="market-detail-meta">
       <div class="meta-item">
         <span class="meta-label">Volume</span>
-        <span class="meta-value gold">${volumeStr}</span>
+        <span class="meta-value gold">${tokenIcon ? `<img class="token-icon-inline" src="${tokenIcon}" alt="${denomLabel}" onerror="this.style.display='none'">` : ''}${volumeStr}</span>
       </div>
       <div class="meta-item">
         <span class="meta-label">Positions</span>
@@ -386,7 +392,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
       </div>
       <div class="meta-item">
         <span class="meta-label">Denomination</span>
-        <span class="meta-value">${denomLabel}</span>
+        <span class="meta-value">${tokenIcon ? `<img class="token-icon-inline" src="${tokenIcon}" alt="${denomLabel}" onerror="this.style.display='none'">` : ''}${tokenName}${tokenName !== denomLabel ? ` (${denomLabel})` : ''}</span>
       </div>
       <div class="meta-item">
         <span class="meta-label">Authority</span>
@@ -434,9 +440,10 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
     return `<div class="position-card"><span class="text-muted">Market data unavailable</span></div>`;
   }
 
-  const denomLabel = market.denominationName === 'NativeSol' ? 'SOL' : market.denominationName;
+  const denomLabel = market._tokenSymbol || (market.denominationName === 'NativeSol' ? 'SOL' : market.denominationName);
+  const tokenIcon = market._tokenIcon || '';
   const amountStr = market.denominationName === 'NativeSol'
-    ? formatSol(position.amount) : formatTokenAmount(position.amount, market.tokenDecimals);
+    ? formatSol(position.amount) : formatTokenAmount(position.amount, market.tokenDecimals) + ' ' + denomLabel;
   const outcomeLabel = market.outcomeLabels[position.outcomeIndex] ?? `Outcome ${position.outcomeIndex}`;
   const statusClass = market.statusName.toLowerCase();
   const { category } = parseDescription(market.description);
@@ -462,6 +469,7 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
 
   // Payout estimate badge
   const isSol = market.denominationName === 'NativeSol';
+  const sym = denomLabel;
   let payoutBadge = '';
   if (!position.claimed) {
     const pool = market.outcomePools[position.outcomeIndex];
@@ -469,13 +477,13 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       const gross = (BigInt(position.amount) * market.totalPool) / pool;
       const fee = (gross * BigInt(market.feeBps)) / 10000n;
       const net = gross - fee;
-      payoutBadge = `<span class="position-estimate-badge">Est. ${isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals)}</span>`;
+      payoutBadge = `<span class="position-estimate-badge">Est. ${isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym}</span>`;
     } else if (market.status === 2 && market.winningOutcome === position.outcomeIndex) {
       const winPool = market.outcomePools[market.winningOutcome];
       if (winPool > 0n) {
         const gross = (BigInt(position.amount) * market.totalPool) / winPool;
         const fee = (gross * BigInt(market.feeBps)) / 10000n;
-        payoutBadge = `<span class="position-estimate-badge win">Win ${isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals)}</span>`;
+        payoutBadge = `<span class="position-estimate-badge win">Win ${isSol ? formatSol(gross - fee) : formatTokenAmount(gross - fee, market.tokenDecimals) + ' ' + sym}</span>`;
       }
     } else if (market.status === 2 && market.winningOutcome !== position.outcomeIndex) {
       payoutBadge = `<span class="position-estimate-badge lost">Lost</span>`;
@@ -502,7 +510,7 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       </div>
       <div class="position-detail">
         <span class="position-detail-label">Amount</span>
-        <span class="position-detail-value">${amountStr}</span>
+        <span class="position-detail-value">${tokenIcon ? `<img class="token-icon-inline" src="${tokenIcon}" alt="${denomLabel}" onerror="this.style.display='none'">` : ''}${amountStr}</span>
       </div>
       <div class="position-detail">
         <span class="position-detail-label">Deposited</span>

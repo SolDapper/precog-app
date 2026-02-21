@@ -589,7 +589,7 @@ body::before {
   font-size: 0.88rem;
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 .market-detail-meta {
   display: flex;
@@ -876,12 +876,13 @@ body::before {
   display: inline-block;
 }
 .token-chooser-btn {
-  background: var(--bg-card);
+  background: var(--bg-input);
   border: 1px solid var(--border-primary);
-  color: var(--text-primary);
-  padding: 6px 12px;
-  border-radius: var(--radius-md);
-  font-size: 0.78rem;
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-family: var(--font-body);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -892,6 +893,14 @@ body::before {
 .token-chooser-btn:hover { border-color: var(--gold-dim); }
 .token-chooser-btn.token-active { border-color: var(--gold-dim); color: var(--gold); }
 .token-icon-sm { width: 14px; height: 14px; border-radius: 50%; }
+.token-icon-inline {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  vertical-align: -2px;
+  margin-right: 8px;
+  object-fit: cover;
+}
 .token-chooser-dropdown {
   position: fixed;
   top: 50%;
@@ -1240,6 +1249,7 @@ body::before {
 }
 .chart-container canvas {
   max-height: 260px;
+  max-width: 100%;
 }
 .chart-title {
   font-family: var(--font-display);
@@ -1254,11 +1264,15 @@ body::before {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  overflow: hidden;
 }
 .detail-charts-row .chart-container {
   flex: 1;
   min-width: 200px;
+  max-width: 100%;
   margin-top: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* ── Watchlist Star ─────────────────────────────────────────────── */
@@ -1676,6 +1690,7 @@ body::before {
   .market-detail-title { font-size: 1.05rem; }
   .market-detail-meta { gap: 8px; }
   .detail-charts-row { flex-direction: column; }
+  .detail-charts-row .chart-container { min-width: 0; }
 
   /* Forms */
   .form-row { flex-direction: column; gap: 0; }

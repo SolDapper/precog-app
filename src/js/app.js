@@ -148,6 +148,31 @@ async function loadMarkets() {
     }
     const [markets] = await Promise.all([sdk.fetchAllMarkets(), refreshUserPositions()]);
     allMarkets = markets;
+
+    // Pre-resolve token metadata for all unique non-SOL mints
+    const mints = new Set();
+    for (const { account } of allMarkets) {
+      if (account.denomination !== 0) {
+        mints.add(account.tokenMint.toBase58());
+      }
+    }
+    await Promise.all([...mints].map(m => fetchTokenIcon(m)));
+
+    // Augment each market with resolved token info
+    for (const { account } of allMarkets) {
+      if (account.denomination === 0) {
+        account._tokenSymbol = 'SOL';
+        account._tokenName = 'Solana';
+        account._tokenIcon = SOL_ICON;
+      } else {
+        const mint = account.tokenMint.toBase58();
+        const meta = _tokenIconCache.get(mint) || { icon: '', name: '', symbol: '' };
+        account._tokenSymbol = meta.symbol || 'Token';
+        account._tokenName = meta.name || mint.slice(0, 6) + '…';
+        account._tokenIcon = meta.icon || '';
+      }
+    }
+
     // On poll refresh, don't reset the page — show same amount user has scrolled to
     const isInitialLoad = listEl.querySelector('.loading-state') !== null;
     renderMarketsList(isInitialLoad);
@@ -683,6 +708,20 @@ async function openMarketDetail(pubkey) {
   try {
     const market = await sdk.fetchMarket(pubkey);
     if (!market) { el.innerHTML = '<div class="empty-state">Market not found.</div>'; return; }
+
+    // Resolve token metadata
+    if (market.denomination === 0) {
+      market._tokenSymbol = 'SOL';
+      market._tokenName = 'Solana';
+      market._tokenIcon = SOL_ICON;
+    } else {
+      const mint = market.tokenMint.toBase58();
+      const meta = await fetchTokenIcon(mint);
+      market._tokenSymbol = meta.symbol || 'Token';
+      market._tokenName = meta.name || mint.slice(0, 6) + '…';
+      market._tokenIcon = meta.icon || '';
+    }
+
     currentMarketData = market;
     const w = wallet.getWallet();
     const positions = userPositionsMap.get(pubkey.toBase58()) || null;
@@ -770,13 +809,16 @@ function updateBetUI() {
   // Payout estimate
   const est = document.getElementById('bet-payout-estimate');
   if (!est || !currentMarketData || selectedOutcome === null || !amount || amount <= 0) { est?.classList.add('hidden'); return; }
-  const lam = sdk.solToLamports(amount);
+  const isSol = currentMarketData.denominationName === 'NativeSol';
+  const decimals = isSol ? 9 : currentMarketData.tokenDecimals;
+  const lam = BigInt(Math.round(amount * (10 ** decimals)));
   const newPool = currentMarketData.outcomePools[selectedOutcome] + lam;
   const newTotal = currentMarketData.totalPool + lam;
   const pay = sdk.calculatePayout(lam, newPool, newTotal, currentMarketData.feeBps);
   est.classList.remove('hidden');
   const v = est.querySelector('.bet-payout-value');
-  if (v) v.textContent = ui.formatSol(pay);
+  const sym = currentMarketData._tokenSymbol || (isSol ? 'SOL' : 'tokens');
+  if (v) v.textContent = isSol ? ui.formatSol(pay) : ui.formatTokenAmount(pay, decimals) + ' ' + sym;
 }
 
 async function handlePlaceBet() {
@@ -786,7 +828,9 @@ async function handlePlaceBet() {
   if (!amount || amount <= 0) return;
   try {
     ui.showTxOverlay('Building transaction…');
-    const lam = sdk.solToLamports(amount);
+    const isSol = currentMarketData.denominationName === 'NativeSol';
+    const decimals = isSol ? 9 : currentMarketData.tokenDecimals;
+    const lam = BigInt(Math.round(amount * (10 ** decimals)));
     const [vault] = await sdk.findVault(currentMarketPubkey);
     const [position] = await sdk.findPosition(currentMarketPubkey, w.publicKey, selectedOutcome);
     const ix = sdk.buildPlaceBet(
@@ -1283,7 +1327,9 @@ async function handleCreateMarket() {
     const accounts = { market, vault, authority: w.publicKey, payer: w.publicKey, protocolConfig };
     const ixList = [];
 
-    // For SPL/Token-2022 markets, add token accounts and create the vault ATA
+    // For SPL/Token-2022 markets, pass token accounts
+    // The program creates and initializes the token vault itself via CPI
+    // tokenVault uses the SAME PDA as vault: [VAULT_SEED, market]
     if (denomination === 1 || denomination === 2) {
       const mintAddr = document.getElementById('create-token-mint')?.value.trim();
       if (!mintAddr || mintAddr.length < 32) return showCreateError('Token mint address is required');
@@ -1291,23 +1337,10 @@ async function handleCreateMarket() {
       const tokenProgramId = denomination === 1 ? sdk.TOKEN_PROGRAM_ID : sdk.TOKEN_2022_PROGRAM_ID;
       const [vaultAuthority] = await sdk.findVaultAuthority(market);
 
-      // Create the vault's ATA (idempotent — safe if it already exists)
-      const { ata: tokenVault, ix: createAtaIx } = sdk.buildCreateATA(w.publicKey, vaultAuthority, tokenMint, tokenProgramId);
-      ixList.push(createAtaIx);
-
       accounts.tokenMint = tokenMint;
       accounts.vaultAuthority = vaultAuthority;
-      accounts.tokenVault = tokenVault;
+      accounts.tokenVault = vault; // Same PDA as vault — program creates it as a token account
       accounts.tokenProgram = tokenProgramId;
-
-      console.log('Token market accounts:');
-      console.log('  market:', market.toBase58());
-      console.log('  vault:', vault.toBase58());
-      console.log('  vaultAuthority:', vaultAuthority.toBase58());
-      console.log('  tokenMint:', tokenMint.toBase58());
-      console.log('  tokenVault (ATA):', tokenVault.toBase58());
-      console.log('  tokenProgram:', tokenProgramId.toBase58());
-      console.log('  denomination:', denomination);
     }
 
     const createIx = sdk.buildCreateMarket(
