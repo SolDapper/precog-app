@@ -90,9 +90,14 @@ body::before {
 /* ── Top Bar ────────────────────────────────────────────────────── */
 /* ── Buy $PELF Button ─────────────────────────────────────────── */
 .buy-pelf-btn {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   padding: 2px 5px;
   background: var(--gold);
   color: #010101;
@@ -101,12 +106,13 @@ body::before {
   font-weight: 700;
   letter-spacing: 0.5px;
   text-decoration: none;
-  border-radius: 5px;
+  border-radius: 0 0 6px 6px;
   transition: background 0.2s;
   white-space: nowrap;
 }
 .buy-pelf-btn:hover {
   background: #ffe066;
+  transform: translateX(-50%) scale(1.03);
 }
 .buy-pelf-icon {
   width: 14px;
@@ -115,21 +121,12 @@ body::before {
   object-fit: cover;
 }
 
-/* Desktop: fixed centered at top with bottom-only radius */
+/* Desktop: slightly larger */
 @media (min-width: 641px) {
   .buy-pelf-btn {
-    position: fixed;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    border-radius: 0 0 8px 8px;
     padding: 4px 6px 5px;
     font-size: 0.75rem;
-    gap: 6px;
-  }
-  .buy-pelf-btn:hover {
-    transform: translateX(-50%) scale(1.03);
+    gap: 3px;
   }
   .buy-pelf-icon {
     width: 18px;
