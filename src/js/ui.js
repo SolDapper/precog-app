@@ -603,7 +603,7 @@ export function renderVolumeChart(markets, onClickMarket) {
           const x = bar.x - barWidth + 14;
           const y = bar.y;
           // Use dark text on the bar for readability
-          ctx.fillStyle = barWidth > 60 ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
+          ctx.fillStyle = barWidth > 60 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.8)';
           const textX = barWidth > 60 ? x + 4 : bar.x + 6;
           ctx.fillText(label, textX, y);
         });
