@@ -554,10 +554,10 @@ async function fetchTokenIcon(mint) {
   return { icon: '', name: '', symbol: '' };
 }
 
-// ── Token USD price cache (Jupiter Price API v2) ──────────────────
+// ── Token USD price cache (Jupiter Price API v3) ──────────────────
 let _priceCache = new Map(); // mint → { price, ts }
 
-/** Fetch USD prices for a list of mints via Jupiter. Returns Map<mint, price>. */
+/** Fetch USD prices for a list of mints via Jupiter lite API. Returns Map<mint, price>. */
 async function fetchTokenPrices(mints) {
   if (mints.length === 0) return new Map();
   const now = Date.now();
@@ -568,13 +568,12 @@ async function fetchTokenPrices(mints) {
   if (stale.length > 0) {
     try {
       const ids = stale.join(',');
-      const resp = await fetch(`https://api.jup.ag/price/v2?ids=${ids}`);
+      const resp = await fetch(`https://lite-api.jup.ag/price/v3?ids=${ids}`);
       if (resp.ok) {
-        const json = await resp.json();
-        const data = json.data || {};
+        const data = await resp.json();
         for (const mint of stale) {
           const entry = data[mint];
-          const price = entry?.price ? parseFloat(entry.price) : 0;
+          const price = entry?.usdPrice ? parseFloat(entry.usdPrice) : 0;
           _priceCache.set(mint, { price, ts: now });
         }
       }
@@ -587,6 +586,11 @@ async function fetchTokenPrices(mints) {
     result.set(m, _priceCache.get(m)?.price || 0);
   }
   return result;
+}
+
+/** Get cached USD price for a single mint. Returns 0 if not yet fetched. */
+function getTokenPrice(mint) {
+  return _priceCache.get(mint)?.price || 0;
 }
 
 function populateTokenFilter() {
