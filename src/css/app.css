@@ -92,16 +92,16 @@ body::before {
 .buy-pelf-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 6px;
+  gap: 4px;
+  padding: 2px 5px;
   background: var(--gold);
   color: #010101;
   font-family: var(--font-display);
-  font-size: 0.75rem;
+  font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.5px;
   text-decoration: none;
-  border-radius: 6px;
+  border-radius: 5px;
   transition: background 0.2s;
   white-space: nowrap;
 }
@@ -109,8 +109,8 @@ body::before {
   background: #ffe066;
 }
 .buy-pelf-icon {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -124,10 +124,16 @@ body::before {
     transform: translateX(-50%);
     z-index: 1000;
     border-radius: 0 0 8px 8px;
-    padding: 4px 10px 5px;
+    padding: 4px 6px 5px;
+    font-size: 0.75rem;
+    gap: 6px;
   }
   .buy-pelf-btn:hover {
     transform: translateX(-50%) scale(1.03);
+  }
+  .buy-pelf-icon {
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -151,21 +157,12 @@ body::before {
   cursor: pointer;
   padding: 0;
 }
-.logo-glyph {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--bg-primary);
-  background: linear-gradient(135deg, #e5a200, #ffbc0c, #e5a200);
+.logo-icon {
+  width: 60px;
+  height: 60px;
   border-radius: 6px;
-  line-height: 1;
+  object-fit: cover;
   filter: drop-shadow(0 0 6px rgba(255, 188, 12, 0.35));
-  letter-spacing: -0.02em;
 }
 .logo-text {
   font-family: var(--font-display);
@@ -1694,7 +1691,7 @@ body::before {
 
   /* Top bar */
   .logo-text { font-size: 0.88rem; letter-spacing: 0.04em; }
-  .logo-glyph { width: 27px; height: 27px; font-size: 0.95rem; }
+  .logo-icon { width: 50px; height: 50px; }
   .wallet-btn { font-size: 0.68rem; padding: 7px 10px; }
   .nav-share-btn { width: 30px; height: 30px; }
   .nav-share-btn svg { width: 14px; height: 14px; }
@@ -1757,7 +1754,7 @@ body::before {
 /* ── Responsive: Very Small Phones ──────────────────────────────── */
 @media (max-width: 360px) {
   .logo-text { font-size: 0.78rem; }
-  .logo-glyph { width: 24px; height: 24px; font-size: 0.85rem; }
+  .logo-icon { width: 44px; height: 44px; }
   .nav-btn { font-size: 0.52rem; padding: 7px 1px; letter-spacing: 0; }
   .filter-btn { font-size: 0.58rem; padding: 3px 5px; }
   .market-card-title { font-size: 0.82rem; }

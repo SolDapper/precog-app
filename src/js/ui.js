@@ -584,7 +584,7 @@ export function renderVolumeChart(markets, onClickMarket) {
   if (_volumeChart) { _volumeChart.destroy(); _volumeChart = null; }
 
   // Sort by USD volume (fallback to raw pool for markets without price)
-  const withVolume = [...markets].filter(m => m.account.status !== 3);
+  const withVolume = [...markets].filter(m => m.account.status === 0);
   const sorted = withVolume.sort((a, b) => (b.account._usdVolume || 0) - (a.account._usdVolume || 0)).slice(0, 10);
   const hasVolume = sorted.some(m => (m.account._usdVolume || 0) > 0 || m.account.totalPool > 0n);
 
