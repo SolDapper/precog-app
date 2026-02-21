@@ -893,7 +893,16 @@ function updateBetUI() {
   est.classList.remove('hidden');
   const v = est.querySelector('.bet-payout-value');
   const sym = currentMarketData._tokenSymbol || (isSol ? 'SOL' : 'tokens');
-  if (v) v.textContent = isSol ? ui.formatSol(pay) : ui.formatTokenAmount(pay, decimals) + ' ' + sym;
+  let payStr = isSol ? ui.formatSol(pay) : ui.formatTokenAmount(pay, decimals) + ' ' + sym;
+  // Append USD value
+  const priceMint = isSol ? SOL_MINT : currentMarketData.tokenMint.toBase58();
+  const tokenPrice = getTokenPrice(priceMint) || (!isSol ? 1 : 0);
+  if (tokenPrice > 0) {
+    const payTokens = Number(pay) / (10 ** decimals);
+    const usd = payTokens * tokenPrice;
+    payStr += ` ($${usd >= 1 ? usd.toFixed(2) : usd.toFixed(4)})`;
+  }
+  if (v) v.textContent = payStr;
 }
 
 async function handlePlaceBet() {
