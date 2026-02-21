@@ -12,7 +12,7 @@ import {
   ComputeBudgetProgram,
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
-import { RPC_URL, PROGRAM_ID } from './config.js';
+import { RPC_URL, PROGRAM_ID, TOLERANCE, PRIORITY } from './config.js';
 
 // ── Re-exports from precog-markets SDK ────────────────────────────
 import {
@@ -65,8 +65,8 @@ function getClient() {
   if (!_client) {
     _client = new PrecogMarketsClient(getConnection(), {
       programId: PROGRAM_ID,
-      computeUnitMargin: 1.1,
-      priorityLevel: 'Medium',
+      computeUnitMargin: TOLERANCE,
+      priorityLevel: PRIORITY,
     });
   }
   return _client;

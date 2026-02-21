@@ -20,5 +20,9 @@ export const APP_IDENTITY = {
 export const MARKET_POLL_MS = 20_000;
 export const PRICE_CACHE_MS = 60_000;
 
+// Compute budget
+export const TOLERANCE = parseFloat(process.env.TOLERANCE) || 1.1;
+export const PRIORITY = process.env.PRIORITY || 'Medium';
+
 // SOL price
 export const SOL_MINT = 'So11111111111111111111111111111111111111112';
