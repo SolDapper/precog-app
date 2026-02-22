@@ -1538,13 +1538,23 @@ async function handleCreateMarket() {
   try {
     ui.showTxOverlay('Creating market…');
     const config = await sdk.fetchProtocolConfig();
-    const marketId = config ? config.totalMarketsCreated + 1n : 1n;
+    if (!config) { showCreateError('Protocol not initialized'); ui.hideTxOverlay(); return; }
+
+    // Find the next available market ID — skip any PDAs that already exist on-chain
+    let marketId = config.totalMarketsCreated + 1n;
+    let market, vault;
+    for (let attempt = 0; attempt < 20; attempt++) {
+      [market] = await sdk.findMarket(w.publicKey, marketId);
+      const info = await sdk.connection.getAccountInfo(market);
+      if (!info) break; // PDA is free
+      marketId++;
+    }
+    [vault] = await sdk.findVault(market);
+
     // Total fee = protocol default + creator's additional fee
-    const feeBpsOverride = creatorFee > 0 && config
+    const feeBpsOverride = creatorFee > 0
       ? config.defaultFeeBps + creatorFee
       : null;
-    const [market] = await sdk.findMarket(w.publicKey, marketId);
-    const [vault] = await sdk.findVault(market);
     const [protocolConfig] = await sdk.findProtocolConfig();
 
     const accounts = { market, vault, authority: w.publicKey, payer: w.publicKey, protocolConfig };
