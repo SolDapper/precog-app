@@ -380,6 +380,9 @@ body::before {
   display: flex;
   gap: 4px;
 }
+#explore-mine-toggle {
+  padding: 8px 16px;
+}
 .filter-btn {
   padding: 6px 12px;
   border: 1px solid var(--border-primary);
