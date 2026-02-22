@@ -273,6 +273,8 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
     `;
   }).join('');
 
+  const isSol = market.denominationName === 'NativeSol';
+
   // Position section (only if market is open and not past deadline)
   let betSectionHtml = '';
   if (market.status === 0 && !market._expired) {
@@ -339,7 +341,6 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
   const { category: marketCategory, description: cleanDesc } = parseDescription(market.description);
 
   // User position estimate badges for detail view
-  const isSol = market.denominationName === 'NativeSol';
   const sym = denomLabel;
   const detDecimals = isSol ? 9 : (market.tokenDecimals || 9);
   const detUsdPerToken = (market._usdVolume && market.totalPool > 0n)
