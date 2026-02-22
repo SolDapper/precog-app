@@ -2123,11 +2123,20 @@ function setupWallet() {
       const disconnectBtn = ui.renderWalletConnected(ctx.publicKey);
       disconnectBtn.addEventListener('click', wallet.disconnect);
       document.getElementById('network-indicator')?.classList.add('connected');
+      // Check if connected wallet is admin
+      sdk.fetchProtocolConfig().then(config => {
+        const adminLink = document.querySelector('.footer-admin-link');
+        if (adminLink) {
+          adminLink.classList.toggle('hidden', !config || config.admin.toBase58() !== ctx.publicKey.toBase58());
+        }
+      }).catch(() => {});
     } else {
       const isMob = wallet.isMobile() && !wallet.isWalletBrowser();
       ui.renderWalletDisconnected(wallet.getAvailableWallets(), isMob);
       attachConnectListeners();
       document.getElementById('network-indicator')?.classList.remove('connected');
+      // Hide admin link on disconnect
+      document.querySelector('.footer-admin-link')?.classList.add('hidden');
     }
     // Refresh current view
     refreshUserPositions().then(() => {
