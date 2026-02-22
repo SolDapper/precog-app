@@ -290,7 +290,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
           <div class="bet-outcomes">${outcomeBtns}</div>
           <div class="bet-amount-row">
             <input id="bet-amount-input" type="number" class="bet-amount-input"
-              placeholder="0.001" min="0.001" step="0.001">
+              placeholder="${isSol ? '0.01' : '0.001'}" ${isSol ? 'min="0.01"' : ''} step="any">
             <span class="bet-amount-suffix">${denomLabel}</span>
           </div>
           <div id="bet-payout-estimate" class="bet-payout-estimate hidden">

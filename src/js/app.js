@@ -943,6 +943,8 @@ async function handlePlaceBet() {
   if (currentMarketData.status !== 0 || currentMarketData._expired) { ui.showStatus('This market is no longer open for positions.', 'error'); return; }
   const amount = parseFloat(document.getElementById('bet-amount-input').value);
   if (!amount || amount <= 0) return;
+  const isSolBet = currentMarketData.denominationName === 'NativeSol';
+  if (isSolBet && amount < 0.01) { ui.showStatus('Minimum position is 0.01 SOL.', 'error'); return; }
   try {
     ui.showTxOverlay('Building transaction…');
     const isSol = currentMarketData.denominationName === 'NativeSol';
