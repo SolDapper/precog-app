@@ -973,8 +973,8 @@ async function handlePlaceBet() {
     ui.updateTxOverlay('Please approve…');
     const sig = await sdk.signAndSend(ix, w.publicKey, p);
     ui.hideTxOverlay();
+    await openMarketDetail(currentMarketPubkey);
     ui.showBetStatus(`Position confirmed! ${sig.slice(0, 8)}…`, 'success');
-    openMarketDetail(currentMarketPubkey);
   } catch (err) {
     ui.hideTxOverlay();
     ui.showBetStatus(err.message || 'Position failed', 'error');
