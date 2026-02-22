@@ -348,7 +348,7 @@ body::before {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin: 3px 0 20px 0;
+  margin: 3px 0 15px 0;
 }
 .section-title {
   font-family: var(--font-display);
