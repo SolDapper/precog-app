@@ -59,11 +59,7 @@
       <div class="explore-header">
         <h2 class="section-title">Markets</h2>
         <div class="explore-filters">
-          <button class="filter-btn active" data-filter="open">Open</button>
-          <button class="filter-btn" data-filter="resolved">Resolved</button>
-          <button class="filter-btn" data-filter="finalized">Finalized</button>
-          <button class="filter-btn" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="mine">My Markets</button>
+          <button id="explore-mine-toggle" class="filter-btn">My Markets</button>
         </div>
       </div>
 
@@ -74,12 +70,26 @@
       </div>
 
       <div class="explore-sort">
+        <label class="sort-label">Status</label>
+        <select id="explore-status-filter" class="sort-select">
+          <option value="open" selected>Open</option>
+          <option value="closed">Closed</option>
+          <option value="resolved">Resolved</option>
+          <option value="finalized">Finalized</option>
+          <option value="voided">Voided</option>
+          <option value="all">All</option>
+        </select>
+
         <label class="sort-label">Sort by</label>
         <select id="explore-sort-select" class="sort-select">
+          <option value="deadline-asc" selected>Closing Soon</option>
+          <option value="deadline-desc">Deadline ↓</option>
+          <option value="created-desc">Newest First</option>
+          <option value="created-asc">Oldest First</option>
           <option value="value-desc">Value (High → Low)</option>
           <option value="value-asc">Value (Low → High)</option>
-          <option value="deadline" selected>Closing Soon</option>
-          <option value="positions">Most Positions</option>
+          <option value="positions-desc">Most Positions</option>
+          <option value="positions-asc">Least Positions</option>
         </select>
 
         <label class="sort-label" style="margin-left:12px">Creator</label>
@@ -113,7 +123,7 @@
     <main id="view-watchlist" class="view hidden">
       <div class="explore-header">
         <h2 class="section-title">Watchlist</h2>
-        <div class="explore-filters" style="gap:6px">
+        <div class="explore-filters">
           <button id="manage-categories-btn" class="filter-btn" title="Manage categories">⚙</button>
           <button id="clear-watchlist-btn" class="filter-btn">Clear All</button>
         </div>
@@ -167,6 +177,7 @@
           <select id="positions-status-filter" class="sort-select">
             <option value="all">All Statuses</option>
             <option value="0">Open</option>
+            <option value="closed">Closed</option>
             <option value="1">Resolved</option>
             <option value="2">Finalized</option>
             <option value="3">Voided</option>
@@ -183,6 +194,8 @@
           <select id="positions-sort" class="sort-select">
             <option value="deadline-desc">Deadline ↓</option>
             <option value="deadline-asc">Deadline ↑</option>
+            <option value="created-desc">Newest First</option>
+            <option value="created-asc">Oldest First</option>
             <option value="amount-desc">Amount ↓</option>
             <option value="amount-asc">Amount ↑</option>
             <option value="payout-desc">Est. Payout ↓</option>
@@ -477,6 +490,7 @@
   <footer class="footer">
     <span class="footer-text"><a href="https://www.pelfortsolana.com/" target="_blank" rel="noopener noreferrer" class="footer-brand-link"><span class="accent">P</span> PELFMONT</a></span>
     <span class="footer-text">Trustless · Non-Custodial · On-Chain</span>
+    <button class="footer-admin-link">Admin</button>
   </footer>
 
   <script type="module" src="./js/app.js"></script>

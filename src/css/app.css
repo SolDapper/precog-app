@@ -348,7 +348,7 @@ body::before {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 12px;
+  margin: 3px 0 20px 0;
 }
 .section-title {
   font-family: var(--font-display);
@@ -359,6 +359,23 @@ body::before {
   margin-bottom: 12px;
   padding-left: 4px;
 }
+.explore-header .section-title {
+  margin-bottom: 0;
+}
+.filter-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.filter-toggle-label input[type="checkbox"] {
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
 .explore-filters {
   display: flex;
   gap: 4px;
@@ -1674,8 +1691,6 @@ body::before {
 /* ── Responsive: Tablets & Small Laptops ────────────────────────── */
 @media (max-width: 700px) {
   .nav-btn { font-size: 0.68rem; padding: 9px 6px; letter-spacing: 0.04em; }
-  .explore-filters { flex-wrap: wrap; gap: 4px; }
-  .filter-btn { font-size: 0.72rem; padding: 5px 9px; }
   .explore-sort {
     flex-wrap: wrap;
     gap: 6px;
@@ -1711,8 +1726,6 @@ body::before {
   /* Explore header: stack title and filters */
   .explore-header { flex-direction: column; align-items: flex-start; gap: 8px; }
   .section-title { font-size: 1rem; }
-  .explore-filters { flex-wrap: wrap; gap: 3px; }
-  .filter-btn { font-size: 0.62rem; padding: 4px 7px; }
 
   /* Sort/filter row: stack into label+select rows */
   .explore-sort {
@@ -1723,6 +1736,7 @@ body::before {
   }
   .explore-sort .sort-label { margin-left: 0 !important; font-size: 0.7rem; }
   .explore-sort .sort-select { width: 100%; font-size: 0.72rem; padding: 7px 8px; }
+  .explore-sort .token-chooser { width: 100%; }
 
   /* Cards */
   .market-card { padding: 14px; }
@@ -1756,7 +1770,6 @@ body::before {
   .logo-text { font-size: 0.78rem; }
   .logo-icon { width: 44px; height: 44px; }
   .nav-btn { font-size: 0.52rem; padding: 7px 1px; letter-spacing: 0; }
-  .filter-btn { font-size: 0.58rem; padding: 3px 5px; }
   .market-card-title { font-size: 0.82rem; }
   .section-title { font-size: 0.92rem; }
 }

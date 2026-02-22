@@ -17,7 +17,8 @@ import * as watchlist from './watchlist.js';
 // ═══════════════════════════════════════════════════════════════════
 let allMarkets = [];
 let currentFilter = 'open';
-let currentSort = 'deadline';
+let currentSort = 'deadline-asc';
+let currentMineOnly = false;
 let currentCreatorFilter = 'all';
 let currentCategoryFilter = 'all';
 let currentMarketPubkey = null;
@@ -249,25 +250,37 @@ function renderMarketsList(resetPage = true) {
     }
   }
 
-  // Status / mine filter
-  if (currentFilter === 'mine') {
+  // Status filter
+  if (currentFilter === 'open') {
+    filtered = filtered.filter(m => m.account.status === 0 && !m.account._expired);
+  } else if (currentFilter === 'closed') {
+    filtered = filtered.filter(m => m.account._expired);
+  } else if (currentFilter !== 'all') {
+    const map = { resolved: 1, finalized: 2, voided: 3 };
+    const val = map[currentFilter];
+    if (val !== undefined) filtered = filtered.filter(m => m.account.status === val);
+  }
+
+  // My Markets toggle
+  if (currentMineOnly) {
     const w = wallet.getWallet();
     if (!w) {
       listEl.innerHTML = '<div class="empty-state">Connect your wallet to see your markets.</div>';
       return;
     }
     const myAddr = w.publicKey.toBase58();
-    filtered = filtered.filter(m => m.account.authority.toBase58() === myAddr);
-  } else if (currentFilter !== 'all') {
-    const map = { open: 0, resolved: 1, finalized: 2, voided: 3 };
-    const val = map[currentFilter];
-    if (val !== undefined) filtered = filtered.filter(m => m.account.status === val);
+    filtered = filtered.filter(m => m.account.authority.toBase58() === myAddr || m.account.creator.toBase58() === myAddr);
   }
+
   switch (currentSort) {
     case 'value-desc': filtered.sort((a, b) => (b.account._usdVolume || 0) - (a.account._usdVolume || 0)); break;
     case 'value-asc': filtered.sort((a, b) => (a.account._usdVolume || 0) - (b.account._usdVolume || 0)); break;
-    case 'deadline': filtered.sort((a, b) => Number(a.account.resolutionDeadline - b.account.resolutionDeadline)); break;
-    case 'positions': filtered.sort((a, b) => Number(b.account.totalPositions - a.account.totalPositions)); break;
+    case 'deadline-asc': filtered.sort((a, b) => Number(a.account.resolutionDeadline - b.account.resolutionDeadline)); break;
+    case 'deadline-desc': filtered.sort((a, b) => Number(b.account.resolutionDeadline - a.account.resolutionDeadline)); break;
+    case 'created-desc': filtered.sort((a, b) => Number(b.account.createdAt - a.account.createdAt)); break;
+    case 'created-asc': filtered.sort((a, b) => Number(a.account.createdAt - b.account.createdAt)); break;
+    case 'positions-desc': filtered.sort((a, b) => Number(b.account.totalPositions - a.account.totalPositions)); break;
+    case 'positions-asc': filtered.sort((a, b) => Number(a.account.totalPositions - b.account.totalPositions)); break;
   }
 
   // Store for pagination
@@ -416,13 +429,16 @@ document.getElementById('explore-chart-toggle')?.addEventListener('click', () =>
 });
 
 // Filters
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentFilter = btn.dataset.filter;
-    renderMarketsList();
-  });
+// Status dropdown filter
+document.getElementById('explore-status-filter')?.addEventListener('change', (e) => {
+  currentFilter = e.target.value;
+  renderMarketsList();
+});
+// My Markets toggle button
+document.getElementById('explore-mine-toggle')?.addEventListener('click', (e) => {
+  currentMineOnly = !currentMineOnly;
+  e.target.classList.toggle('active', currentMineOnly);
+  renderMarketsList();
 });
 document.getElementById('explore-sort-select')?.addEventListener('change', (e) => {
   currentSort = e.target.value;
@@ -1138,9 +1154,15 @@ function renderPositionsList(entries, listEl) {
   }
 
   // Status filter
-  if (currentPositionsStatusFilter !== 'all') {
+  if (currentPositionsStatusFilter === 'closed') {
+    filtered = filtered.filter(e => e.status === 0 && e.mk && e.mk._expired);
+  } else if (currentPositionsStatusFilter !== 'all') {
     const statusVal = parseInt(currentPositionsStatusFilter);
-    filtered = filtered.filter(e => e.status === statusVal);
+    if (statusVal === 0) {
+      filtered = filtered.filter(e => e.status === 0 && !(e.mk && e.mk._expired));
+    } else {
+      filtered = filtered.filter(e => e.status === statusVal);
+    }
   }
 
   // Result filter
@@ -1176,6 +1198,12 @@ function renderPositionsList(entries, listEl) {
       break;
     case 'status':
       filtered.sort((a, b) => a.status - b.status || Number(b.deadline - a.deadline));
+      break;
+    case 'created-desc':
+      filtered.sort((a, b) => Number(b.pos.lastDepositAt - a.pos.lastDepositAt));
+      break;
+    case 'created-asc':
+      filtered.sort((a, b) => Number(a.pos.lastDepositAt - b.pos.lastDepositAt));
       break;
   }
 
