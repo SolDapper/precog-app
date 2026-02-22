@@ -1307,7 +1307,7 @@ body::before {
 }
 .chart-toggle-btn:hover { color: var(--gold); border-color: var(--border-hover); }
 .chart-toggle-btn.open { color: var(--gold); margin-bottom: 0; }
-.chart-toggle-btn { margin-bottom: 14px; }
+.chart-toggle-btn { margin-bottom: 15px; }
 .chart-container {
   padding: 16px;
   margin-top: 16px;
