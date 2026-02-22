@@ -327,29 +327,33 @@
 
         <div class="manual-section">
           <h3 class="manual-heading">Exploring Markets</h3>
-          <p class="manual-text">The <strong>Explore</strong> tab is your home screen. Each market card shows outcome probability bars, volume, position count, and time remaining. If you have a position in a market, an estimate badge shows your projected payout right on the card.</p>
-          <p class="manual-text"><strong>Status tabs</strong> — Filter by Open, Resolved, Finalized, or All. The "My Markets" tab shows only markets you created.</p>
-          <p class="manual-text"><strong>Sort &amp; filter</strong> — Sort by Closing Soon, Volume, or Most Positions. Filter by creator (with SNS name display), category, or token denomination.</p>
-          <p class="manual-text"><strong>Hot Markets chart</strong> — Toggle the bar chart to see the top 10 markets by volume. Voided markets are excluded. Click any bar to jump to that market.</p>
+          <p class="manual-text">The <strong>Explore</strong> tab is your home screen. Each market card shows outcome probability bars, volume, USD value, position count, time remaining, and creator (with SNS name when available). If you have a position in a market, an estimate badge shows your projected payout with USD value right on the card.</p>
+          <p class="manual-text"><strong>Status filter</strong> — Use the dropdown to filter by Open, Closed (past deadline, awaiting resolution), Resolved, Finalized, Voided, or All. Default is Open.</p>
+          <p class="manual-text"><strong>My Markets</strong> — Toggle the button to show only markets where you are the authority or creator.</p>
+          <p class="manual-text"><strong>Sort</strong> — Sort by Closing Soon (default), Deadline, Newest/Oldest, Value High/Low, or Most/Least Positions. Additional filters for creator, category, and token denomination.</p>
+          <p class="manual-text"><strong>Hot Markets chart</strong> — Toggle the bar chart to see the top 10 open markets by USD volume. Closed and voided markets are excluded. Click any bar to jump to that market.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Market Detail</h3>
-          <p class="manual-text">Tap any market card to open its detail page. You'll see the full description, outcome distribution charts, pool breakdown, authority and creator addresses, fee structure, and denomination.</p>
-          <p class="manual-text">If you hold a position, estimate badges appear next to the watchlist button showing your projected payout (or win/loss once finalized).</p>
+          <p class="manual-text">Tap any market card to open its detail page. You'll see the full description, outcome distribution charts with USD values, pool breakdown, authority and creator addresses (with SNS names), fee structure, and denomination.</p>
+          <p class="manual-text">If you hold a position, estimate badges appear showing your projected payout with USD equivalent (or win/loss once finalized).</p>
           <p class="manual-text">Use the <strong>Share</strong> button to send the market link to others via your device's native share sheet, or it will copy the link to your clipboard.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Choosing a Position</h3>
-          <p class="manual-text">On the market detail page, select the outcome you want to take a position on, enter your amount, and review the estimated payout. The estimate updates live based on current pool sizes and the total fee.</p>
+          <p class="manual-text">On the market detail page (open markets only), select the outcome you want to take a position on, enter your amount, and review the estimated payout with USD value. The estimate updates live based on current pool sizes and the total fee.</p>
+          <p class="manual-text">For SOL markets, the minimum position is 0.01 SOL. Token markets have no minimum — any amount works depending on the token.</p>
           <p class="manual-text">Tap <strong>Confirm Position</strong> and approve the transaction in your wallet. Your funds go directly into the on-chain vault — not to any company or individual.</p>
           <p class="manual-text">Markets can be denominated in native SOL, SPL tokens, or Token-2022 tokens. The denomination is shown on the market card and detail page.</p>
+          <p class="manual-text">Markets that are past their deadline show as <strong>Awaiting Resolution</strong> and no longer accept new positions.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Market Lifecycle</h3>
           <p class="manual-text"><strong>Open</strong> — Accepting positions. Anyone can take a position on any outcome.</p>
+          <p class="manual-text"><strong>Awaiting Resolution</strong> — The deadline has passed but the authority hasn't resolved yet. No new positions accepted. Displayed as "Closed" in the status filter.</p>
           <p class="manual-text"><strong>Resolved</strong> — The authority declared a winning outcome. A 24-hour dispute window begins. No new positions.</p>
           <p class="manual-text"><strong>Finalized</strong> — The dispute window has passed. Winners can claim payouts.</p>
           <p class="manual-text"><strong>Voided</strong> — The authority cancelled the market. All participants can claim full refunds.</p>
@@ -359,9 +363,10 @@
           <h3 class="manual-heading">Positions — Filtering &amp; Sorting</h3>
           <p class="manual-text">The <strong>Positions</strong> tab shows all your positions across every market. Use the filters to zero in on what you need:</p>
           <p class="manual-text"><strong>Category</strong> — Filter by the market's on-chain category.</p>
-          <p class="manual-text"><strong>Status</strong> — Show only positions in Open, Resolved, Finalized, or Voided markets.</p>
+          <p class="manual-text"><strong>Status</strong> — Show only positions in Open, Closed (past deadline), Resolved, Finalized, or Voided markets.</p>
           <p class="manual-text"><strong>Result</strong> — Filter by Unclaimed, Claimed, Winning, or Losing. Use "Winning + Unclaimed" together to quickly find everything you need to claim.</p>
-          <p class="manual-text"><strong>Sort</strong> — Order by deadline, position size, estimated payout, or group by market status.</p>
+          <p class="manual-text"><strong>Sort</strong> — Order by deadline, newest/oldest, position size, estimated payout, or group by market status.</p>
+          <p class="manual-text">Each position card shows the outcome, amount, deposit date, deadline, and creator. USD values are shown on estimate badges when price data is available.</p>
           <p class="manual-text">If a market is finalized and you hold the winning outcome, a <strong>Claim Winnings</strong> button appears. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
         </div>
 
@@ -393,10 +398,16 @@
         </div>
 
         <div class="manual-section">
+          <h3 class="manual-heading">Protocol Pause</h3>
+          <p class="manual-text">The protocol admin can pause the system, which prevents new markets from being created and new positions from being placed. Claims and refunds always remain available even when paused — your funds are never locked.</p>
+        </div>
+
+        <div class="manual-section">
           <h3 class="manual-heading">Tips</h3>
           <p class="manual-text">• Outcome bars show implied probabilities based on pool sizes — they update live as positions come in.</p>
-          <p class="manual-text">• Payout estimates appear on both market cards and position cards when you have an active position.</p>
+          <p class="manual-text">• Payout estimates with USD values appear on market cards, position cards, and the bet input when you have an active position.</p>
           <p class="manual-text">• Data refreshes automatically every 20 seconds on the Explore page.</p>
+          <p class="manual-text">• Priority fee level and compute tolerance are configurable via environment variables (PRIORITY and TOLERANCE) at build time.</p>
           <p class="manual-text">• This app has zero backend infrastructure. If the website goes down, your funds are always safe on-chain and recoverable with any Solana program explorer.</p>
         </div>
       </div>
