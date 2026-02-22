@@ -103,6 +103,17 @@ export function showStatus(msg, type = 'info') {
 
 export function hideStatus() { statusBar()?.classList.add('hidden'); }
 
+export function showBetStatus(msg, type = 'info') {
+  const el = document.getElementById('bet-status');
+  if (!el) { showStatus(msg, type); return; }
+  el.textContent = msg;
+  el.className = `bet-status ${type}`;
+  el.classList.remove('hidden');
+  if (type !== 'error') {
+    setTimeout(() => el.classList.add('hidden'), 5000);
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // Transaction Overlay
 // ═══════════════════════════════════════════════════════════════════
@@ -298,6 +309,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
           <div id="bet-payout-estimate" class="bet-payout-estimate hidden">
             Est. payout: <span class="bet-payout-value">—</span>
           </div>
+          <div id="bet-status" class="bet-status hidden"></div>
           <button id="place-bet-btn" class="action-btn primary-btn" disabled>Select an Outcome</button>
         </div>
       </div>

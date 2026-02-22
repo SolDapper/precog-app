@@ -750,6 +750,26 @@ body::before {
 }
 .bet-payout-value { color: var(--green); font-weight: 700; }
 
+.bet-status {
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  text-align: center;
+}
+.bet-status.success {
+  background: rgba(76, 175, 80, 0.15);
+  color: var(--green);
+}
+.bet-status.error {
+  background: rgba(244, 67, 54, 0.15);
+  color: #f44336;
+}
+.bet-status.info {
+  background: rgba(255, 188, 12, 0.1);
+  color: var(--gold);
+}
+
 /* Action buttons */
 .action-btn {
   width: 100%;

@@ -940,11 +940,11 @@ function updateBetUI() {
 async function handlePlaceBet() {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p || selectedOutcome === null || !currentMarketPubkey || !currentMarketData) return;
-  if (currentMarketData.status !== 0 || currentMarketData._expired) { ui.showStatus('This market is no longer open for positions.', 'error'); return; }
+  if (currentMarketData.status !== 0 || currentMarketData._expired) { ui.showBetStatus('This market is no longer open for positions.', 'error'); return; }
   const amount = parseFloat(document.getElementById('bet-amount-input').value);
   if (!amount || amount <= 0) return;
   const isSolBet = currentMarketData.denominationName === 'NativeSol';
-  if (isSolBet && amount < 0.01) { ui.showStatus('Minimum position is 0.01 SOL.', 'error'); return; }
+  if (isSolBet && amount < 0.01) { ui.showBetStatus('Minimum position is 0.01 SOL.', 'error'); return; }
   try {
     ui.showTxOverlay('Building transaction…');
     const isSol = currentMarketData.denominationName === 'NativeSol';
@@ -973,11 +973,11 @@ async function handlePlaceBet() {
     ui.updateTxOverlay('Please approve…');
     const sig = await sdk.signAndSend(ix, w.publicKey, p);
     ui.hideTxOverlay();
-    ui.showStatus(`Position confirmed! ${sig.slice(0, 8)}…`, 'success');
+    ui.showBetStatus(`Position confirmed! ${sig.slice(0, 8)}…`, 'success');
     openMarketDetail(currentMarketPubkey);
   } catch (err) {
     ui.hideTxOverlay();
-    ui.showStatus(err.message || 'Position failed', 'error');
+    ui.showBetStatus(err.message || 'Position failed', 'error');
   }
 }
 
