@@ -467,7 +467,7 @@ function populateCreatorFilter() {
   _lastCreatorSet = key;
 
   const prev = sel.value;
-  sel.innerHTML = '<option value="all">All Creators</option>';
+  sel.innerHTML = '<option value="all">All Makers</option>';
   for (const [addr, short] of creators) {
     const opt = document.createElement('option');
     opt.value = addr;

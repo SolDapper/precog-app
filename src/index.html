@@ -45,7 +45,7 @@
       <button class="nav-btn active" data-view="explore">Explore</button>
       <button class="nav-btn" data-view="watchlist">Watchlist</button>
       <button class="nav-btn" data-view="positions">Positions</button>
-      <button class="nav-btn" data-view="create">Create</button>
+      <button class="nav-btn" data-view="create">Make</button>
       <button class="nav-btn" data-view="info">WUT?</button>
     </nav>
 
@@ -92,9 +92,9 @@
           <option value="positions-asc">Least Positions</option>
         </select>
 
-        <label class="sort-label" style="margin-left:12px">Creator</label>
+        <label class="sort-label" style="margin-left:12px">Maker</label>
         <select id="explore-creator-filter" class="sort-select">
-          <option value="all">All Creators</option>
+          <option value="all">All Makers</option>
         </select>
 
         <label class="sort-label" style="margin-left:12px">Category</label>
@@ -213,7 +213,7 @@
     <!-- VIEW: Create Market -->
     <!-- ═══════════════════════════════════════════════ -->
     <main id="view-create" class="view hidden">
-      <h2 class="section-title">Create Market</h2>
+      <h2 class="section-title">Make Market</h2>
 
       <div class="create-form card">
         <div class="form-group">
@@ -265,7 +265,7 @@
             <input id="create-deadline" type="datetime-local" class="form-input">
           </div>
           <div class="form-group form-group-half">
-            <label class="form-label">Creator Fee (bps)</label>
+            <label class="form-label">Maker Fee (bps)</label>
             <input id="create-fee" type="number" class="form-input" placeholder="0" min="0" max="500">
             <span class="form-hint">Your additional fee on top of the protocol default. 0–500 bps (5% max). Leave blank or 0 for no extra fee.</span>
           </div>
@@ -306,7 +306,7 @@
         </div>
 
         <button id="create-market-btn" class="action-btn primary-btn" disabled>
-          Connect Wallet to Create
+          Connect Wallet to Make
         </button>
         <div id="create-status" class="form-status hidden"></div>
       </div>
@@ -327,16 +327,16 @@
 
         <div class="manual-section">
           <h3 class="manual-heading">Exploring Markets</h3>
-          <p class="manual-text">The <strong>Explore</strong> tab is your home screen. Each market card shows outcome probability bars, volume, USD value, position count, time remaining, and creator (with SNS name when available). If you have a position in a market, an estimate badge shows your projected payout with USD value right on the card.</p>
+          <p class="manual-text">The <strong>Explore</strong> tab is your home screen. Each market card shows outcome probability bars, volume, USD value, position count, time remaining, and maker (with SNS name when available). If you have a position in a market, an estimate badge shows your projected payout with USD value right on the card.</p>
           <p class="manual-text"><strong>Status filter</strong> — Use the dropdown to filter by Open, Closed (past deadline, awaiting resolution), Resolved, Finalized, Voided, or All. Default is Open.</p>
-          <p class="manual-text"><strong>My Markets</strong> — Toggle the button to show only markets where you are the authority or creator.</p>
-          <p class="manual-text"><strong>Sort</strong> — Sort by Closing Soon (default), Deadline, Newest/Oldest, Value High/Low, or Most/Least Positions. Additional filters for creator, category, and token denomination.</p>
+          <p class="manual-text"><strong>My Markets</strong> — Toggle the button to show only markets where you are the authority or maker.</p>
+          <p class="manual-text"><strong>Sort</strong> — Sort by Closing Soon (default), Deadline, Newest/Oldest, Value High/Low, or Most/Least Positions. Additional filters for maker, category, and token denomination.</p>
           <p class="manual-text"><strong>Hot Markets chart</strong> — Toggle the bar chart to see the top 10 open markets by USD volume. Closed and voided markets are excluded. Click any bar to jump to that market.</p>
         </div>
 
         <div class="manual-section">
           <h3 class="manual-heading">Market Detail</h3>
-          <p class="manual-text">Tap any market card to open its detail page. You'll see the full description, outcome distribution charts with USD values, pool breakdown, authority and creator addresses (with SNS names), fee structure, and denomination.</p>
+          <p class="manual-text">Tap any market card to open its detail page. You'll see the full description, outcome distribution charts with USD values, pool breakdown, authority and maker addresses (with SNS names), fee structure, and denomination.</p>
           <p class="manual-text">If you hold a position, estimate badges appear showing your projected payout with USD equivalent (or win/loss once finalized).</p>
           <p class="manual-text">Use the <strong>Share</strong> button to send the market link to others via your device's native share sheet, or it will copy the link to your clipboard.</p>
         </div>
@@ -366,16 +366,16 @@
           <p class="manual-text"><strong>Status</strong> — Show only positions in Open, Closed (past deadline), Resolved, Finalized, or Voided markets.</p>
           <p class="manual-text"><strong>Result</strong> — Filter by Unclaimed, Claimed, Winning, or Losing. Use "Winning + Unclaimed" together to quickly find everything you need to claim.</p>
           <p class="manual-text"><strong>Sort</strong> — Order by deadline, newest/oldest, position size, estimated payout, or group by market status.</p>
-          <p class="manual-text">Each position card shows the outcome, amount, deposit date, deadline, and creator. USD values are shown on estimate badges when price data is available.</p>
+          <p class="manual-text">Each position card shows the outcome, amount, deposit date, deadline, and maker. USD values are shown on estimate badges when price data is available.</p>
           <p class="manual-text">If a market is finalized and you hold the winning outcome, a <strong>Claim Winnings</strong> button appears. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
         </div>
 
         <div class="manual-section">
-          <h3 class="manual-heading">Creating a Market</h3>
-          <p class="manual-text">Go to the <strong>Create</strong> tab. Fill in a title, optional category, description, and define 2–10 outcomes. Set a resolution deadline.</p>
-          <p class="manual-text"><strong>Creator Fee</strong> — Optionally set an additional fee (0–500 bps / up to 5%) that you earn on top of the protocol default. This is paid out of winning claims directly to your wallet.</p>
+          <h3 class="manual-heading">Making a Market</h3>
+          <p class="manual-text">Go to the <strong>Make</strong> tab. Fill in a title, optional category, description, and define 2–10 outcomes. Set a resolution deadline.</p>
+          <p class="manual-text"><strong>Maker Fee</strong> — Optionally set an additional fee (0–500 bps / up to 5%) that you earn on top of the protocol default. This is paid out of winning claims directly to your wallet.</p>
           <p class="manual-text"><strong>Denomination</strong> — Choose Native SOL, SPL Token, or Token-2022. For token markets, paste the mint address and a live preview with the token icon, name, and symbol will appear from on-chain metadata.</p>
-          <p class="manual-text">The category is stored on-chain inside the description and displayed as a badge on market cards. As the creator, you are the market authority — responsible for resolving with the correct outcome or voiding if needed.</p>
+          <p class="manual-text">The category is stored on-chain inside the description and displayed as a badge on market cards. As the maker, you are the market authority — responsible for resolving with the correct outcome or voiding if needed.</p>
         </div>
 
         <div class="manual-section">
@@ -394,7 +394,7 @@
         <div class="manual-section">
           <h3 class="manual-heading">Fees</h3>
           <p class="manual-text">Fees are charged on winning claims only — never on losing positions, voided refunds, or market creation.</p>
-          <p class="manual-text">The total fee is split between the protocol treasury (the default fee set by the admin) and the market creator (any additional fee they set). The fee breakdown is visible on each market's detail page.</p>
+          <p class="manual-text">The total fee is split between the protocol treasury (the default fee set by the admin) and the market maker (any additional fee they set). The fee breakdown is visible on each market's detail page.</p>
         </div>
 
         <div class="manual-section">
@@ -433,7 +433,7 @@
         <div class="form-group">
           <label class="form-label">Default Fee (bps)</label>
           <input id="init-fee-bps" type="number" class="form-input" placeholder="200" min="0" max="10000" value="200">
-          <span class="form-hint">Basis points (100 = 1%). Market creators can override up to 500 bps.</span>
+          <span class="form-hint">Basis points (100 = 1%). Market makers can override up to 500 bps.</span>
         </div>
         <button id="init-protocol-btn" class="action-btn primary-btn" disabled>Connect Wallet to Initialize</button>
         <div id="init-status" class="form-status hidden"></div>

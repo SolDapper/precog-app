@@ -246,7 +246,7 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
       </div>
       <div class="market-stat">
         <span class="market-stat-value sns-resolve" data-address="${market.creator.toBase58()}">${shortAddress(market.creator.toBase58())}</span>
-        <span class="market-stat-label">Creator</span>
+        <span class="market-stat-label">Maker</span>
       </div>
     </div>
   `;
@@ -433,7 +433,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
       </div>
       <div class="meta-item">
         <span class="meta-label">Fee</span>
-        <span class="meta-value">${market.feeBps / 100}%${market.creatorFeeBps > 0 ? ` <span style="font-size:0.68rem;color:var(--text-muted)">(${(market.feeBps - market.creatorFeeBps) / 100}% protocol + ${market.creatorFeeBps / 100}% creator)</span>` : ''}</span>
+        <span class="meta-value">${market.feeBps / 100}%${market.creatorFeeBps > 0 ? ` <span style="font-size:0.68rem;color:var(--text-muted)">(${(market.feeBps - market.creatorFeeBps) / 100}% protocol + ${market.creatorFeeBps / 100}% maker)</span>` : ''}</span>
       </div>
       <div class="meta-item">
         <span class="meta-label">Denomination</span>
@@ -444,7 +444,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
         <span class="meta-value sns-resolve" data-address="${market.authority.toBase58()}" style="font-size:0.72rem">${shortAddress(market.authority.toBase58())}</span>
       </div>
       <div class="meta-item">
-        <span class="meta-label">Creator</span>
+        <span class="meta-label">Maker</span>
         <span class="meta-value sns-resolve" data-address="${market.creator.toBase58()}" style="font-size:0.72rem">${shortAddress(market.creator.toBase58())}</span>
       </div>
     </div>
@@ -578,7 +578,7 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
         <span class="position-detail-value">${deadlineStr}</span>
       </div>
       <div class="position-detail">
-        <span class="position-detail-label">Creator</span>
+        <span class="position-detail-label">Maker</span>
         <span class="position-detail-value sns-resolve" data-address="${market.creator.toBase58()}">${shortAddress(market.creator.toBase58())}</span>
       </div>
     </div>
