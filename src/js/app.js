@@ -62,7 +62,7 @@ async function refreshUserPositions() {
 // ═══════════════════════════════════════════════════════════════════
 // View Router
 // ═══════════════════════════════════════════════════════════════════
-const viewNames = ['explore', 'market', 'positions', 'create', 'admin', 'watchlist', 'info'];
+const viewNames = ['explore', 'market', 'positions', 'make', 'admin', 'watchlist', 'info'];
 
 /** Update the URL hash without triggering hashchange handler re-entrantly */
 let _suppressHashChange = false;
@@ -85,7 +85,7 @@ function switchView(name, { updateHash = true } = {}) {
   if (name === 'explore') loadMarkets();
   if (name === 'positions') loadPositions();
   if (name === 'admin') loadAdmin();
-  if (name === 'create') updateCreateForm();
+  if (name === 'make') updateCreateForm();
   if (name === 'watchlist') loadWatchlist();
 }
 
@@ -2158,7 +2158,7 @@ function setupWallet() {
         const view = activeNav.dataset.view;
         if (view === 'explore') renderMarketsList(false);
         if (view === 'positions') loadPositions();
-        if (view === 'create') updateCreateForm();
+        if (view === 'make') updateCreateForm();
         if (view === 'watchlist') loadWatchlist();
         if (view === 'admin') loadAdmin();
       }
@@ -2233,7 +2233,7 @@ document.querySelector('.logo-btn')?.addEventListener('click', () => switchView(
  *   #/positions        → My Positions view
  *   #/watchlist        → Watchlist view
  *   #/info             → Info / Manual view
- *   #/create           → Create Market view
+ *   #/make             → Make Market view
  *   #/admin            → Admin view
  *   (empty / unknown)  → Explore view
  */
