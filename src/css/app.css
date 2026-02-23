@@ -378,7 +378,7 @@ body::before {
 
 .explore-filters {
   display: flex;
-  gap: 4px;
+  gap: 12px;
 }
 #explore-mine-toggle {
   padding: 7px 14px;
