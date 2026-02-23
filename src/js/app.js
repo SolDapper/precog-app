@@ -1543,9 +1543,10 @@ async function handleCreateMarket() {
     // Find the next available market ID — skip any PDAs that already exist on-chain
     let marketId = config.totalMarketsCreated + 1n;
     let market, vault;
+    const conn = sdk.getConnection();
     for (let attempt = 0; attempt < 20; attempt++) {
       [market] = await sdk.findMarket(w.publicKey, marketId);
-      const info = await sdk.connection.getAccountInfo(market);
+      const info = await conn.getAccountInfo(market);
       if (!info) break; // PDA is free
       marketId++;
     }
