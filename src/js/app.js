@@ -19,6 +19,7 @@ let allMarkets = [];
 let currentFilter = 'open';
 let currentSort = 'deadline-asc';
 let currentMineOnly = false;
+let currentStreetBetsOnly = false;
 let currentCreatorFilter = 'all';
 let currentCategoryFilter = 'all';
 let currentMarketPubkey = null;
@@ -177,6 +178,19 @@ async function loadMarkets() {
       account._expired = account.status === 0 && account.resolutionDeadline <= nowSec;
     }
 
+    // Fetch creation times for Street Bet detection — non-blocking
+    Promise.all(allMarkets.map(async ({ pubkey, account }) => {
+      const addr = pubkey.toBase58();
+      const creationTime = await fetchCreationTime(addr);
+      if (creationTime) {
+        const runtime = Number(account.resolutionDeadline) - creationTime;
+        account._isStreetBet = runtime > 0 && runtime <= STREET_BET_SECONDS;
+        account._creationTime = creationTime;
+      } else {
+        account._isStreetBet = false;
+      }
+    })).then(() => renderMarketsList(false)).catch(() => {});
+
     // Fetch USD prices for all unique mints (SOL + tokens) — non-blocking for chart
     const allMints = new Set();
     allMints.add(SOL_MINT); // wrapped SOL for price lookup
@@ -272,13 +286,18 @@ function renderMarketsList(resetPage = true) {
     filtered = filtered.filter(m => m.account.authority.toBase58() === myAddr || m.account.creator.toBase58() === myAddr);
   }
 
+  // Street Bets filter
+  if (currentStreetBetsOnly) {
+    filtered = filtered.filter(m => m.account._isStreetBet);
+  }
+
   switch (currentSort) {
     case 'value-desc': filtered.sort((a, b) => (b.account._usdVolume || 0) - (a.account._usdVolume || 0)); break;
     case 'value-asc': filtered.sort((a, b) => (a.account._usdVolume || 0) - (b.account._usdVolume || 0)); break;
     case 'deadline-asc': filtered.sort((a, b) => Number(a.account.resolutionDeadline - b.account.resolutionDeadline)); break;
     case 'deadline-desc': filtered.sort((a, b) => Number(b.account.resolutionDeadline - a.account.resolutionDeadline)); break;
-    case 'created-desc': filtered.sort((a, b) => Number(b.account.createdAt - a.account.createdAt)); break;
-    case 'created-asc': filtered.sort((a, b) => Number(a.account.createdAt - b.account.createdAt)); break;
+    case 'created-desc': filtered.sort((a, b) => (b.account._creationTime || Number(b.account.marketId)) - (a.account._creationTime || Number(a.account.marketId))); break;
+    case 'created-asc': filtered.sort((a, b) => (a.account._creationTime || Number(a.account.marketId)) - (b.account._creationTime || Number(b.account.marketId))); break;
     case 'positions-desc': filtered.sort((a, b) => Number(b.account.totalPositions - a.account.totalPositions)); break;
     case 'positions-asc': filtered.sort((a, b) => Number(a.account.totalPositions - b.account.totalPositions)); break;
   }
@@ -440,6 +459,11 @@ document.getElementById('explore-mine-toggle')?.addEventListener('click', (e) =>
   e.target.classList.toggle('active', currentMineOnly);
   renderMarketsList();
 });
+document.getElementById('explore-street-toggle')?.addEventListener('click', (e) => {
+  currentStreetBetsOnly = !currentStreetBetsOnly;
+  e.target.classList.toggle('active', currentStreetBetsOnly);
+  renderMarketsList();
+});
 document.getElementById('explore-sort-select')?.addEventListener('change', (e) => {
   currentSort = e.target.value;
   renderMarketsList();
@@ -546,6 +570,36 @@ const NATIVE_SOL_MINT = '11111111111111111111111111111111';
 const SOL_ICON = 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png';
 let _lastTokenSet = '';
 let _tokenIconCache = new Map(); // mint → icon URL
+
+// ── Market creation time cache (for Street Bet detection) ────────
+const STREET_BET_SECONDS = 1800; // 30 minutes
+let _creationTimeCache = new Map(); // market address → unix timestamp
+
+/** Fetch market creation time from its earliest transaction signature */
+async function fetchCreationTime(marketAddress) {
+  const addr = typeof marketAddress === 'string' ? marketAddress : marketAddress.toBase58();
+  if (_creationTimeCache.has(addr)) return _creationTimeCache.get(addr);
+  try {
+    const conn = sdk.getConnection();
+    // Returns newest-first; fetch a batch and take the last (earliest) entry
+    const sigs = await conn.getSignaturesForAddress(
+      new PublicKey(addr),
+      { limit: 20 },
+      'finalized'
+    );
+    const earliest = sigs.length > 0 ? sigs[sigs.length - 1] : null;
+    if (earliest?.blockTime) {
+      _creationTimeCache.set(addr, earliest.blockTime);
+      return earliest.blockTime;
+    }
+  } catch {}
+  return null;
+}
+
+/** Check if a market qualifies as a Street Bet (runtime < 30 min) */
+function isStreetBet(market) {
+  return market._isStreetBet === true;
+}
 
 /** Fetch token metadata via Helius DAS getAsset */
 async function fetchTokenIcon(mint) {
@@ -826,6 +880,15 @@ async function openMarketDetail(pubkey) {
     // Mark open markets past their deadline
     const nowSec = BigInt(Math.floor(Date.now() / 1000));
     market._expired = market.status === 0 && market.resolutionDeadline <= nowSec;
+
+    // Street Bet detection
+    const creationTime = await fetchCreationTime(pubkey.toBase58());
+    if (creationTime) {
+      const runtime = Number(market.resolutionDeadline) - creationTime;
+      market._isStreetBet = runtime > 0 && runtime <= STREET_BET_SECONDS;
+    } else {
+      market._isStreetBet = false;
+    }
 
     currentMarketData = market;
     const w = wallet.getWallet();

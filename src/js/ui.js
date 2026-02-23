@@ -222,7 +222,8 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
       <button class="watchlist-star ${isWatched ? 'active' : ''}" data-addr="${addr}" title="Toggle watchlist">${isWatched ? '★' : '☆'}</button>
       <span class="market-status-badge ${statusClass}">${displayStatus}</span>
     </div>
-    ${hasBadgeRow ? `<div class="market-badge-row">
+    ${hasBadgeRow || market._isStreetBet ? `<div class="market-badge-row">
+      ${market._isStreetBet ? '<span class="street-bet-badge">Street Bet</span>' : ''}
       ${marketCategory ? `<span class="position-category-badge">${escapeHtml(marketCategory)}</span>` : ''}
       ${positionBadges}
     </div>` : ''}
@@ -400,6 +401,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <h1 class="market-detail-title">${escapeHtml(market.title)}</h1>
         <span class="detail-header-badges">
+          ${market._isStreetBet ? '<span class="street-bet-badge">Street Bet</span>' : ''}
           ${marketCategory ? `<span class="position-category-badge">${escapeHtml(marketCategory)}</span>` : ''}
           <span class="market-status-badge ${statusClass}">${displayStatus}</span>
         </span>
