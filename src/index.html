@@ -498,6 +498,21 @@
 
   </div>
 
+  <!-- iOS Wallet Chooser Modal -->
+  <div id="ios-wallet-modal" class="ios-wallet-modal hidden">
+    <div class="ios-wallet-modal-backdrop"></div>
+    <div class="ios-wallet-modal-sheet">
+      <div class="ios-wallet-modal-header">
+        <span class="ios-wallet-modal-title">Connect Wallet</span>
+        <button id="ios-wallet-modal-close" class="ios-wallet-modal-close">&times;</button>
+      </div>
+      <p class="ios-wallet-modal-desc">Choose a wallet to open this page in its in-app browser.</p>
+      <div id="ios-wallet-options" class="ios-wallet-options">
+        <!-- dynamically populated -->
+      </div>
+    </div>
+  </div>
+
   <!-- Overlay for transaction confirmations -->
   <div id="tx-overlay" class="tx-overlay hidden">
     <div class="tx-overlay-content">

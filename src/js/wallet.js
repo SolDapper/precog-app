@@ -43,6 +43,11 @@ export function isMobile() {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
+export function isIOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad with desktop UA
+}
+
 export function isTelegramBrowser() {
   const ua = navigator.userAgent || navigator.vendor || window.opera;
   return /Telegram/i.test(ua) || window.TelegramWebviewProxy !== undefined ||
@@ -50,7 +55,16 @@ export function isTelegramBrowser() {
 }
 
 export function isWalletBrowser() {
-  return window.phantom?.solana?.isPhantom || window.solflare?.isSolflare || /Phantom|Solflare/i.test(navigator.userAgent);
+  // Legacy injected providers
+  if (window.phantom?.solana?.isPhantom) return true;
+  if (window.solflare?.isSolflare) return true;
+  // Backpack injects window.backpack
+  if (window.backpack?.isBackpack) return true;
+  // UA sniffing fallback for in-app browsers
+  if (/Phantom|Solflare|Backpack/i.test(navigator.userAgent)) return true;
+  // If any Wallet Standard wallets registered synchronously, we're likely in a wallet browser
+  if (_standardWallets.size > 0) return true;
+  return false;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -191,6 +205,37 @@ function initWalletStandardListener() {
 
 // Initialize immediately so we catch wallets that register early
 initWalletStandardListener();
+
+// ═══════════════════════════════════════════════════════════════════
+// iOS Wallet Browse Deep Links
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Returns the list of wallets available for iOS deep-link browsing.
+ * Each entry has a name, icon (emoji/char), and a function to build the
+ * browse URL that opens the current page inside the wallet's in-app browser.
+ */
+export function getIOSWalletOptions() {
+  const currentUrl = encodeURIComponent(window.location.href);
+  const ref = encodeURIComponent(window.location.origin);
+  return [
+    {
+      name: 'Phantom',
+      icon: '👻',
+      browseUrl: `https://phantom.app/ul/browse/${currentUrl}?ref=${ref}`,
+    },
+    {
+      name: 'Solflare',
+      icon: '☀️',
+      browseUrl: `https://solflare.com/ul/v1/browse/${currentUrl}?ref=${ref}`,
+    },
+    {
+      name: 'Backpack',
+      icon: '🎒',
+      browseUrl: `https://backpack.app/ul/browse/${currentUrl}?ref=${ref}`,
+    },
+  ];
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // Wallet Discovery (legacy + standard)

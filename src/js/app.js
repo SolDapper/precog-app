@@ -2282,6 +2282,39 @@ function setupWallet() {
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// iOS Wallet Chooser Modal
+// ═══════════════════════════════════════════════════════════════════
+
+function showIOSWalletModal() {
+  const modal = document.getElementById('ios-wallet-modal');
+  const optionsEl = document.getElementById('ios-wallet-options');
+  if (!modal || !optionsEl) return;
+
+  const walletOptions = wallet.getIOSWalletOptions();
+  optionsEl.innerHTML = walletOptions.map(w => `
+    <a class="ios-wallet-option" href="${w.browseUrl}" rel="noopener">
+      <span class="ios-wallet-option-icon">${w.icon}</span>
+      <span class="ios-wallet-option-info">
+        <span class="ios-wallet-option-name">${w.name}</span>
+        <span class="ios-wallet-option-hint">Open in ${w.name}</span>
+      </span>
+    </a>
+  `).join('');
+
+  modal.classList.remove('hidden');
+
+  // Close handlers
+  document.getElementById('ios-wallet-modal-close')?.addEventListener('click', hideIOSWalletModal);
+  modal.querySelector('.ios-wallet-modal-backdrop')?.addEventListener('click', hideIOSWalletModal);
+}
+
+function hideIOSWalletModal() {
+  document.getElementById('ios-wallet-modal')?.classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+
 function attachConnectListeners() {
   const isMob = wallet.isMobile() && !wallet.isWalletBrowser();
 
@@ -2294,12 +2327,18 @@ function attachConnectListeners() {
   if (!connectBtn) return;
 
   if (isMob) {
-    connectBtn.addEventListener('click', async () => {
-      try { await wallet.connectMobile(); } catch (err) {
-        ui.showStatus('Failed to connect wallet', 'error');
-        console.error(err);
-      }
-    });
+    // iOS: show our own wallet chooser modal (no system chooser on iOS)
+    // Android: use MWA which has a system wallet chooser
+    if (wallet.isIOS() && !wallet.isWalletBrowser()) {
+      connectBtn.addEventListener('click', () => showIOSWalletModal());
+    } else {
+      connectBtn.addEventListener('click', async () => {
+        try { await wallet.connectMobile(); } catch (err) {
+          ui.showStatus('Failed to connect wallet', 'error');
+          console.error(err);
+        }
+      });
+    }
     return;
   }
 
