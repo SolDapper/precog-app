@@ -1,6 +1,12 @@
 /**
  * @module wallet
- * Wallet connection logic — desktop injected providers + Solana Mobile Wallet Adapter.
+ * Wallet connection logic — legacy injected providers, Wallet Standard, and
+ * Solana Mobile Wallet Adapter.
+ *
+ * Legacy providers (Phantom, Solflare) inject globals like window.phantom.solana.
+ * Newer wallets (Jupiter, Backpack, etc.) use the Wallet Standard protocol —
+ * they register via `wallet-standard:register-wallet` window events.
+ * This module listens for both without importing any adapter packages.
  */
 import { PublicKey } from '@solana/web3.js';
 import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
@@ -47,12 +53,176 @@ export function isWalletBrowser() {
   return window.phantom?.solana?.isPhantom || window.solflare?.isSolflare || /Phantom|Solflare/i.test(navigator.userAgent);
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// Wallet Standard Detection
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Wallet Standard wallets discovered via window events.
+ * Map of name → raw Wallet Standard wallet object.
+ */
+const _standardWallets = new Map();
+let _standardListenerReady = false;
+
+/**
+ * Check if a Wallet Standard wallet supports the Solana features we need.
+ */
+function isSolanaWallet(wallet) {
+  const features = wallet.features || {};
+  return 'standard:connect' in features && 'solana:signTransaction' in features;
+}
+
+/**
+ * Wrap a Wallet Standard wallet into a provider object compatible with our
+ * existing connectDesktop / signAndSend flow.
+ *
+ * The wrapper exposes: connect(), signTransaction(), signAllTransactions(),
+ * disconnect(), publicKey, and on().
+ */
+function wrapStandardWallet(standardWallet) {
+  let _account = null;
+
+  const wrapper = {
+    _isWalletStandard: true,
+    _standardWallet: standardWallet,
+    publicKey: null,
+
+    async connect(opts) {
+      const connectFeature = standardWallet.features['standard:connect'];
+      const result = await connectFeature.connect(opts?.onlyIfTrusted ? { silent: true } : undefined);
+      const accounts = result?.accounts ?? standardWallet.accounts ?? [];
+      if (accounts.length === 0) throw new Error('No accounts returned');
+      _account = accounts[0];
+      // Wallet Standard accounts store address as base58 string
+      wrapper.publicKey = new PublicKey(_account.address);
+      return { publicKey: wrapper.publicKey };
+    },
+
+    async signTransaction(transaction) {
+      const signFeature = standardWallet.features['solana:signTransaction'];
+      const serialized = transaction.serialize({ requireAllSignatures: false, verifySignatures: false });
+      const results = await signFeature.signTransaction({
+        transaction: serialized,
+        account: _account,
+        chain: _account.chains?.[0] || 'solana:mainnet',
+      });
+      // Result may be a single object or array; normalize
+      const signed = Array.isArray(results) ? results[0] : results;
+      const signedBytes = signed.signedTransaction || signed;
+      const { Transaction } = await import('@solana/web3.js');
+      return Transaction.from(signedBytes);
+    },
+
+    async signAllTransactions(transactions) {
+      return Promise.all(transactions.map(tx => wrapper.signTransaction(tx)));
+    },
+
+    async disconnect() {
+      try {
+        const disconnectFeature = standardWallet.features['standard:disconnect'];
+        if (disconnectFeature) await disconnectFeature.disconnect();
+      } catch {}
+      _account = null;
+      wrapper.publicKey = null;
+    },
+
+    on(event, handler) {
+      const eventsFeature = standardWallet.features['standard:events'];
+      if (eventsFeature) {
+        eventsFeature.on('change', (changes) => {
+          if (event === 'accountChanged' && changes.accounts?.length > 0) {
+            _account = changes.accounts[0];
+            wrapper.publicKey = new PublicKey(_account.address);
+            handler(wrapper.publicKey);
+          }
+          if (event === 'disconnect' && changes.accounts?.length === 0) {
+            handler();
+          }
+        });
+      }
+    },
+  };
+
+  return wrapper;
+}
+
+/**
+ * Callback passed to wallet registration events.
+ * The wallet calls this with its Wallet Standard interface.
+ */
+function _registerStandardWallet(wallet) {
+  if (!wallet || !wallet.name) return;
+  if (isSolanaWallet(wallet)) {
+    _standardWallets.set(wallet.name, wallet);
+  }
+}
+
+/**
+ * Start listening for Wallet Standard registrations.
+ * Wallets that already registered before we started listening will be picked up
+ * when we dispatch the `wallet-standard:app-ready` event.
+ */
+function initWalletStandardListener() {
+  if (_standardListenerReady) return;
+  _standardListenerReady = true;
+
+  try {
+    // Listen for wallets registering themselves
+    window.addEventListener('wallet-standard:register-wallet', (event) => {
+      const callback = event.detail;
+      if (typeof callback === 'function') {
+        callback(_registerStandardWallet);
+      }
+    });
+
+    // Tell already-loaded wallets that we're ready to receive registrations
+    window.dispatchEvent(new CustomEvent('wallet-standard:app-ready', {
+      detail: _registerStandardWallet,
+      bubbles: false,
+      cancelable: false,
+    }));
+  } catch (err) {
+    console.warn('Wallet Standard listener init failed:', err);
+  }
+}
+
+// Initialize immediately so we catch wallets that register early
+initWalletStandardListener();
+
+// ═══════════════════════════════════════════════════════════════════
+// Wallet Discovery (legacy + standard)
+// ═══════════════════════════════════════════════════════════════════
+
+// Legacy wallet names to skip in standard results (prevents duplicates —
+// prefer the legacy provider for these since their legacy APIs are mature)
+const LEGACY_NAMES = new Set(['phantom', 'solflare']);
+
 /** Returns array of { name, provider } for installed desktop wallets */
 export function getAvailableWallets() {
   const wallets = [];
-  if (window.phantom?.solana?.isPhantom) wallets.push({ name: 'Phantom', provider: window.phantom.solana });
-  if (window.solflare?.isSolflare) wallets.push({ name: 'Solflare', provider: window.solflare });
-  if (window.jupiter?.solana) wallets.push({ name: 'Jupiter', provider: window.jupiter.solana });
+  const seen = new Set();
+
+  // Legacy injected providers
+  if (window.phantom?.solana?.isPhantom) {
+    wallets.push({ name: 'Phantom', provider: window.phantom.solana });
+    seen.add('phantom');
+  }
+  if (window.solflare?.isSolflare) {
+    wallets.push({ name: 'Solflare', provider: window.solflare });
+    seen.add('solflare');
+  }
+
+  // Wallet Standard providers (Jupiter, Backpack, and any future compliant wallets)
+  for (const [name, stdWallet] of _standardWallets) {
+    const lowerName = name.toLowerCase();
+    // Skip if we already have a legacy provider for this wallet
+    if (seen.has(lowerName)) continue;
+    if ([...LEGACY_NAMES].some(ln => lowerName.includes(ln))) continue;
+
+    wallets.push({ name, provider: wrapStandardWallet(stdWallet) });
+    seen.add(lowerName);
+  }
+
   return wallets;
 }
 
@@ -68,7 +238,7 @@ export async function connectDesktop(provider) {
   });
   provider.on?.('disconnect', disconnect);
 
-  // Phantom returns { publicKey } from connect(); Solflare sets provider.publicKey instead
+  // Phantom returns { publicKey } from connect(); Solflare/Standard set provider.publicKey
   const publicKey = resp?.publicKey ?? provider.publicKey;
   if (!publicKey) throw new Error('Wallet did not return a public key');
   _setConnected(publicKey);
