@@ -742,6 +742,10 @@ function populateTokenFilter() {
     });
   }
 
+  // Toggle scrollable when >10 items
+  const itemCount = dropdown.querySelectorAll('.token-chooser-item').length;
+  dropdown.classList.toggle('scrollable', itemCount > 10);
+
   // Click handlers
   dropdown.querySelectorAll('.token-chooser-item').forEach(item => {
     item.addEventListener('click', (e) => {
@@ -809,6 +813,7 @@ document.getElementById('token-chooser-btn')?.addEventListener('click', (e) => {
 // Close dropdown on outside click
 document.addEventListener('click', () => {
   document.getElementById('token-chooser-dropdown')?.classList.add('hidden');
+  document.getElementById('pos-token-chooser-dropdown')?.classList.add('hidden');
   document.querySelector('.token-chooser-backdrop')?.remove();
 });
 
@@ -837,6 +842,17 @@ document.querySelector('.positions-filters')?.addEventListener('change', (e) => 
     currentPositionsSort = e.target.value;
     reRenderPositions();
   }
+});
+// Positions toggle buttons
+document.getElementById('pos-mine-toggle')?.addEventListener('click', (e) => {
+  posShowMineOnly = !posShowMineOnly;
+  e.target.classList.toggle('active', posShowMineOnly);
+  reRenderPositions();
+});
+document.getElementById('pos-street-toggle')?.addEventListener('click', (e) => {
+  posShowStreetBetsOnly = !posShowStreetBetsOnly;
+  e.target.classList.toggle('active', posShowStreetBetsOnly);
+  reRenderPositions();
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1102,6 +1118,9 @@ let currentPositionsCategoryFilter = 'all';
 let currentPositionsStatusFilter = 'all';
 let currentPositionsResultFilter = 'all';
 let currentPositionsSort = 'created-desc';
+let currentPositionsTokenFilter = 'all';
+let posShowMineOnly = false;
+let posShowStreetBetsOnly = false;
 
 async function loadPositions() {
   const listEl = document.getElementById('positions-list');
@@ -1160,6 +1179,21 @@ async function loadPositions() {
       mk._expired = mk.status === 0 && mk.resolutionDeadline <= posNowSec;
     }
 
+    // Street Bet detection for position markets
+    const w2 = wallet.getWallet();
+    const myAddr = w2 ? w2.publicKey.toBase58() : '';
+    await Promise.all(marketAddrs.map(async (addr) => {
+      const mk = marketMap[addr];
+      if (!mk) return;
+      const creationTime = await fetchCreationTime(addr);
+      if (creationTime) {
+        const runtime = Number(mk.resolutionDeadline) - creationTime;
+        mk._isStreetBet = runtime > 0 && runtime <= STREET_BET_SECONDS;
+      } else {
+        mk._isStreetBet = false;
+      }
+    }));
+
     // Build position entries with market data attached
     const entries = positions.map(({ pubkey: posPk, account: pos }) => {
       const mk = marketMap[pos.market.toBase58()] || null;
@@ -1191,7 +1225,19 @@ async function loadPositions() {
         }
       }
 
-      return { posPk, pos, mk, market: pos.market, category, deadline, status, claimed, payout, isWinning, isLosing, amount: pos.amount };
+      // Convert payout to USD for sorting
+      let payoutUsd = 0;
+      if (payout > 0n && mk) {
+        const decimals = mk.denomination === 0 ? 9 : (mk.tokenDecimals || 9);
+        const priceMint = mk.denomination === 0 ? SOL_MINT : mk.tokenMint.toBase58();
+        const tokenPrice = posPrices.get(priceMint) || (mk.denomination !== 0 ? 1 : 0);
+        payoutUsd = (Number(payout) / (10 ** decimals)) * tokenPrice;
+      }
+
+      return { posPk, pos, mk, market: pos.market, category, deadline, status, claimed, payout, payoutUsd, isWinning, isLosing, amount: pos.amount,
+        isStreetBet: mk ? mk._isStreetBet === true : false,
+        isMyMarket: mk && myAddr ? (mk.authority.toBase58() === myAddr || mk.creator.toBase58() === myAddr) : false,
+      };
     });
 
     // Populate category filter dropdown
@@ -1207,6 +1253,7 @@ async function loadPositions() {
 
     renderPositionsList(entries, listEl);
     _positionEntries = entries;
+    populatePositionsTokenFilter(entries);
   } catch (err) {
     console.error(err);
     listEl.innerHTML = '<div class="empty-state">Failed to load positions.</div>';
@@ -1215,6 +1262,25 @@ async function loadPositions() {
 
 function renderPositionsList(entries, listEl) {
   let filtered = entries;
+
+  // Token filter
+  if (currentPositionsTokenFilter !== 'all') {
+    if (currentPositionsTokenFilter === NATIVE_SOL_MINT) {
+      filtered = filtered.filter(e => e.mk && e.mk.denomination === 0);
+    } else {
+      filtered = filtered.filter(e => e.mk && e.mk.tokenMint?.toBase58() === currentPositionsTokenFilter);
+    }
+  }
+
+  // My Markets toggle
+  if (posShowMineOnly) {
+    filtered = filtered.filter(e => e.isMyMarket);
+  }
+
+  // Street Bets toggle
+  if (posShowStreetBetsOnly) {
+    filtered = filtered.filter(e => e.isStreetBet);
+  }
 
   // Category filter
   if (currentPositionsCategoryFilter !== 'all') {
@@ -1261,10 +1327,10 @@ function renderPositionsList(entries, listEl) {
       filtered.sort((a, b) => Number(a.amount - b.amount));
       break;
     case 'payout-desc':
-      filtered.sort((a, b) => Number(b.payout - a.payout));
+      filtered.sort((a, b) => b.payoutUsd - a.payoutUsd);
       break;
     case 'payout-asc':
-      filtered.sort((a, b) => Number(a.payout - b.payout));
+      filtered.sort((a, b) => a.payoutUsd - b.payoutUsd);
       break;
     case 'status':
       filtered.sort((a, b) => a.status - b.status || Number(b.deadline - a.deadline));
@@ -1307,6 +1373,146 @@ function renderPositionsList(entries, listEl) {
 let _positionEntries = [];
 
 // We handle re-render in the filter handler instead
+
+// ── Positions Token Chooser ──────────────────────────────────────
+let _lastPosTokenSet = '';
+
+function populatePositionsTokenFilter(entries) {
+  const dropdown = document.getElementById('pos-token-chooser-dropdown');
+  if (!dropdown) return;
+
+  // Gather unique token mints from position markets
+  const tokens = new Map();
+  for (const { mk } of entries) {
+    if (!mk) continue;
+    const mint = mk.denomination === 0 ? NATIVE_SOL_MINT : mk.tokenMint.toBase58();
+    if (!tokens.has(mint)) {
+      tokens.set(mint, { count: 0, denomination: mk.denomination, denominationName: mk.denominationName });
+    }
+    tokens.get(mint).count++;
+  }
+
+  const key = [...tokens.keys()].sort().join(',');
+  if (key === _lastPosTokenSet) return;
+  _lastPosTokenSet = key;
+
+  dropdown.innerHTML = '';
+
+  // "All Tokens" option
+  const allItem = document.createElement('div');
+  allItem.className = `token-chooser-item${currentPositionsTokenFilter === 'all' ? ' active' : ''}`;
+  allItem.dataset.mint = 'all';
+  allItem.innerHTML = `<span class="token-chooser-label">All Tokens</span>`;
+  dropdown.appendChild(allItem);
+
+  // Native SOL
+  if (tokens.has(NATIVE_SOL_MINT)) {
+    const info = tokens.get(NATIVE_SOL_MINT);
+    const item = document.createElement('div');
+    item.className = `token-chooser-item${currentPositionsTokenFilter === NATIVE_SOL_MINT ? ' active' : ''}`;
+    item.dataset.mint = NATIVE_SOL_MINT;
+    item.innerHTML = `
+      <img class="token-icon" src="${SOL_ICON}" alt="SOL" onerror="this.style.display='none'">
+      <span class="token-chooser-label">SOL <span class="token-chooser-sub">Native</span></span>
+      <span class="token-chooser-count">${info.count}</span>
+    `;
+    dropdown.appendChild(item);
+    tokens.delete(NATIVE_SOL_MINT);
+  }
+
+  // SPL / Token-2022 tokens
+  const sorted = [...tokens.entries()].sort((a, b) => b[1].count - a[1].count);
+  for (const [mint, info] of sorted) {
+    const shortMint = mint.slice(0, 4) + '…' + mint.slice(-4);
+    const typeLabel = info.denominationName === 'Token2022' ? 'Token-2022' : 'SPL';
+    const item = document.createElement('div');
+    item.className = `token-chooser-item${currentPositionsTokenFilter === mint ? ' active' : ''}`;
+    item.dataset.mint = mint;
+    item.innerHTML = `
+      <img class="token-icon" src="" alt="" style="display:none">
+      <span class="token-chooser-label">
+        <span class="token-symbol-name">Loading…</span>
+        <a class="token-mint-link" href="https://solscan.io/token/${mint}" target="_blank" rel="noopener" title="${mint}">${shortMint}</a>
+        <span class="token-chooser-sub">${typeLabel}</span>
+      </span>
+      <span class="token-chooser-count">${info.count}</span>
+    `;
+    dropdown.appendChild(item);
+    fetchTokenIcon(mint).then(({ icon, name, symbol }) => {
+      const img = item.querySelector('.token-icon');
+      const label = item.querySelector('.token-symbol-name');
+      if (icon) { img.src = icon; img.style.display = ''; }
+      label.textContent = symbol ? `${symbol}${name ? ' — ' + name : ''}` : shortMint;
+    });
+  }
+
+  // Toggle scrollable when >10 items
+  const posItemCount = dropdown.querySelectorAll('.token-chooser-item').length;
+  dropdown.classList.toggle('scrollable', posItemCount > 10);
+
+  // Click handlers
+  dropdown.querySelectorAll('.token-chooser-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.token-mint-link')) return;
+      e.stopPropagation();
+      currentPositionsTokenFilter = item.dataset.mint;
+      updatePosTokenChooserButton();
+      dropdown.classList.add('hidden');
+      document.querySelector('.token-chooser-backdrop')?.remove();
+      _lastPosTokenSet = '';
+      populatePositionsTokenFilter(_positionEntries);
+      reRenderPositions();
+    });
+  });
+}
+
+function updatePosTokenChooserButton() {
+  const btn = document.getElementById('pos-token-chooser-btn');
+  if (!btn) return;
+  if (currentPositionsTokenFilter === 'all') {
+    btn.textContent = 'All Tokens ▾';
+    btn.classList.remove('token-active');
+  } else if (currentPositionsTokenFilter === NATIVE_SOL_MINT) {
+    btn.innerHTML = `<img class="token-icon-sm" src="${SOL_ICON}" alt="SOL"> SOL ▾`;
+    btn.classList.add('token-active');
+  } else {
+    const cached = _tokenIconCache.get(currentPositionsTokenFilter);
+    const short = currentPositionsTokenFilter.slice(0, 4) + '…' + currentPositionsTokenFilter.slice(-4);
+    const label = cached?.symbol || short;
+    if (cached?.icon) {
+      btn.innerHTML = `<img class="token-icon-sm" src="${cached.icon}" alt="${label}"> ${label} ▾`;
+    } else {
+      btn.textContent = `${label} ▾`;
+    }
+    btn.classList.add('token-active');
+  }
+}
+
+// Positions token chooser button toggle
+document.getElementById('pos-token-chooser-btn')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const dd = document.getElementById('pos-token-chooser-dropdown');
+  if (!dd) return;
+  dd.classList.toggle('hidden');
+  let backdrop = document.querySelector('.token-chooser-backdrop');
+  if (!dd.classList.contains('hidden')) {
+    if (!backdrop) {
+      backdrop = document.createElement('div');
+      backdrop.className = 'token-chooser-backdrop';
+      backdrop.addEventListener('click', () => {
+        dd.classList.add('hidden');
+        backdrop.remove();
+      });
+    }
+    document.body.insertBefore(backdrop, dd);
+  } else if (backdrop) {
+    backdrop.remove();
+  }
+});
+
+document.getElementById('pos-token-chooser-dropdown')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+});
 
 async function claimWinnings(posAddr, mktAddr) {
   const w = wallet.getWallet(); const p = wallet.getProvider();

@@ -81,7 +81,7 @@
           <option value="all">All</option>
         </select>
 
-        <label class="sort-label">Sort by</label>
+        <label class="sort-label">Sort</label>
         <select id="explore-sort-select" class="sort-select">
           <option value="deadline-asc" selected>Closing Soon</option>
           <option value="deadline-desc">Deadline ↓</option>
@@ -167,7 +167,13 @@
     <!-- VIEW: My Positions -->
     <!-- ═══════════════════════════════════════════════ -->
     <main id="view-positions" class="view hidden">
-      <h2 class="section-title">My Positions</h2>
+      <div class="explore-header">
+        <h2 class="section-title">My Positions</h2>
+        <div class="explore-filters">
+          <button id="pos-street-toggle" class="filter-btn">Street Bets</button>
+          <button id="pos-mine-toggle" class="filter-btn">My Markets</button>
+        </div>
+      </div>
       <div class="positions-filters">
         <div class="explore-sort">
           <label class="sort-label">Category</label>
@@ -203,6 +209,11 @@
             <option value="payout-asc">Est. Payout ↑</option>
             <option value="status">Status</option>
           </select>
+          <label class="sort-label">Token</label>
+          <div id="pos-token-chooser" class="token-chooser">
+            <button id="pos-token-chooser-btn" class="token-chooser-btn">All Tokens ▾</button>
+            <div id="pos-token-chooser-dropdown" class="token-chooser-dropdown hidden"></div>
+          </div>
         </div>
       </div>
       <div id="positions-list" class="positions-list">
