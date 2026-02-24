@@ -167,13 +167,7 @@
     <!-- VIEW: My Positions -->
     <!-- ═══════════════════════════════════════════════ -->
     <main id="view-positions" class="view hidden">
-      <div class="explore-header">
-        <h2 class="section-title">My Positions</h2>
-        <div class="explore-filters">
-          <button id="positions-street-toggle" class="filter-btn">Street Bets</button>
-          <button id="positions-mine-toggle" class="filter-btn">My Markets</button>
-        </div>
-      </div>
+      <h2 class="section-title">My Positions</h2>
       <div class="positions-filters">
         <div class="explore-sort">
           <label class="sort-label">Category</label>
@@ -199,10 +193,10 @@
           </select>
           <label class="sort-label">Sort</label>
           <select id="positions-sort" class="sort-select">
+            <option value="created-desc" selected>Newest First</option>
+            <option value="created-asc">Oldest First</option>
             <option value="deadline-desc">Deadline ↓</option>
             <option value="deadline-asc">Deadline ↑</option>
-            <option value="created-desc">Newest First</option>
-            <option value="created-asc">Oldest First</option>
             <option value="amount-desc">Amount ↓</option>
             <option value="amount-asc">Amount ↑</option>
             <option value="payout-desc">Est. Payout ↓</option>
@@ -496,21 +490,6 @@
       </div>
     </main>
 
-  </div>
-
-  <!-- iOS Wallet Chooser Modal -->
-  <div id="ios-wallet-modal" class="ios-wallet-modal hidden">
-    <div class="ios-wallet-modal-backdrop"></div>
-    <div class="ios-wallet-modal-sheet">
-      <div class="ios-wallet-modal-header">
-        <span class="ios-wallet-modal-title">Connect Wallet</span>
-        <button id="ios-wallet-modal-close" class="ios-wallet-modal-close">&times;</button>
-      </div>
-      <p class="ios-wallet-modal-desc">Choose a wallet to open this page in its in-app browser.</p>
-      <div id="ios-wallet-options" class="ios-wallet-options">
-        <!-- dynamically populated -->
-      </div>
-    </div>
   </div>
 
   <!-- Overlay for transaction confirmations -->

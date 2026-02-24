@@ -817,26 +817,26 @@ document.getElementById('token-chooser-dropdown')?.addEventListener('click', (e)
   e.stopPropagation();
 });
 
-// Positions category filter
+// Positions filters — use event delegation for reliability
 function reRenderPositions() {
   const listEl = document.getElementById('positions-list');
   if (_positionEntries.length > 0) renderPositionsList(_positionEntries, listEl);
 }
-document.getElementById('positions-category-filter')?.addEventListener('change', (e) => {
-  currentPositionsCategoryFilter = e.target.value;
-  reRenderPositions();
-});
-document.getElementById('positions-status-filter')?.addEventListener('change', (e) => {
-  currentPositionsStatusFilter = e.target.value;
-  reRenderPositions();
-});
-document.getElementById('positions-result-filter')?.addEventListener('change', (e) => {
-  currentPositionsResultFilter = e.target.value;
-  reRenderPositions();
-});
-document.getElementById('positions-sort')?.addEventListener('change', (e) => {
-  currentPositionsSort = e.target.value;
-  reRenderPositions();
+document.querySelector('.positions-filters')?.addEventListener('change', (e) => {
+  const id = e.target.id;
+  if (id === 'positions-category-filter') {
+    currentPositionsCategoryFilter = e.target.value;
+    reRenderPositions();
+  } else if (id === 'positions-status-filter') {
+    currentPositionsStatusFilter = e.target.value;
+    reRenderPositions();
+  } else if (id === 'positions-result-filter') {
+    currentPositionsResultFilter = e.target.value;
+    reRenderPositions();
+  } else if (id === 'positions-sort') {
+    currentPositionsSort = e.target.value;
+    reRenderPositions();
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1101,7 +1101,7 @@ document.getElementById('back-to-explore')?.addEventListener('click', () => {
 let currentPositionsCategoryFilter = 'all';
 let currentPositionsStatusFilter = 'all';
 let currentPositionsResultFilter = 'all';
-let currentPositionsSort = 'deadline-desc';
+let currentPositionsSort = 'created-desc';
 
 async function loadPositions() {
   const listEl = document.getElementById('positions-list');
