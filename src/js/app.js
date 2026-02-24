@@ -1038,6 +1038,11 @@ async function handlePlaceBet() {
     ui.hideTxOverlay();
     await openMarketDetail(currentMarketPubkey);
     ui.showBetStatus(`Position confirmed! ${sig.slice(0, 8)}…`, 'success');
+    // Background: wait for finalization then refresh positions cache
+    const conn = sdk.getConnection();
+    conn.getLatestBlockhash('finalized').then(({ blockhash: bh, lastValidBlockHeight: h }) =>
+      conn.confirmTransaction({ signature: sig, blockhash: bh, lastValidBlockHeight: h }, 'finalized')
+    ).then(() => refreshUserPositions()).catch(() => {});
   } catch (err) {
     ui.hideTxOverlay();
     ui.showBetStatus(err.message || 'Position failed', 'error');
