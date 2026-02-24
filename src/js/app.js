@@ -1550,6 +1550,7 @@ function previewTokenMint(mint) {
   const fullname = document.getElementById('token-preview-fullname');
   const link = document.getElementById('token-preview-link');
   const loader = document.getElementById('token-preview-loader');
+  const denomSelect = document.getElementById('create-denomination');
 
   // Show loader
   loader.classList.remove('hidden');
@@ -1561,6 +1562,21 @@ function previewTokenMint(mint) {
   const shortMint = mint.slice(0, 5) + '…' + mint.slice(-4);
   link.href = `https://solscan.io/token/${mint}`;
   link.textContent = shortMint;
+
+  // Auto-detect token program from mint's on-chain owner
+  try {
+    const conn = sdk.getConnection();
+    conn.getAccountInfo(new PublicKey(mint)).then(acctInfo => {
+      if (acctInfo && denomSelect) {
+        const owner = acctInfo.owner.toBase58();
+        if (owner === sdk.TOKEN_2022_PROGRAM_ID.toBase58()) {
+          denomSelect.value = '2';
+        } else if (owner === sdk.TOKEN_PROGRAM_ID.toBase58()) {
+          denomSelect.value = '1';
+        }
+      }
+    }).catch(() => {});
+  } catch {}
 
   fetchTokenIcon(mint).then(({ icon: iconUrl, name, symbol: sym }) => {
     loader.classList.add('hidden');
