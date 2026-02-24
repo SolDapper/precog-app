@@ -838,16 +838,6 @@ document.getElementById('positions-sort')?.addEventListener('change', (e) => {
   currentPositionsSort = e.target.value;
   reRenderPositions();
 });
-document.getElementById('positions-mine-toggle')?.addEventListener('click', (e) => {
-  currentPositionsMineOnly = !currentPositionsMineOnly;
-  e.target.classList.toggle('active', currentPositionsMineOnly);
-  reRenderPositions();
-});
-document.getElementById('positions-street-toggle')?.addEventListener('click', (e) => {
-  currentPositionsStreetBetsOnly = !currentPositionsStreetBetsOnly;
-  e.target.classList.toggle('active', currentPositionsStreetBetsOnly);
-  reRenderPositions();
-});
 
 // ═══════════════════════════════════════════════════════════════════
 // Market Detail
@@ -1107,8 +1097,6 @@ let currentPositionsCategoryFilter = 'all';
 let currentPositionsStatusFilter = 'all';
 let currentPositionsResultFilter = 'all';
 let currentPositionsSort = 'deadline-desc';
-let currentPositionsMineOnly = false;
-let currentPositionsStreetBetsOnly = false;
 
 async function loadPositions() {
   const listEl = document.getElementById('positions-list');
@@ -1167,18 +1155,6 @@ async function loadPositions() {
       mk._expired = mk.status === 0 && mk.resolutionDeadline <= posNowSec;
     }
 
-    // Street Bet detection
-    await Promise.all(Object.entries(marketMap).map(async ([addr, mk]) => {
-      const creationTime = await fetchCreationTime(addr);
-      if (creationTime) {
-        const runtime = Number(mk.resolutionDeadline) - creationTime;
-        mk._isStreetBet = runtime > 0 && runtime <= STREET_BET_SECONDS;
-        mk._creationTime = creationTime;
-      } else {
-        mk._isStreetBet = false;
-      }
-    }));
-
     // Build position entries with market data attached
     const entries = positions.map(({ pubkey: posPk, account: pos }) => {
       const mk = marketMap[pos.market.toBase58()] || null;
@@ -1234,20 +1210,6 @@ async function loadPositions() {
 
 function renderPositionsList(entries, listEl) {
   let filtered = entries;
-
-  // My Markets filter
-  if (currentPositionsMineOnly) {
-    const w = wallet.getWallet();
-    if (w) {
-      const myAddr = w.publicKey.toBase58();
-      filtered = filtered.filter(e => e.mk && (e.mk.authority.toBase58() === myAddr || e.mk.creator.toBase58() === myAddr));
-    }
-  }
-
-  // Street Bets filter
-  if (currentPositionsStreetBetsOnly) {
-    filtered = filtered.filter(e => e.mk && e.mk._isStreetBet);
-  }
 
   // Category filter
   if (currentPositionsCategoryFilter !== 'all') {
@@ -1550,7 +1512,6 @@ function previewTokenMint(mint) {
   const fullname = document.getElementById('token-preview-fullname');
   const link = document.getElementById('token-preview-link');
   const loader = document.getElementById('token-preview-loader');
-  const denomSelect = document.getElementById('create-denomination');
 
   // Show loader
   loader.classList.remove('hidden');
@@ -1562,21 +1523,6 @@ function previewTokenMint(mint) {
   const shortMint = mint.slice(0, 5) + '…' + mint.slice(-4);
   link.href = `https://solscan.io/token/${mint}`;
   link.textContent = shortMint;
-
-  // Auto-detect token program from mint's on-chain owner
-  try {
-    const conn = sdk.getConnection();
-    conn.getAccountInfo(new PublicKey(mint)).then(acctInfo => {
-      if (acctInfo && denomSelect) {
-        const owner = acctInfo.owner.toBase58();
-        if (owner === sdk.TOKEN_2022_PROGRAM_ID.toBase58()) {
-          denomSelect.value = '2';
-        } else if (owner === sdk.TOKEN_PROGRAM_ID.toBase58()) {
-          denomSelect.value = '1';
-        }
-      }
-    }).catch(() => {});
-  } catch {}
 
   fetchTokenIcon(mint).then(({ icon: iconUrl, name, symbol: sym }) => {
     loader.classList.add('hidden');
@@ -1702,6 +1648,10 @@ async function handleCreateMarket() {
 
     ui.updateTxOverlay('Please approve…');
     const sig = await sdk.signAndSend(ixList, w.publicKey, p);
+    ui.updateTxOverlay('Finalizing transaction…');
+    // Wait for finalized confirmation before navigating
+    const { blockhash: finBh, lastValidBlockHeight: finH } = await conn.getLatestBlockhash('finalized');
+    await conn.confirmTransaction({ signature: sig, blockhash: finBh, lastValidBlockHeight: finH }, 'finalized');
     ui.hideTxOverlay();
     ui.showStatus(`Market created! ${sig.slice(0, 8)}…`, 'success');
     // Reset form
@@ -1712,10 +1662,8 @@ async function handleCreateMarket() {
     document.getElementById('create-fee').value = '';
     document.getElementById('create-title-count').textContent = '0';
     document.getElementById('create-desc-count').textContent = '0';
-    const el = document.getElementById('create-status');
-    el.innerHTML = `<span class="status-msg">Market created: ${market.toBase58()}</span><button class="status-dismiss" aria-label="Dismiss">&times;</button>`;
-    el.className = 'form-status success'; el.classList.remove('hidden');
-    el.querySelector('.status-dismiss').addEventListener('click', () => el.classList.add('hidden'));
+    // Navigate to the new market's detail page
+    openMarketDetail(market);
   } catch (err) {
     ui.hideTxOverlay();
     showCreateError(err.message || 'Failed to create market');
@@ -2179,19 +2127,6 @@ async function loadWatchlist() {
       account._expired = account.status === 0 && account.resolutionDeadline <= wlNowSec;
     }
 
-    // Street Bet detection
-    await Promise.all(cards.map(async ({ pubkey, account }) => {
-      const addr = pubkey.toBase58();
-      const creationTime = await fetchCreationTime(addr);
-      if (creationTime) {
-        const runtime = Number(account.resolutionDeadline) - creationTime;
-        account._isStreetBet = runtime > 0 && runtime <= STREET_BET_SECONDS;
-        account._creationTime = creationTime;
-      } else {
-        account._isStreetBet = false;
-      }
-    }));
-
     const categories = watchlist.getCategories();
     listEl.innerHTML = '';
     for (const { pubkey, account, address: addr } of cards) {
@@ -2298,39 +2233,6 @@ function setupWallet() {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// iOS Wallet Chooser Modal
-// ═══════════════════════════════════════════════════════════════════
-
-function showIOSWalletModal() {
-  const modal = document.getElementById('ios-wallet-modal');
-  const optionsEl = document.getElementById('ios-wallet-options');
-  if (!modal || !optionsEl) return;
-
-  const walletOptions = wallet.getIOSWalletOptions();
-  optionsEl.innerHTML = walletOptions.map(w => `
-    <a class="ios-wallet-option" href="${w.browseUrl}" rel="noopener">
-      <span class="ios-wallet-option-icon">${w.icon}</span>
-      <span class="ios-wallet-option-info">
-        <span class="ios-wallet-option-name">${w.name}</span>
-        <span class="ios-wallet-option-hint">Open in ${w.name}</span>
-      </span>
-    </a>
-  `).join('');
-
-  modal.classList.remove('hidden');
-
-  // Close handlers
-  document.getElementById('ios-wallet-modal-close')?.addEventListener('click', hideIOSWalletModal);
-  modal.querySelector('.ios-wallet-modal-backdrop')?.addEventListener('click', hideIOSWalletModal);
-}
-
-function hideIOSWalletModal() {
-  document.getElementById('ios-wallet-modal')?.classList.add('hidden');
-}
-
-// ═══════════════════════════════════════════════════════════════════
-
 function attachConnectListeners() {
   const isMob = wallet.isMobile() && !wallet.isWalletBrowser();
 
@@ -2343,18 +2245,12 @@ function attachConnectListeners() {
   if (!connectBtn) return;
 
   if (isMob) {
-    // iOS: show our own wallet chooser modal (no system chooser on iOS)
-    // Android: use MWA which has a system wallet chooser
-    if (wallet.isIOS() && !wallet.isWalletBrowser()) {
-      connectBtn.addEventListener('click', () => showIOSWalletModal());
-    } else {
-      connectBtn.addEventListener('click', async () => {
-        try { await wallet.connectMobile(); } catch (err) {
-          ui.showStatus('Failed to connect wallet', 'error');
-          console.error(err);
-        }
-      });
-    }
+    connectBtn.addEventListener('click', async () => {
+      try { await wallet.connectMobile(); } catch (err) {
+        ui.showStatus('Failed to connect wallet', 'error');
+        console.error(err);
+      }
+    });
     return;
   }
 
@@ -2447,24 +2343,6 @@ async function init() {
 
   // Try silent reconnect
   await wallet.trySilentConnect();
-
-  // Re-detect wallets after a delay — some providers (e.g. Solflare) inject
-  // into the page asynchronously and may not be available at first paint
-  if (!wallet.isConnected()) {
-    const redetect = () => {
-      const freshWallets = wallet.getAvailableWallets();
-      const currentBtn = document.getElementById('connect-wallet-btn');
-      // Only re-render if wallet count changed and user hasn't connected yet
-      if (!wallet.isConnected() && currentBtn) {
-        const isMob = wallet.isMobile() && !wallet.isWalletBrowser();
-        ui.renderWalletDisconnected(freshWallets, isMob);
-        attachConnectListeners();
-      }
-    };
-    // Check after a short delay, and again after window.load
-    setTimeout(redetect, 500);
-    window.addEventListener('load', () => setTimeout(redetect, 200), { once: true });
-  }
 
   // Route based on initial URL hash (handles direct links like #/market/<addr>)
   const hash = window.location.hash || '';
