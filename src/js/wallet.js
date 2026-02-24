@@ -166,18 +166,21 @@ function initWalletStandardListener() {
   if (_standardListenerReady) return;
   _standardListenerReady = true;
 
+  // The api object the wallet's callback expects: { register }
+  const api = Object.freeze({ register: _registerStandardWallet });
+
   try {
     // Listen for wallets registering themselves
     window.addEventListener('wallet-standard:register-wallet', (event) => {
       const callback = event.detail;
       if (typeof callback === 'function') {
-        callback(_registerStandardWallet);
+        callback(api);
       }
     });
 
     // Tell already-loaded wallets that we're ready to receive registrations
     window.dispatchEvent(new CustomEvent('wallet-standard:app-ready', {
-      detail: _registerStandardWallet,
+      detail: api,
       bubbles: false,
       cancelable: false,
     }));
