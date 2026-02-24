@@ -838,6 +838,16 @@ document.getElementById('positions-sort')?.addEventListener('change', (e) => {
   currentPositionsSort = e.target.value;
   reRenderPositions();
 });
+document.getElementById('positions-mine-toggle')?.addEventListener('click', (e) => {
+  currentPositionsMineOnly = !currentPositionsMineOnly;
+  e.target.classList.toggle('active', currentPositionsMineOnly);
+  reRenderPositions();
+});
+document.getElementById('positions-street-toggle')?.addEventListener('click', (e) => {
+  currentPositionsStreetBetsOnly = !currentPositionsStreetBetsOnly;
+  e.target.classList.toggle('active', currentPositionsStreetBetsOnly);
+  reRenderPositions();
+});
 
 // ═══════════════════════════════════════════════════════════════════
 // Market Detail
@@ -1097,6 +1107,8 @@ let currentPositionsCategoryFilter = 'all';
 let currentPositionsStatusFilter = 'all';
 let currentPositionsResultFilter = 'all';
 let currentPositionsSort = 'deadline-desc';
+let currentPositionsMineOnly = false;
+let currentPositionsStreetBetsOnly = false;
 
 async function loadPositions() {
   const listEl = document.getElementById('positions-list');
@@ -1155,6 +1167,18 @@ async function loadPositions() {
       mk._expired = mk.status === 0 && mk.resolutionDeadline <= posNowSec;
     }
 
+    // Street Bet detection
+    await Promise.all(Object.entries(marketMap).map(async ([addr, mk]) => {
+      const creationTime = await fetchCreationTime(addr);
+      if (creationTime) {
+        const runtime = Number(mk.resolutionDeadline) - creationTime;
+        mk._isStreetBet = runtime > 0 && runtime <= STREET_BET_SECONDS;
+        mk._creationTime = creationTime;
+      } else {
+        mk._isStreetBet = false;
+      }
+    }));
+
     // Build position entries with market data attached
     const entries = positions.map(({ pubkey: posPk, account: pos }) => {
       const mk = marketMap[pos.market.toBase58()] || null;
@@ -1210,6 +1234,20 @@ async function loadPositions() {
 
 function renderPositionsList(entries, listEl) {
   let filtered = entries;
+
+  // My Markets filter
+  if (currentPositionsMineOnly) {
+    const w = wallet.getWallet();
+    if (w) {
+      const myAddr = w.publicKey.toBase58();
+      filtered = filtered.filter(e => e.mk && (e.mk.authority.toBase58() === myAddr || e.mk.creator.toBase58() === myAddr));
+    }
+  }
+
+  // Street Bets filter
+  if (currentPositionsStreetBetsOnly) {
+    filtered = filtered.filter(e => e.mk && e.mk._isStreetBet);
+  }
 
   // Category filter
   if (currentPositionsCategoryFilter !== 'all') {
@@ -2125,6 +2163,19 @@ async function loadWatchlist() {
       account._expired = account.status === 0 && account.resolutionDeadline <= wlNowSec;
     }
 
+    // Street Bet detection
+    await Promise.all(cards.map(async ({ pubkey, account }) => {
+      const addr = pubkey.toBase58();
+      const creationTime = await fetchCreationTime(addr);
+      if (creationTime) {
+        const runtime = Number(account.resolutionDeadline) - creationTime;
+        account._isStreetBet = runtime > 0 && runtime <= STREET_BET_SECONDS;
+        account._creationTime = creationTime;
+      } else {
+        account._isStreetBet = false;
+      }
+    }));
+
     const categories = watchlist.getCategories();
     listEl.innerHTML = '';
     for (const { pubkey, account, address: addr } of cards) {
@@ -2341,6 +2392,24 @@ async function init() {
 
   // Try silent reconnect
   await wallet.trySilentConnect();
+
+  // Re-detect wallets after a delay — some providers (e.g. Solflare) inject
+  // into the page asynchronously and may not be available at first paint
+  if (!wallet.isConnected()) {
+    const redetect = () => {
+      const freshWallets = wallet.getAvailableWallets();
+      const currentBtn = document.getElementById('connect-wallet-btn');
+      // Only re-render if wallet count changed and user hasn't connected yet
+      if (!wallet.isConnected() && currentBtn) {
+        const isMob = wallet.isMobile() && !wallet.isWalletBrowser();
+        ui.renderWalletDisconnected(freshWallets, isMob);
+        attachConnectListeners();
+      }
+    };
+    // Check after a short delay, and again after window.load
+    setTimeout(redetect, 500);
+    window.addEventListener('load', () => setTimeout(redetect, 200), { once: true });
+  }
 
   // Route based on initial URL hash (handles direct links like #/market/<addr>)
   const hash = window.location.hash || '';

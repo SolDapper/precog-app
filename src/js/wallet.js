@@ -68,7 +68,10 @@ export async function connectDesktop(provider) {
   });
   provider.on?.('disconnect', disconnect);
 
-  _setConnected(resp.publicKey);
+  // Phantom returns { publicKey } from connect(); Solflare sets provider.publicKey instead
+  const publicKey = resp?.publicKey ?? provider.publicKey;
+  if (!publicKey) throw new Error('Wallet did not return a public key');
+  _setConnected(publicKey);
 }
 
 /** Attempt silent reconnect */
@@ -78,7 +81,9 @@ export async function trySilentConnect() {
   try {
     const resp = await wallets[0].provider.connect({ onlyIfTrusted: true });
     _walletProvider = wallets[0].provider;
-    _setConnected(resp.publicKey);
+    const publicKey = resp?.publicKey ?? wallets[0].provider.publicKey;
+    if (!publicKey) return false;
+    _setConnected(publicKey);
     return true;
   } catch {
     return false;
