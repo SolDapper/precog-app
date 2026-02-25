@@ -190,7 +190,7 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
         const fee = (gross * BigInt(market.feeBps)) / 10000n;
         const net = gross - fee;
         const payStr = isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym;
-        return `<span class="position-estimate-badge" title="${amountStr} on ${outcomeLabel}">${escapeHtml(outcomeLabel)}: Est. ${payStr}${fmtUsd(net)}</span>`;
+        return `<span class="position-estimate-badge" title="${amountStr} on ${outcomeLabel}">Est. ${payStr}${fmtUsd(net)}</span>`;
       } else if (market.status === 2 && market.winningOutcome === p.outcomeIndex) {
         const winPool = market.outcomePools[market.winningOutcome];
         if (winPool > 0n) {
@@ -198,10 +198,10 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
           const fee = (gross * BigInt(market.feeBps)) / 10000n;
           const net = gross - fee;
           const payStr = isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym;
-          return `<span class="position-estimate-badge win" title="${amountStr} on ${outcomeLabel}">${escapeHtml(outcomeLabel)}: Win ${payStr}${fmtUsd(net)}</span>`;
+          return `<span class="position-estimate-badge win" title="${amountStr} on ${outcomeLabel}">Win ${payStr}${fmtUsd(net)}</span>`;
         }
       } else if (market.status === 2 && market.winningOutcome !== p.outcomeIndex) {
-        return `<span class="position-estimate-badge lost" title="${amountStr} on ${outcomeLabel}">${escapeHtml(outcomeLabel)}: Lost</span>`;
+        return `<span class="position-estimate-badge lost" title="${amountStr} on ${outcomeLabel}">Lost</span>`;
       }
       return '';
     }).filter(Boolean);
@@ -337,16 +337,52 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
       </div>
     `;
   } else if (market.status === 1) {
-    // Finalize is permissionless — anyone can call it after dispute window
-    authorityHtml = `
-      <div class="authority-actions card" style="margin-top:8px">
-        <div class="bet-section-title">Finalize Market</div>
-        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:10px">
-          Anyone can finalize after the 24h dispute window.
-        </p>
-        <button id="finalize-market-btn" class="action-btn primary-btn">Finalize Market</button>
-      </div>
-    `;
+    const DISPUTE_SECONDS = 86400;
+    const nowSec = Math.floor(Date.now() / 1000);
+    const disputeEnd = Number(market.resolvedAt) + DISPUTE_SECONDS;
+    const inDisputeWindow = nowSec < disputeEnd;
+
+    if (inDisputeWindow) {
+      // Show dispute window info + countdown
+      const disputeCountdown = formatCountdown(BigInt(disputeEnd));
+      const winLabel = escapeHtml(market.outcomeLabels[market.winningOutcome] || `#${market.winningOutcome}`);
+      let disputeActions = '';
+      if (isAuthority) {
+        disputeActions = `
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-primary)">
+            <div class="bet-section-title">Authority Dispute Actions</div>
+            <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:8px">
+              You can void this market during the dispute window. All positions will be refunded.
+            </p>
+            <button id="dispute-void-btn" class="action-btn danger-btn" style="width:100%">Void Market</button>
+          </div>
+        `;
+      }
+      authorityHtml = `
+        <div class="authority-actions card" style="margin-top:8px">
+          <div class="bet-section-title">⏳ Dispute Window</div>
+          <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:6px">
+            Resolved as: <strong style="color:var(--gold)">${winLabel}</strong>
+          </p>
+          <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:6px">
+            Dispute window closes in <strong class="countdown">${disputeCountdown}</strong>.
+            Market will be eligible for finalization after the window passes.
+          </p>
+          ${disputeActions}
+        </div>
+      `;
+    } else {
+      // Dispute window passed — finalize is permissionless
+      authorityHtml = `
+        <div class="authority-actions card" style="margin-top:8px">
+          <div class="bet-section-title">Finalize Market</div>
+          <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:10px">
+            The dispute window has passed. Anyone can finalize this market.
+          </p>
+          <button id="finalize-market-btn" class="action-btn primary-btn">Finalize Market</button>
+        </div>
+      `;
+    }
   }
 
   const addr = pubkey.toBase58();
@@ -376,7 +412,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
         const fee = (gross * BigInt(market.feeBps)) / 10000n;
         const net = gross - fee;
         const payStr = isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym;
-        return `<span class="position-estimate-badge" title="${amountStr} on ${escapeHtml(outcomeLabel)}">${escapeHtml(outcomeLabel)}: Est. ${payStr}${detFmtUsd(net)}</span>`;
+        return `<span class="position-estimate-badge" title="${amountStr} on ${escapeHtml(outcomeLabel)}">Est. ${payStr}${detFmtUsd(net)}</span>`;
       } else if (market.status === 2 && market.winningOutcome === p.outcomeIndex) {
         const winPool = market.outcomePools[market.winningOutcome];
         if (winPool > 0n) {
@@ -384,10 +420,10 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
           const fee = (gross * BigInt(market.feeBps)) / 10000n;
           const net = gross - fee;
           const payStr = isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym;
-          return `<span class="position-estimate-badge win" title="${amountStr} on ${escapeHtml(outcomeLabel)}">${escapeHtml(outcomeLabel)}: Win ${payStr}${detFmtUsd(net)}</span>`;
+          return `<span class="position-estimate-badge win" title="${amountStr} on ${escapeHtml(outcomeLabel)}">Win ${payStr}${detFmtUsd(net)}</span>`;
         }
       } else if (market.status === 2 && market.winningOutcome !== p.outcomeIndex) {
-        return `<span class="position-estimate-badge lost" title="${amountStr} on ${escapeHtml(outcomeLabel)}">${escapeHtml(outcomeLabel)}: Lost</span>`;
+        return `<span class="position-estimate-badge lost" title="${amountStr} on ${escapeHtml(outcomeLabel)}">Lost</span>`;
       }
       return '';
     }).filter(Boolean);
@@ -535,21 +571,21 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       const gross = (BigInt(position.amount) * market.totalPool) / pool;
       const fee = (gross * BigInt(market.feeBps)) / 10000n;
       const net = gross - fee;
-      payoutBadge = `<span class="position-estimate-badge">${escapeHtml(outcomeLabel)}: Est. ${isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym}${posFmtUsd(net)}</span>`;
+      payoutBadge = `<span class="position-estimate-badge">Est. ${isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym}${posFmtUsd(net)}</span>`;
     } else if (market.status === 2 && market.winningOutcome === position.outcomeIndex) {
       const winPool = market.outcomePools[market.winningOutcome];
       if (winPool > 0n) {
         const gross = (BigInt(position.amount) * market.totalPool) / winPool;
         const fee = (gross * BigInt(market.feeBps)) / 10000n;
         const net = gross - fee;
-        payoutBadge = `<span class="position-estimate-badge win">${escapeHtml(outcomeLabel)}: Win ${isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym}${posFmtUsd(net)}</span>`;
+        payoutBadge = `<span class="position-estimate-badge win">Win ${isSol ? formatSol(net) : formatTokenAmount(net, market.tokenDecimals) + ' ' + sym}${posFmtUsd(net)}</span>`;
       }
     } else if (market.status === 2 && market.winningOutcome !== position.outcomeIndex) {
-      payoutBadge = `<span class="position-estimate-badge lost">${escapeHtml(outcomeLabel)}: Lost</span>`;
+      payoutBadge = `<span class="position-estimate-badge lost">Lost</span>`;
     }
   }
 
-  const hasBadgeRow = category || payoutBadge || market._isStreetBet;
+  const hasBadgeRow = category || payoutBadge;
 
   const card = document.createElement('div');
   card.className = 'position-card';
@@ -559,7 +595,6 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       <span class="market-status-badge ${statusClass}">${displayStatus}</span>
     </div>
     ${hasBadgeRow ? `<div class="position-badge-row">
-      ${market._isStreetBet ? '<span class="street-bet-badge">Street Bet</span>' : ''}
       ${category ? `<span class="position-category-badge">${escapeHtml(category)}</span>` : ''}
       ${payoutBadge}
     </div>` : ''}

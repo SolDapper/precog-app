@@ -958,6 +958,7 @@ function attachDetailListeners(pubkey, market, tokenUsdPrice = 0) {
   document.getElementById('confirm-resolve-btn')?.addEventListener('click', handleResolve);
   voidBtn?.addEventListener('click', handleVoid);
   document.getElementById('finalize-market-btn')?.addEventListener('click', handleFinalize);
+  document.getElementById('dispute-void-btn')?.addEventListener('click', handleVoid);
 
   // Watchlist detail button
   const wlBtn = document.getElementById('detail-watchlist-btn');
