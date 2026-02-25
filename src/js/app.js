@@ -1101,39 +1101,46 @@ async function handleResolve() {
     const ix = sdk.buildResolveMarket({ market: currentMarketPubkey, authority: w.publicKey }, { winningOutcome: outcome });
     ui.updateTxOverlay('Please approve…');
     await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
-    ui.hideTxOverlay(); ui.showStatus('Market resolved!', 'success');
+    ui.hideTxOverlay(); ui.showCardStatus('authority-status', 'Market resolved!', 'success');
     openMarketDetail(currentMarketPubkey);
-  } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Resolve failed', 'error'); }
+  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('authority-status', err.message || 'Resolve failed', 'error'); }
 }
 
 async function handleVoid() {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p || !currentMarketPubkey) return;
   if (!confirm('Void this market? All positions refunded.')) return;
+  const statusId = document.getElementById('dispute-status') ? 'dispute-status' : 'authority-status';
   try {
     ui.showTxOverlay('Voiding…');
     const ix = sdk.buildVoidMarket({ market: currentMarketPubkey, authority: w.publicKey });
     ui.updateTxOverlay('Please approve…');
     await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
-    ui.hideTxOverlay(); ui.showStatus('Market voided.', 'success');
+    ui.hideTxOverlay();
+    ui.showCardStatus(statusId, 'Market voided!', 'success');
     openMarketDetail(currentMarketPubkey);
-  } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Void failed', 'error'); }
+  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus(statusId, err.message || 'Void failed', 'error'); }
 }
 
 async function handleDisputeResolve() {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p || !currentMarketPubkey) return;
   const outcome = parseInt(document.getElementById('dispute-resolve-dropdown')?.value);
-  if (isNaN(outcome)) { ui.showStatus('Select an outcome', 'error'); return; }
+  if (isNaN(outcome)) { ui.showCardStatus('dispute-status', 'Select an outcome', 'error'); return; }
   if (!confirm('Change the winning outcome? This restarts the 24h dispute window.')) return;
   try {
     ui.showTxOverlay('Changing resolution…');
     const ix = sdk.buildDisputeResolve({ market: currentMarketPubkey, authority: w.publicKey }, { winningOutcome: outcome });
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
-    ui.hideTxOverlay(); ui.showStatus('Resolution updated! Dispute window restarted.', 'success');
+    const sig = await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
+    ui.updateTxOverlay('Finalizing transaction…');
+    const conn = sdk.getConnection();
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('finalized');
+    await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'finalized');
+    ui.hideTxOverlay();
+    ui.showCardStatus('dispute-status', 'Resolution updated! Dispute window restarted.', 'success');
     openMarketDetail(currentMarketPubkey);
-  } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Dispute resolve failed', 'error'); }
+  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('dispute-status', err.message || 'Dispute resolve failed', 'error'); }
 }
 
 async function handleFinalize() {
@@ -1144,9 +1151,9 @@ async function handleFinalize() {
     const ix = sdk.buildFinalizeMarket(currentMarketPubkey);
     ui.updateTxOverlay('Please approve…');
     await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
-    ui.hideTxOverlay(); ui.showStatus('Market finalized!', 'success');
+    ui.hideTxOverlay(); ui.showCardStatus('finalize-status', 'Market finalized!', 'success');
     openMarketDetail(currentMarketPubkey);
-  } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Finalize failed', 'error'); }
+  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('finalize-status', err.message || 'Finalize failed', 'error'); }
 }
 
 document.getElementById('back-to-explore')?.addEventListener('click', () => {
@@ -2022,11 +2029,11 @@ document.getElementById('admin-toggle-pause-btn')?.addEventListener('click', asy
     ui.updateTxOverlay('Please approve…');
     await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
     ui.hideTxOverlay();
-    ui.showStatus(newPaused ? 'Protocol paused' : 'Protocol unpaused', 'success');
+    ui.showCardStatus('admin-status', newPaused ? 'Protocol paused' : 'Protocol unpaused', 'success');
     loadAdmin();
   } catch (err) {
     ui.hideTxOverlay();
-    ui.showStatus(err.message || 'Failed to update', 'error');
+    ui.showCardStatus('admin-status', err.message || 'Failed to update', 'error');
   }
 });
 
@@ -2039,7 +2046,7 @@ document.getElementById('admin-update-fee-btn')?.addEventListener('click', async
   const feeInput = document.getElementById('admin-update-fee');
   const feeBps = parseInt(feeInput.value);
   if (isNaN(feeBps) || feeBps < 0 || feeBps > 10000) {
-    ui.showStatus('Fee must be 0–10000 bps', 'error');
+    ui.showCardStatus('admin-status', 'Fee must be 0–10000 bps', 'error');
     return;
   }
 
@@ -2053,12 +2060,12 @@ document.getElementById('admin-update-fee-btn')?.addEventListener('click', async
     ui.updateTxOverlay('Please approve…');
     await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
     ui.hideTxOverlay();
-    ui.showStatus(`Default fee updated to ${feeBps / 100}%`, 'success');
+    ui.showCardStatus('admin-status', `Default fee updated to ${feeBps / 100}%`, 'success');
     feeInput.value = '';
     loadAdmin();
   } catch (err) {
     ui.hideTxOverlay();
-    ui.showStatus(err.message || 'Failed to update fee', 'error');
+    ui.showCardStatus('admin-status', err.message || 'Failed to update fee', 'error');
   }
 });
 
@@ -2070,14 +2077,14 @@ document.getElementById('admin-update-treasury-btn')?.addEventListener('click', 
 
   const input = document.getElementById('admin-update-treasury').value.trim();
   if (!input) {
-    ui.showStatus('Enter a treasury address', 'error');
+    ui.showCardStatus('admin-status', 'Enter a treasury address', 'error');
     return;
   }
 
   let newTreasury;
   try { newTreasury = new PublicKey(input); }
   catch {
-    ui.showStatus('Invalid treasury address', 'error');
+    ui.showCardStatus('admin-status', 'Invalid treasury address', 'error');
     return;
   }
 
@@ -2091,12 +2098,12 @@ document.getElementById('admin-update-treasury-btn')?.addEventListener('click', 
     ui.updateTxOverlay('Please approve…');
     await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
     ui.hideTxOverlay();
-    ui.showStatus('Treasury updated', 'success');
+    ui.showCardStatus('admin-status', 'Treasury updated', 'success');
     document.getElementById('admin-update-treasury').value = '';
     loadAdmin();
   } catch (err) {
     ui.hideTxOverlay();
-    ui.showStatus(err.message || 'Failed to update treasury', 'error');
+    ui.showCardStatus('admin-status', err.message || 'Failed to update treasury', 'error');
   }
 });
 
@@ -2136,7 +2143,6 @@ async function handleInitProtocol() {
     ui.updateTxOverlay('Please approve…');
     const sig = await sdk.signAndSend(ix, w.publicKey, p);
     ui.hideTxOverlay();
-    ui.showStatus(`Protocol initialized! ${sig.slice(0, 8)}…`, 'success');
     statusEl.textContent = 'Protocol initialized successfully!';
     statusEl.className = 'form-status success';
     statusEl.classList.remove('hidden');

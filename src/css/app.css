@@ -124,9 +124,9 @@ body::before {
 /* Desktop: slightly larger */
 @media (min-width: 641px) {
   .buy-pelf-btn {
-    padding: 4px 6px 5px;
-    font-size: 0.75rem;
     gap: 3px;
+    padding: 4px 9px 5px 6px;
+    font-size: 0.75rem;
   }
   .buy-pelf-icon {
     width: 18px;
@@ -1769,6 +1769,14 @@ body::before {
 .copy-btn:hover { color: var(--gold); background: var(--gold-ghost); }
 .copy-btn.copied { color: var(--green); }
 
+.market-address-code {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
 .countdown { color: var(--gold); font-family: var(--font-display); font-weight: 700; }
 
 /* ── Responsive ─────────────────────────────────────────────────── */
@@ -1850,6 +1858,9 @@ body::before {
   /* Watchlist */
   .watchlist-category-tabs { gap: 3px; }
   .category-tab { font-size: 0.7rem; padding: 5px 10px; }
+
+  /* Market address */
+  .market-address-code { font-size: 0.62rem; }
 }
 
 /* ── Responsive: Very Small Phones ──────────────────────────────── */

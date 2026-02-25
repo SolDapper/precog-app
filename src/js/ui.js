@@ -114,6 +114,28 @@ export function showBetStatus(msg, type = 'info') {
   }
 }
 
+export function showDisputeStatus(msg, type = 'info') {
+  const el = document.getElementById('dispute-status');
+  if (!el) { showStatus(msg, type); return; }
+  el.textContent = msg;
+  el.className = `bet-status ${type}`;
+  el.classList.remove('hidden');
+  if (type !== 'error') {
+    setTimeout(() => el.classList.add('hidden'), 5000);
+  }
+}
+
+export function showCardStatus(elementId, msg, type = 'info') {
+  const el = document.getElementById(elementId);
+  if (!el) { showStatus(msg, type); return; }
+  el.textContent = msg;
+  el.className = `bet-status ${type}`;
+  el.classList.remove('hidden');
+  if (type !== 'error') {
+    setTimeout(() => el.classList.add('hidden'), 5000);
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // Transaction Overlay
 // ═══════════════════════════════════════════════════════════════════
@@ -324,6 +346,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
     authorityHtml = `
       <div class="authority-actions card" style="margin-top:8px">
         <div class="bet-section-title">Authority Actions</div>
+        <div id="authority-status" class="bet-status hidden" style="margin-bottom:8px"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button id="resolve-market-btn" class="action-btn secondary-btn" style="flex:1;min-width:120px" disabled>Resolve</button>
           <button id="void-market-btn" class="action-btn danger-btn" style="flex:1;min-width:120px" disabled>Void</button>
@@ -356,6 +379,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
         disputeActions = `
           <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-primary)">
             <div class="bet-section-title">Authority Dispute Actions</div>
+            <div id="dispute-status" class="bet-status hidden" style="margin-bottom:8px"></div>
             <div style="margin-bottom:12px">
               <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:8px">
                 Change the winning outcome. This restarts the 24h dispute window.
@@ -392,6 +416,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
       authorityHtml = `
         <div class="authority-actions card" style="margin-top:8px">
           <div class="bet-section-title">Finalize Market</div>
+          <div id="finalize-status" class="bet-status hidden" style="margin-bottom:8px"></div>
           <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:10px">
             The dispute window has passed. Anyone can finalize this market.
           </p>
@@ -522,10 +547,8 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
 
     <div class="card" style="margin-top:8px">
       <div class="bet-section-title">Market Address</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <code style="font-size:0.72rem;color:var(--text-secondary);word-break:break-all">${addr}</code>
-        <button class="copy-btn" data-copy="${addr}">Copy</button>
-      </div>
+      <code class="market-address-code">${addr}</code>
+      <button class="copy-btn" data-copy="${addr}" style="margin-top:6px">Copy</button>
     </div>
   `;
 }
