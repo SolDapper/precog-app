@@ -388,8 +388,16 @@
           <p class="manual-text"><strong>Open</strong> — Accepting positions. Anyone can take a position on any outcome.</p>
           <p class="manual-text"><strong>Awaiting Resolution</strong> — The deadline has passed but the authority hasn't resolved yet. No new positions accepted. Displayed as "Closed" in the status filter.</p>
           <p class="manual-text"><strong>Resolved</strong> — The authority declared a winning outcome. A 24-hour dispute window begins. No new positions.</p>
-          <p class="manual-text"><strong>Finalized</strong> — The dispute window has passed. Winners can claim payouts.</p>
-          <p class="manual-text"><strong>Voided</strong> — The authority cancelled the market. All participants can claim full refunds.</p>
+          <p class="manual-text"><strong>Finalized</strong> — The dispute window has passed and the market has been finalized. Winners can claim payouts. Finalization is permissionless — anyone can trigger it once the window expires.</p>
+          <p class="manual-text"><strong>Voided</strong> — The authority cancelled the market. All participants can claim full refunds regardless of outcome.</p>
+        </div>
+
+        <div class="manual-section">
+          <h3 class="manual-heading">Dispute Window</h3>
+          <p class="manual-text">After a market is resolved, a <strong>24-hour dispute window</strong> begins before the market can be finalized. This gives participants time to review the outcome and gives the authority a chance to correct mistakes.</p>
+          <p class="manual-text"><strong>Change Resolution</strong> — During the dispute window, the market authority can change the winning outcome to a different one. This restarts the full 24-hour window so everyone has time to review the updated result.</p>
+          <p class="manual-text"><strong>Void Market</strong> — The authority can also void the market during the dispute window, which cancels it entirely and allows all participants to claim full refunds.</p>
+          <p class="manual-text">Once the 24-hour window passes without any changes, anyone can finalize the market by clicking the <strong>Finalize Market</strong> button. No special permissions are needed to finalize.</p>
         </div>
 
         <div class="manual-section">
@@ -413,8 +421,11 @@
 
         <div class="manual-section">
           <h3 class="manual-heading">Watchlist</h3>
-          <p class="manual-text">Tap the ☆ star on any market card to add it to your watchlist with a personal category. Your watchlist is stored locally in your browser.</p>
-          <p class="manual-text">In the <strong>Watchlist</strong> tab, filter by category, reassign categories, and manage your custom categories with the ⚙ button.</p>
+          <p class="manual-text">Tap the ☆ star on any market card to add it to your watchlist. A picker appears with your existing categories and a field to create a new one inline — just type a name and tap <strong>+</strong>.</p>
+          <p class="manual-text">In the <strong>Watchlist</strong> tab, filter by category tabs, reassign categories on individual cards, and manage your categories with the ⚙ button. Categories are sorted alphabetically.</p>
+          <p class="manual-text"><strong>Trash</strong> — A built-in protected category that always appears last. Move unwanted markets to Trash instead of removing them. Use the <strong>Clear Trash</strong> button to permanently remove all trashed markets.</p>
+          <p class="manual-text"><strong>Export / Import</strong> — In the category manager (⚙), use Export to save your entire watchlist as a <code>.json</code> file, and Import to merge a saved watchlist back in. Importing adds new markets and categories without duplicating existing ones.</p>
+          <p class="manual-text">Your watchlist is stored locally in your browser.</p>
         </div>
 
         <div class="manual-section">
