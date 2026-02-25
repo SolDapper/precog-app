@@ -98,7 +98,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 2px 5px;
+  padding: 2px 8px 2px 5px;
   background: var(--gold);
   color: #010101;
   font-family: var(--font-display);
@@ -281,18 +281,27 @@ body::before {
 }
 .nav-btn {
   flex: 1;
-  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 8px 6px;
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--gold-dim);
   font-family: var(--font-display);
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
+}
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 .nav-btn:hover { color: var(--text-primary); }
 .nav-btn.active {
@@ -1728,7 +1737,8 @@ body::before {
 /* ── Responsive ─────────────────────────────────────────────────── */
 /* ── Responsive: Tablets & Small Laptops ────────────────────────── */
 @media (max-width: 700px) {
-  .nav-btn { font-size: 0.68rem; padding: 9px 6px; letter-spacing: 0.04em; }
+  .nav-btn { font-size: 0.58rem; padding: 6px 4px 5px; letter-spacing: 0.04em; }
+  .nav-icon { width: 16px; height: 16px; }
   .explore-sort {
     flex-wrap: wrap;
     gap: 6px;
@@ -1755,11 +1765,13 @@ body::before {
   /* Nav: compact, allow text to shrink */
   .main-nav { gap: 2px; padding: 3px; }
   .nav-btn {
-    font-size: 0.58rem;
-    padding: 8px 2px;
+    font-size: 0.5rem;
+    padding: 5px 2px 4px;
     letter-spacing: 0.02em;
     min-width: 0;
+    gap: 2px;
   }
+  .nav-icon { width: 15px; height: 15px; }
 
   /* Explore header: stack title and filters */
   .explore-header { align-items: center; gap: 8px; }
@@ -1807,7 +1819,8 @@ body::before {
 @media (max-width: 360px) {
   .logo-text { font-size: 0.78rem; }
   .logo-icon { width: 44px; height: 44px; }
-  .nav-btn { font-size: 0.52rem; padding: 7px 1px; letter-spacing: 0; }
+  .nav-btn { font-size: 0.45rem; padding: 5px 1px 3px; letter-spacing: 0; gap: 1px; }
+  .nav-icon { width: 13px; height: 13px; }
   .market-card-title { font-size: 0.82rem; }
   .section-title { font-size: 0.92rem; }
 }
