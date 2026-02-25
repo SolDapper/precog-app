@@ -12,7 +12,8 @@
  */
 
 const STORAGE_KEY = 'precog_watchlist';
-const DEFAULT_CATEGORIES = ['Crypto', 'Politics', 'Sports', 'Culture', 'Other'];
+const DEFAULT_CATEGORIES = ['Crypto', 'Politics', 'Sports', 'Culture', 'Other', 'Trash'];
+const PROTECTED_CATEGORIES = ['Trash'];
 
 function _load() {
   try {
@@ -27,6 +28,10 @@ function _load() {
     }
     if (!data.categories) data.categories = [...DEFAULT_CATEGORIES];
     if (!data.markets) data.markets = {};
+    // Ensure protected categories always exist
+    for (const pc of PROTECTED_CATEGORIES) {
+      if (!data.categories.includes(pc)) data.categories.push(pc);
+    }
     return data;
   } catch {
     return { categories: [...DEFAULT_CATEGORIES], markets: {} };
@@ -129,6 +134,7 @@ export function addCategory(name) {
 
 /** Remove a category (markets in it become uncategorized) */
 export function removeCategory(name) {
+  if (PROTECTED_CATEGORIES.includes(name)) return false;
   const data = _load();
   const idx = data.categories.indexOf(name);
   if (idx === -1) return false;
@@ -145,6 +151,7 @@ export function removeCategory(name) {
 
 /** Rename a category */
 export function renameCategory(oldName, newName) {
+  if (PROTECTED_CATEGORIES.includes(oldName)) return false;
   const data = _load();
   const trimmed = newName.trim();
   const idx = data.categories.indexOf(oldName);
@@ -163,4 +170,94 @@ export function renameCategory(oldName, newName) {
 /** Count markets total */
 export function count() {
   return Object.keys(_load().markets).length;
+}
+
+/** Check if a category is protected (cannot be removed or renamed) */
+export function isProtected(name) {
+  return PROTECTED_CATEGORIES.includes(name);
+}
+
+/** Sort categories: alphabetical, with protected categories (Trash) always last */
+export function sortedCategories(cats) {
+  return [...cats].sort((a, b) => {
+    const aP = PROTECTED_CATEGORIES.includes(a) ? 1 : 0;
+    const bP = PROTECTED_CATEGORIES.includes(b) ? 1 : 0;
+    if (aP !== bP) return aP - bP;
+    return a.localeCompare(b);
+  });
+}
+
+/** Clear all markets in the Trash category */
+export function clearTrash() {
+  const data = _load();
+  for (const addr of Object.keys(data.markets)) {
+    if (data.markets[addr].category === 'Trash') {
+      delete data.markets[addr];
+    }
+  }
+  _save(data);
+}
+
+/** Export watchlist as a JSON object */
+export function exportData() {
+  const data = _load();
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    categories: data.categories,
+    markets: data.markets,
+  };
+}
+
+/**
+ * Import watchlist from a JSON object. Merges into existing data.
+ * - New markets are added; existing markets are skipped (no duplicates).
+ * - New categories from the import are added.
+ * - For markets that exist in both, the imported category wins.
+ * @returns {{ marketsAdded: number, marketsUpdated: number, categoriesAdded: number }}
+ */
+export function importData(imported) {
+  if (!imported || typeof imported !== 'object') throw new Error('Invalid watchlist file');
+  const importedMarkets = imported.markets || {};
+  const importedCategories = imported.categories || [];
+
+  const data = _load();
+  let marketsAdded = 0;
+  let marketsUpdated = 0;
+  let categoriesAdded = 0;
+
+  // Merge categories
+  for (const cat of importedCategories) {
+    const trimmed = (typeof cat === 'string') ? cat.trim() : '';
+    if (trimmed && !data.categories.includes(trimmed)) {
+      data.categories.push(trimmed);
+      categoriesAdded++;
+    }
+  }
+
+  // Ensure protected categories
+  for (const pc of PROTECTED_CATEGORIES) {
+    if (!data.categories.includes(pc)) data.categories.push(pc);
+  }
+
+  // Merge markets
+  for (const [addr, meta] of Object.entries(importedMarkets)) {
+    if (addr in data.markets) {
+      // Existing market — imported category wins if present
+      if (meta.category && meta.category !== data.markets[addr].category) {
+        data.markets[addr].category = meta.category;
+        marketsUpdated++;
+      }
+    } else {
+      // New market
+      data.markets[addr] = {
+        addedAt: meta.addedAt || Date.now(),
+        category: meta.category || null,
+      };
+      marketsAdded++;
+    }
+  }
+
+  _save(data);
+  return { marketsAdded, marketsUpdated, categoriesAdded };
 }

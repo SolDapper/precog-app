@@ -118,7 +118,11 @@ function handleWatchlistStarClick(addr, onUpdate) {
       <div class="watchlist-picker-title">Add to Watchlist</div>
       <div class="watchlist-picker-options">
         <button class="watchlist-picker-option" data-cat="">No Category</button>
-        ${categories.map(c => `<button class="watchlist-picker-option" data-cat="${c}">${c}</button>`).join('')}
+        ${watchlist.sortedCategories(categories).map(c => `<button class="watchlist-picker-option" data-cat="${c}">${c}</button>`).join('')}
+      </div>
+      <div class="watchlist-picker-new">
+        <input type="text" class="watchlist-picker-new-input" placeholder="New category…" maxlength="32">
+        <button class="watchlist-picker-new-btn">+</button>
       </div>
       <button class="watchlist-picker-cancel">Cancel</button>
     </div>
@@ -135,6 +139,27 @@ function handleWatchlistStarClick(addr, onUpdate) {
       onUpdate(true);
     });
   });
+
+  // New category inline creation
+  const newInput = overlay.querySelector('.watchlist-picker-new-input');
+  const newBtn = overlay.querySelector('.watchlist-picker-new-btn');
+  const createAndAdd = () => {
+    const name = newInput.value.trim();
+    if (!name) return;
+    if (watchlist.addCategory(name)) {
+      watchlist.add(addr, name);
+      overlay.remove();
+      onUpdate(true);
+      renderCategoryTabs();
+    } else {
+      // Category already exists — just use it
+      watchlist.add(addr, name);
+      overlay.remove();
+      onUpdate(true);
+    }
+  };
+  newBtn.addEventListener('click', createAndAdd);
+  newInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') createAndAdd(); });
 
   document.body.appendChild(overlay);
 }
@@ -959,6 +984,7 @@ function attachDetailListeners(pubkey, market, tokenUsdPrice = 0) {
   voidBtn?.addEventListener('click', handleVoid);
   document.getElementById('finalize-market-btn')?.addEventListener('click', handleFinalize);
   document.getElementById('dispute-void-btn')?.addEventListener('click', handleVoid);
+  document.getElementById('dispute-resolve-btn')?.addEventListener('click', handleDisputeResolve);
 
   // Watchlist detail button
   const wlBtn = document.getElementById('detail-watchlist-btn');
@@ -1092,6 +1118,22 @@ async function handleVoid() {
     ui.hideTxOverlay(); ui.showStatus('Market voided.', 'success');
     openMarketDetail(currentMarketPubkey);
   } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Void failed', 'error'); }
+}
+
+async function handleDisputeResolve() {
+  const w = wallet.getWallet(); const p = wallet.getProvider();
+  if (!w || !p || !currentMarketPubkey) return;
+  const outcome = parseInt(document.getElementById('dispute-resolve-dropdown')?.value);
+  if (isNaN(outcome)) { ui.showStatus('Select an outcome', 'error'); return; }
+  if (!confirm('Change the winning outcome? This restarts the 24h dispute window.')) return;
+  try {
+    ui.showTxOverlay('Changing resolution…');
+    const ix = sdk.buildDisputeResolve({ market: currentMarketPubkey, authority: w.publicKey }, { winningOutcome: outcome });
+    ui.updateTxOverlay('Please approve…');
+    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
+    ui.hideTxOverlay(); ui.showStatus('Resolution updated! Dispute window restarted.', 'success');
+    openMarketDetail(currentMarketPubkey);
+  } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Dispute resolve failed', 'error'); }
 }
 
 async function handleFinalize() {
@@ -2174,7 +2216,7 @@ function renderCategoryTabs() {
   container.innerHTML = `
     <button class="category-tab ${watchlistCategoryFilter === 'all' ? 'active' : ''}" data-category="all">All (${counts.all})</button>
     <button class="category-tab ${watchlistCategoryFilter === '__uncategorized' ? 'active' : ''}" data-category="__uncategorized">Uncategorized (${counts.__uncategorized})</button>
-    ${categories.map(cat => `
+    ${watchlist.sortedCategories(categories).map(cat => `
       <button class="category-tab ${watchlistCategoryFilter === cat ? 'active' : ''}" data-category="${cat}">${cat} (${counts[cat] || 0})</button>
     `).join('')}
   `;
@@ -2194,14 +2236,15 @@ function renderCategoryManager() {
   const categories = watchlist.getCategories();
   const meta = watchlist.getAllWithMeta();
 
-  list.innerHTML = categories.map(cat => {
+  list.innerHTML = watchlist.sortedCategories(categories).map(cat => {
     const count = Object.values(meta).filter(m => m.category === cat).length;
+    const isProtected = watchlist.isProtected(cat);
     return `
       <div class="category-item" data-cat="${cat}">
-        <span class="category-item-name">${cat}</span>
+        <span class="category-item-name">${cat}${isProtected ? ' 🔒' : ''}</span>
         <span class="category-item-count">${count} market${count !== 1 ? 's' : ''}</span>
-        <button class="category-item-btn rename-cat-btn" title="Rename">✎</button>
-        <button class="category-item-btn danger remove-cat-btn" title="Delete">×</button>
+        ${isProtected ? '' : '<button class="category-item-btn rename-cat-btn" title="Rename">✎</button>'}
+        ${isProtected ? '' : '<button class="category-item-btn danger remove-cat-btn" title="Delete">×</button>'}
       </div>
     `;
   }).join('');
@@ -2339,7 +2382,7 @@ async function loadWatchlist() {
       account._expired = account.status === 0 && account.resolutionDeadline <= wlNowSec;
     }
 
-    const categories = watchlist.getCategories();
+    const categories = watchlist.sortedCategories(watchlist.getCategories());
     listEl.innerHTML = '';
     for (const { pubkey, account, address: addr } of cards) {
       const positions = userPositionsMap.get(addr) || null;
@@ -2396,12 +2439,66 @@ async function loadWatchlist() {
   }
 }
 
-// Clear watchlist button
+// Clear watchlist button (now in manage categories panel)
 document.getElementById('clear-watchlist-btn')?.addEventListener('click', () => {
-  if (!confirm('Clear your entire watchlist?')) return;
+  if (!confirm('Clear your entire watchlist? This removes ALL markets from every category.')) return;
   watchlist.clearMarkets();
   renderCategoryTabs();
   document.getElementById('watchlist-list').innerHTML = '<div class="empty-state">No markets in your watchlist.</div>';
+});
+
+// Clear trash button
+document.getElementById('clear-trash-btn')?.addEventListener('click', () => {
+  const trashCount = watchlist.getByCategory('Trash').length;
+  if (trashCount === 0) { ui.showStatus('Trash is empty.', 'info'); return; }
+  if (!confirm(`Remove ${trashCount} market${trashCount !== 1 ? 's' : ''} from Trash?`)) return;
+  watchlist.clearTrash();
+  renderCategoryTabs();
+  loadWatchlist();
+});
+
+// Export watchlist
+document.getElementById('export-watchlist-btn')?.addEventListener('click', () => {
+  const data = watchlist.exportData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'pelfmont.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  ui.showStatus('Watchlist exported!', 'success');
+});
+
+// Import watchlist
+document.getElementById('import-watchlist-btn')?.addEventListener('click', () => {
+  document.getElementById('import-watchlist-file')?.click();
+});
+document.getElementById('import-watchlist-file')?.addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+      const result = watchlist.importData(imported);
+      const parts = [];
+      if (result.marketsAdded) parts.push(`${result.marketsAdded} market${result.marketsAdded !== 1 ? 's' : ''} added`);
+      if (result.marketsUpdated) parts.push(`${result.marketsUpdated} updated`);
+      if (result.categoriesAdded) parts.push(`${result.categoriesAdded} categor${result.categoriesAdded !== 1 ? 'ies' : 'y'} added`);
+      const msg = parts.length > 0 ? `Import complete: ${parts.join(', ')}.` : 'Nothing new to import.';
+      ui.showStatus(msg, 'success');
+      renderCategoryTabs();
+      renderCategoryManager();
+      loadWatchlist();
+    } catch (err) {
+      ui.showStatus('Invalid watchlist file.', 'error');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
 });
 
 // ═══════════════════════════════════════════════════════════════════

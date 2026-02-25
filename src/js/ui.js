@@ -348,13 +348,29 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
       const winLabel = escapeHtml(market.outcomeLabels[market.winningOutcome] || `#${market.winningOutcome}`);
       let disputeActions = '';
       if (isAuthority) {
+        const outcomeOptions = market.outcomeLabels.map((l, i) =>
+          i === market.winningOutcome
+            ? ''
+            : `<option value="${i}">${escapeHtml(l)}</option>`
+        ).join('');
         disputeActions = `
           <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-primary)">
             <div class="bet-section-title">Authority Dispute Actions</div>
-            <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:8px">
-              You can void this market during the dispute window. All positions will be refunded.
-            </p>
-            <button id="dispute-void-btn" class="action-btn danger-btn" style="width:100%">Void Market</button>
+            <div style="margin-bottom:12px">
+              <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:8px">
+                Change the winning outcome. This restarts the 24h dispute window.
+              </p>
+              <select id="dispute-resolve-dropdown" class="form-select" style="margin-bottom:8px">
+                ${outcomeOptions}
+              </select>
+              <button id="dispute-resolve-btn" class="action-btn primary-btn" style="width:100%">Change Resolution</button>
+            </div>
+            <div>
+              <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:8px">
+                Or void this market. All positions will be refunded.
+              </p>
+              <button id="dispute-void-btn" class="action-btn danger-btn" style="width:100%">Void Market</button>
+            </div>
           </div>
         `;
       }

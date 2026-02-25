@@ -138,7 +138,7 @@
         <h2 class="section-title">Watchlist</h2>
         <div class="explore-filters">
           <button id="manage-categories-btn" class="filter-btn" title="Manage categories">⚙</button>
-          <button id="clear-watchlist-btn" class="filter-btn">Clear All</button>
+          <button id="clear-trash-btn" class="filter-btn">Clear Trash</button>
         </div>
       </div>
 
@@ -156,6 +156,14 @@
         <div class="category-add-row">
           <input id="new-category-input" type="text" class="form-input" placeholder="New category name" maxlength="32">
           <button id="add-category-btn" class="action-btn primary-btn" style="width:auto;padding:10px 18px">Add</button>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-primary);display:flex;gap:8px;flex-wrap:wrap">
+          <button id="export-watchlist-btn" class="action-btn secondary-btn" style="flex:1;font-size:0.75rem;padding:8px 12px">Export Watchlist</button>
+          <button id="import-watchlist-btn" class="action-btn secondary-btn" style="flex:1;font-size:0.75rem;padding:8px 12px">Import Watchlist</button>
+          <input id="import-watchlist-file" type="file" accept=".json" style="display:none">
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-primary);text-align:left">
+          <button id="clear-watchlist-btn" style="background:none;border:none;color:var(--text-muted);font-size:0.7rem;cursor:pointer;padding:2px 0;text-decoration:underline">Clear entire watchlist</button>
         </div>
       </div>
 

@@ -1448,6 +1448,43 @@ body::before {
 }
 .watchlist-picker-cancel:hover { color: var(--text-primary); }
 
+.watchlist-picker-new {
+  display: flex;
+  gap: 6px;
+  padding: 4px 0;
+}
+.watchlist-picker-new-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  outline: none;
+}
+.watchlist-picker-new-input:focus {
+  border-color: var(--gold-dim);
+}
+.watchlist-picker-new-input::placeholder {
+  color: var(--text-muted);
+}
+.watchlist-picker-new-btn {
+  padding: 7px 14px;
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--gold);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.watchlist-picker-new-btn:hover {
+  background: var(--gold);
+  color: var(--bg-primary);
+}
+
 .watchlist-star {
   background: none;
   border: none;

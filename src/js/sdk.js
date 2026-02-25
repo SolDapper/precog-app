@@ -40,6 +40,7 @@ import {
   voidMarket,
   claimRefund,
   updateProtocolConfig,
+  disputeResolve,
 
   // Constants
   ACCOUNT_DISCRIMINATORS,
@@ -164,6 +165,10 @@ export function buildClaimWinnings(accounts) {
 
 export function buildVoidMarket(accounts) {
   return voidMarket(accounts, PROGRAM_ID);
+}
+
+export function buildDisputeResolve(accounts, args) {
+  return disputeResolve(accounts, args, PROGRAM_ID);
 }
 
 export function buildClaimRefund(accounts) {
