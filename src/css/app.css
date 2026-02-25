@@ -98,7 +98,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 2px 8px 2px 5px;
+  padding: 4px 9px 5px 6px;
   background: var(--gold);
   color: #010101;
   font-family: var(--font-display);
