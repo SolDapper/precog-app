@@ -1748,6 +1748,7 @@ document.getElementById('pos-token-chooser-dropdown')?.addEventListener('click',
 async function claimWinnings(posAddr, mktAddr) {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p) return;
+  const statusEl = document.querySelector(`.claim-status[data-position="${posAddr}"]`);
   try {
     ui.showTxOverlay('Claiming winnings…');
     const mk = new PublicKey(mktAddr);
@@ -1784,15 +1785,24 @@ async function claimWinnings(posAddr, mktAddr) {
 
     const ix = sdk.buildClaimWinnings(accounts);
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p);
-    ui.hideTxOverlay(); ui.showStatus('Winnings claimed!', 'success');
+    const sig = await sdk.signAndSend(ix, w.publicKey, p);
+    ui.updateTxOverlay('Confirming transaction…');
+    const conn = sdk.getConnection();
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('finalized');
+    await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'finalized');
+    ui.hideTxOverlay();
+    if (statusEl) { statusEl.textContent = 'Winnings claimed!'; statusEl.className = 'claim-status bet-status success'; statusEl.classList.remove('hidden'); }
     loadPositions();
-  } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Claim failed', 'error'); }
+  } catch (err) {
+    ui.hideTxOverlay();
+    if (statusEl) { statusEl.textContent = err.message || 'Claim failed'; statusEl.className = 'claim-status bet-status error'; statusEl.classList.remove('hidden'); }
+  }
 }
 
 async function claimRefund(posAddr, mktAddr) {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p) return;
+  const statusEl = document.querySelector(`.claim-status[data-position="${posAddr}"]`);
   try {
     ui.showTxOverlay('Claiming refund…');
     const mk = new PublicKey(mktAddr);
@@ -1818,10 +1828,18 @@ async function claimRefund(posAddr, mktAddr) {
 
     const ix = sdk.buildClaimRefund(accounts);
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p);
-    ui.hideTxOverlay(); ui.showStatus('Refund claimed!', 'success');
+    const sig = await sdk.signAndSend(ix, w.publicKey, p);
+    ui.updateTxOverlay('Confirming transaction…');
+    const conn = sdk.getConnection();
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('finalized');
+    await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'finalized');
+    ui.hideTxOverlay();
+    if (statusEl) { statusEl.textContent = 'Refund claimed!'; statusEl.className = 'claim-status bet-status success'; statusEl.classList.remove('hidden'); }
     loadPositions();
-  } catch (err) { ui.hideTxOverlay(); ui.showStatus(err.message || 'Refund failed', 'error'); }
+  } catch (err) {
+    ui.hideTxOverlay();
+    if (statusEl) { statusEl.textContent = err.message || 'Refund failed'; statusEl.className = 'claim-status bet-status error'; statusEl.classList.remove('hidden'); }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════

@@ -604,12 +604,14 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       <button class="action-btn primary-btn claim-winnings-btn"
         data-position="${positionPubkey.toBase58()}"
         data-market="${marketPubkey.toBase58()}">Claim Winnings</button>
+      <div class="claim-status bet-status hidden" data-position="${positionPubkey.toBase58()}"></div>
     </div>`;
   } else if (market.status === 3 && !position.claimed) {
     actionsHtml = `<div class="position-actions">
       <button class="action-btn secondary-btn claim-refund-btn"
         data-position="${positionPubkey.toBase58()}"
         data-market="${marketPubkey.toBase58()}">Claim Refund</button>
+      <div class="claim-status bet-status hidden" data-position="${positionPubkey.toBase58()}"></div>
     </div>`;
   } else if (position.claimed) {
     actionsHtml = `<div style="margin-top:10px;font-size:0.78rem;color:var(--green)">✓ Claimed</div>`;
