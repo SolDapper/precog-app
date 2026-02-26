@@ -1717,8 +1717,64 @@ body::before {
   padding: 1px 5px;
   color: var(--gold-dim);
 }
-.manual-toc-link { color: var(--gold); text-decoration: none; font-size: 0.82rem; cursor: pointer; }
-.manual-toc-link:hover { text-decoration: underline; }
+.manual-toc-link { color: var(--gold); text-decoration: none; font-size: 0.82rem; cursor: pointer; transition: color 0.15s; }
+.manual-toc-link:hover { color: var(--gold-bright, #ffe566); text-decoration: none; }
+
+/* Tree-style TOC */
+.manual-toc-tree {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0 0 0 2px;
+}
+.manual-toc-tree li {
+  position: relative;
+  padding: 4px 0 4px 20px;
+}
+.manual-toc-tree li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-primary);
+}
+.manual-toc-tree li::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 14px;
+  height: 1px;
+  background: var(--border-primary);
+}
+.manual-toc-tree li:last-child::before {
+  bottom: calc(100% - 14px);
+}
+
+/* Nested children */
+.manual-toc-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 6px;
+}
+.manual-toc-tree ul li {
+  padding: 3px 0 3px 18px;
+}
+.manual-toc-tree ul li::after {
+  width: 12px;
+  top: 12px;
+}
+.manual-toc-tree ul li:last-child::before {
+  bottom: calc(100% - 12px);
+}
+.manual-toc-tree ul .manual-toc-link {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.manual-toc-tree ul .manual-toc-link:hover {
+  color: var(--gold);
+}
 
 /* ── Footer ─────────────────────────────────────────────────────── */
 .footer {
