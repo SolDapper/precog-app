@@ -540,6 +540,66 @@ body::before {
 .market-status-badge.voided { background: var(--red-dim); color: var(--red); }
 .market-status-badge.finalize-ready { background: rgba(255, 160, 0, 0.15); color: #ffa000; }
 
+/* Save Maker button */
+.save-maker-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--border-primary);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.save-maker-btn:hover { border-color: var(--gold); color: var(--gold); }
+.save-maker-btn.saved {
+  background: var(--green);
+  border-color: var(--green);
+  color: #111;
+}
+
+/* Makers list (Settings page) */
+.makers-list { display: flex; flex-direction: column; gap: 6px; }
+.maker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  border: 1px solid var(--border-primary);
+  font-size: 0.78rem;
+}
+.maker-item-address {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+.maker-item-name {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+.maker-remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  font-size: 1rem;
+  line-height: 1;
+}
+.maker-remove-btn:hover { color: var(--red); }
+
 /* Outcome bars */
 .outcome-bars {
   display: flex;

@@ -59,6 +59,7 @@
       <button class="nav-btn" data-view="positions"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Positions</button>
       <button class="nav-btn" data-view="make"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Make</button>
       <button class="nav-btn" data-view="info"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>WUT?</button>
+      <button class="nav-btn" data-view="settings"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
     </nav>
 
     <!-- Status Bar -->
@@ -102,7 +103,6 @@
         <label class="sort-label">Sort</label>
         <select id="explore-sort-select" class="sort-select">
           <option value="deadline-asc" selected>Closing Soon</option>
-          <option value="deadline-desc">Deadline ↓</option>
           <option value="created-desc">Newest First</option>
           <option value="created-asc">Oldest First</option>
           <option value="value-desc">Value (High → Low)</option>
@@ -218,6 +218,8 @@
             <option value="claimed">Claimed</option>
             <option value="winning">Winning</option>
             <option value="losing">Losing</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
           </select>
           <label class="sort-label">Sort</label>
           <select id="positions-sort" class="sort-select">
@@ -230,6 +232,10 @@
             <option value="payout-desc">Est. Payout ↓</option>
             <option value="payout-asc">Est. Payout ↑</option>
             <option value="status">Status</option>
+          </select>
+          <label class="sort-label">Maker</label>
+          <select id="positions-maker-filter" class="sort-select">
+            <option value="all">All Makers</option>
           </select>
           <label class="sort-label">Token</label>
           <div id="pos-token-chooser" class="token-chooser">
@@ -453,7 +459,7 @@
           <p class="manual-text">The <strong>Positions</strong> tab shows all your positions across every market. Use the filters to zero in on what you need:</p>
           <p class="manual-text"><strong>Category</strong> — Filter by the market's on-chain category.</p>
           <p class="manual-text"><strong>Status</strong> — Show only positions in Open, Closed (pending resolution), Resolved (dispute window active), Ready (awaiting finalization), Finalized, or Voided markets.</p>
-          <p class="manual-text"><strong>Result</strong> — Filter by Unclaimed, Claimed, Winning, or Losing. Use "Winning + Unclaimed" together to quickly find everything you need to claim.</p>
+          <p class="manual-text"><strong>Result</strong> — Filter by Unclaimed (positions with a pending Claim Winnings or Claim Refund button), Claimed, Winning (open markets where your outcome is currently leading), Losing (open markets where your outcome is behind), Won (resolved/finalized markets where you hold the winning outcome), or Lost (resolved/finalized markets where you don't).</p>
           <p class="manual-text"><strong>Sort</strong> — Order by deadline, newest/oldest, position size, estimated payout, or group by market status.</p>
           <p class="manual-text">Each position card shows the outcome, amount, deposit date, deadline, and maker. USD values are shown on estimate badges when price data is available.</p>
           <p class="manual-text">If a market is finalized and you hold the winning outcome, a <strong>Claim Winnings</strong> button appears. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
@@ -523,6 +529,29 @@
             &nbsp;·&nbsp;
             <a href="https://t.me/pelfortportal" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">Telegram</a>
           </p>
+        </div>
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VIEW: Settings -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main id="view-settings" class="view hidden">
+      <h2 class="section-title">Settings</h2>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="bet-section-title">Saved Market Makers</div>
+        <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:10px">
+          Save makers from market detail pages. Saved makers are pinned to the top of the Maker filter on Explore and Positions.
+        </p>
+        <div id="makers-list" class="makers-list"></div>
+        <div class="makers-actions" style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button id="makers-export-btn" class="action-btn secondary-btn" style="font-size:0.72rem;width:auto;padding:8px 16px">Export</button>
+          <label class="action-btn secondary-btn" style="font-size:0.72rem;width:auto;padding:8px 16px;cursor:pointer">
+            Import
+            <input type="file" id="makers-import-input" accept=".json" style="display:none">
+          </label>
+          <div id="makers-import-status" style="font-size:0.72rem;color:var(--text-secondary)"></div>
         </div>
       </div>
     </main>

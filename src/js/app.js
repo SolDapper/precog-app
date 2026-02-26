@@ -12,6 +12,7 @@ import * as sdk from './sdk.js';
 import * as ui from './ui.js';
 import * as watchlist from './watchlist.js';
 import { gateEnabled, checkGate, getGateTokenInfo, clearGateCache } from './gate.js';
+import * as makers from './makers.js';
 
 const PELF_SWAP_URL = 'https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=BgJW7U1u2RY5XJk9uYb5AqFRzjMtqE7pw3kaf9iw9Ntz';
 
@@ -38,6 +39,7 @@ function saveFilters() {
         result: currentPositionsResultFilter,
         sort: currentPositionsSort,
         token: currentPositionsTokenFilter,
+        maker: currentPositionsMakerFilter,
         mine: posShowMineOnly,
         street: posShowStreetBetsOnly,
       },
@@ -65,6 +67,7 @@ function loadFilters() {
       currentPositionsResultFilter = saved.positions.result || 'all';
       currentPositionsSort = saved.positions.sort || 'created-desc';
       currentPositionsTokenFilter = saved.positions.token || 'all';
+      currentPositionsMakerFilter = saved.positions.maker || 'all';
       posShowMineOnly = saved.positions.mine || false;
       posShowStreetBetsOnly = saved.positions.street || false;
     }
@@ -89,6 +92,8 @@ function applyFiltersToDOM() {
   if (posResultEl) posResultEl.value = currentPositionsResultFilter;
   const posSortEl = document.getElementById('positions-sort');
   if (posSortEl) posSortEl.value = currentPositionsSort;
+  const posMakerEl = document.getElementById('positions-maker-filter');
+  if (posMakerEl) posMakerEl.value = currentPositionsMakerFilter;
   // Positions toggles
   const posMineBtn = document.getElementById('pos-mine-toggle');
   if (posMineBtn) posMineBtn.classList.toggle('active', posShowMineOnly);
@@ -149,7 +154,7 @@ async function refreshUserPositions() {
 // ═══════════════════════════════════════════════════════════════════
 // View Router
 // ═══════════════════════════════════════════════════════════════════
-const viewNames = ['explore', 'market', 'positions', 'make', 'admin', 'watchlist', 'info'];
+const viewNames = ['explore', 'market', 'positions', 'make', 'admin', 'watchlist', 'info', 'settings'];
 
 /** Update the URL hash without triggering hashchange handler re-entrantly */
 let _suppressHashChange = false;
@@ -174,6 +179,7 @@ function switchView(name, { updateHash = true } = {}) {
   if (name === 'admin') loadAdmin();
   if (name === 'make') updateCreateForm();
   if (name === 'watchlist') loadWatchlist();
+  if (name === 'settings') renderSettingsPage();
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -412,7 +418,10 @@ function renderMarketsList(resetPage = true) {
   switch (currentSort) {
     case 'value-desc': filtered.sort((a, b) => (b.account._usdVolume || 0) - (a.account._usdVolume || 0)); break;
     case 'value-asc': filtered.sort((a, b) => (a.account._usdVolume || 0) - (b.account._usdVolume || 0)); break;
-    case 'deadline-asc': filtered.sort((a, b) => Number(a.account.resolutionDeadline - b.account.resolutionDeadline)); break;
+    case 'deadline-asc':
+      filtered = filtered.filter(m => m.account.status === 0 && !m.account._expired);
+      filtered.sort((a, b) => Number(a.account.resolutionDeadline - b.account.resolutionDeadline));
+      break;
     case 'deadline-desc': filtered.sort((a, b) => Number(b.account.resolutionDeadline - a.account.resolutionDeadline)); break;
     case 'created-desc': filtered.sort((a, b) => (b.account._creationTime || Number(b.account.marketId)) - (a.account._creationTime || Number(a.account.marketId))); break;
     case 'created-asc': filtered.sort((a, b) => (a.account._creationTime || Number(a.account.marketId)) - (b.account._creationTime || Number(b.account.marketId))); break;
@@ -614,7 +623,16 @@ function populateCreatorFilter() {
 
   const prev = currentCreatorFilter || sel.value;
   sel.innerHTML = '<option value="all">All Makers</option>';
+
+  // Only show saved makers, sorted alphabetically by short address
+  const savedAddrs = new Set(makers.getAll());
+  const savedCreators = [];
   for (const [addr, short] of creators) {
+    if (savedAddrs.has(addr)) savedCreators.push([addr, short]);
+  }
+  savedCreators.sort((a, b) => a[1].localeCompare(b[1]));
+
+  for (const [addr, short] of savedCreators) {
     const opt = document.createElement('option');
     opt.value = addr;
     opt.textContent = short;
@@ -622,12 +640,12 @@ function populateCreatorFilter() {
   }
 
   // Restore previous selection if still valid
-  if (creators.has(prev)) sel.value = prev;
+  if (savedAddrs.has(prev)) sel.value = prev;
   else { sel.value = 'all'; currentCreatorFilter = 'all'; }
 
   // Resolve SNS names in background
   import('./sns.js').then(sns => {
-    for (const [addr] of creators) {
+    for (const [addr] of savedCreators) {
       sns.resolveDisplayName(addr).then(name => {
         const opt = sel.querySelector(`option[value="${addr}"]`);
         if (opt) opt.textContent = name;
@@ -970,6 +988,10 @@ document.querySelector('.positions-filters')?.addEventListener('change', (e) => 
     currentPositionsSort = e.target.value;
     saveFilters();
     reRenderPositions();
+  } else if (id === 'positions-maker-filter') {
+    currentPositionsMakerFilter = e.target.value;
+    saveFilters();
+    reRenderPositions();
   }
 });
 // Positions toggle buttons
@@ -1052,6 +1074,23 @@ async function openMarketDetail(pubkey) {
 }
 
 function attachDetailListeners(pubkey, market, tokenUsdPrice = 0) {
+  // Save maker button
+  const makerBtn = document.getElementById('save-maker-btn');
+  if (makerBtn) {
+    const makerAddr = makerBtn.dataset.address;
+    // Set initial state
+    if (makers.has(makerAddr)) {
+      makerBtn.classList.add('saved');
+      makerBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    }
+    makerBtn.addEventListener('click', () => {
+      const nowSaved = makers.toggle(makerAddr);
+      makerBtn.classList.toggle('saved', nowSaved);
+      makerBtn.innerHTML = nowSaved
+        ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+    });
+  }
   // Share
   document.getElementById('detail-share-btn')?.addEventListener('click', () => {
     const url = window.location.origin + window.location.pathname + '#/market/' + pubkey.toBase58();
@@ -1342,6 +1381,7 @@ let currentPositionsStatusFilter = 'all';
 let currentPositionsResultFilter = 'all';
 let currentPositionsSort = 'created-desc';
 let currentPositionsTokenFilter = 'all';
+let currentPositionsMakerFilter = 'all';
 let posShowMineOnly = false;
 let posShowStreetBetsOnly = false;
 
@@ -1427,15 +1467,21 @@ async function loadPositions() {
 
       // Compute payout estimate for sorting
       let payout = 0n;
-      let isWinning = false;
-      let isLosing = false;
+      let isWinning = false;  // finalized/resolved winner
+      let isLosing = false;   // finalized/resolved loser
+      let isOpenWinning = false;  // open market, user's outcome is leading
+      let isOpenLosing = false;   // open market, user's outcome is not leading
       if (mk && !claimed) {
         const pool = mk.outcomePools[pos.outcomeIndex];
         if (mk.status < 2 && pool > 0n && mk.totalPool > 0n) {
           const gross = (BigInt(pos.amount) * mk.totalPool) / pool;
           const fee = (gross * BigInt(mk.feeBps)) / 10000n;
           payout = gross - fee;
-        } else if (mk.status === 2 && mk.winningOutcome === pos.outcomeIndex) {
+          // Determine if user's outcome is currently leading
+          const maxPool = mk.outcomePools.reduce((a, b) => a > b ? a : b, 0n);
+          isOpenWinning = pool === maxPool;
+          isOpenLosing = pool !== maxPool;
+        } else if (mk.status >= 1 && mk.status <= 2 && mk.winningOutcome === pos.outcomeIndex) {
           isWinning = true;
           const winPool = mk.outcomePools[mk.winningOutcome];
           if (winPool > 0n) {
@@ -1443,7 +1489,7 @@ async function loadPositions() {
             const fee = (gross * BigInt(mk.feeBps)) / 10000n;
             payout = gross - fee;
           }
-        } else if (mk.status === 2 && mk.winningOutcome !== pos.outcomeIndex) {
+        } else if (mk.status >= 1 && mk.status <= 2 && mk.winningOutcome !== pos.outcomeIndex) {
           isLosing = true;
         }
       }
@@ -1457,7 +1503,7 @@ async function loadPositions() {
         payoutUsd = (Number(payout) / (10 ** decimals)) * tokenPrice;
       }
 
-      return { posPk, pos, mk, market: pos.market, category, deadline, status, claimed, payout, payoutUsd, isWinning, isLosing, amount: pos.amount,
+      return { posPk, pos, mk, market: pos.market, category, deadline, status, claimed, payout, payoutUsd, isWinning, isLosing, isOpenWinning, isOpenLosing, amount: pos.amount,
         isStreetBet: mk ? mk._isStreetBet === true : false,
         isMyMarket: mk && myAddr ? (mk.authority.toBase58() === myAddr || mk.creator.toBase58() === myAddr) : false,
       };
@@ -1473,6 +1519,9 @@ async function loadPositions() {
       if (prev && [...filterEl.options].some(o => o.value === prev)) filterEl.value = prev;
       else { filterEl.value = 'all'; currentPositionsCategoryFilter = 'all'; }
     }
+
+    // Populate maker filter dropdown
+    populatePositionsMakerFilter(entries);
 
     renderPositionsList(entries, listEl);
     _positionEntries = entries;
@@ -1494,6 +1543,11 @@ function renderPositionsList(entries, listEl) {
     } else {
       filtered = filtered.filter(e => e.mk && e.mk.tokenMint?.toBase58() === currentPositionsTokenFilter);
     }
+  }
+
+  // Maker filter
+  if (currentPositionsMakerFilter !== 'all') {
+    filtered = filtered.filter(e => e.mk && (e.mk.authority.toBase58() === currentPositionsMakerFilter || e.mk.creator.toBase58() === currentPositionsMakerFilter));
   }
 
   // My Markets toggle
@@ -1533,12 +1587,19 @@ function renderPositionsList(entries, listEl) {
 
   // Result filter
   if (currentPositionsResultFilter === 'unclaimed') {
-    filtered = filtered.filter(e => !e.claimed);
+    filtered = filtered.filter(e => !e.claimed && (
+      (e.status === 2 && e.isWinning) ||  // Finalized + winning outcome
+      (e.status === 3)                      // Voided (refund available)
+    ));
   } else if (currentPositionsResultFilter === 'claimed') {
     filtered = filtered.filter(e => e.claimed);
   } else if (currentPositionsResultFilter === 'winning') {
-    filtered = filtered.filter(e => e.isWinning);
+    filtered = filtered.filter(e => e.isOpenWinning);
   } else if (currentPositionsResultFilter === 'losing') {
+    filtered = filtered.filter(e => e.isOpenLosing);
+  } else if (currentPositionsResultFilter === 'won') {
+    filtered = filtered.filter(e => e.isWinning);
+  } else if (currentPositionsResultFilter === 'lost') {
     filtered = filtered.filter(e => e.isLosing);
   }
 
@@ -1605,6 +1666,59 @@ let _positionEntries = [];
 // We handle re-render in the filter handler instead
 
 // ── Positions Token Chooser ──────────────────────────────────────
+// ── Positions Maker Filter ────────────────────────────────────────
+let _lastPosMakerSet = '';
+
+function populatePositionsMakerFilter(entries) {
+  const sel = document.getElementById('positions-maker-filter');
+  if (!sel) return;
+
+  // Gather unique makers from position markets
+  const makerMap = new Map(); // address → short label
+  for (const { mk } of entries) {
+    if (!mk) continue;
+    const addr = mk.authority.toBase58();
+    if (!makerMap.has(addr)) {
+      makerMap.set(addr, addr.slice(0, 4) + '…' + addr.slice(-4));
+    }
+  }
+
+  const key = [...makerMap.keys()].sort().join(',');
+  if (key === _lastPosMakerSet) return;
+  _lastPosMakerSet = key;
+
+  const prev = currentPositionsMakerFilter || sel.value;
+  sel.innerHTML = '<option value="all">All Makers</option>';
+
+  // Separate saved vs unsaved
+  const savedAddrs = new Set(makers.getAll());
+  const savedMakers = [];
+  for (const [addr, short] of makerMap) {
+    if (savedAddrs.has(addr)) savedMakers.push([addr, short]);
+  }
+  savedMakers.sort((a, b) => a[1].localeCompare(b[1]));
+
+  for (const [addr, short] of savedMakers) {
+    const opt = document.createElement('option');
+    opt.value = addr;
+    opt.textContent = short;
+    sel.appendChild(opt);
+  }
+
+  if (savedAddrs.has(prev)) sel.value = prev;
+  else { sel.value = 'all'; currentPositionsMakerFilter = 'all'; }
+
+  // Resolve SNS names
+  import('./sns.js').then(sns => {
+    for (const [addr] of savedMakers) {
+      sns.resolveDisplayName(addr).then(name => {
+        const opt = sel.querySelector(`option[value="${addr}"]`);
+        if (opt) opt.textContent = name;
+      });
+    }
+  });
+}
+
 let _lastPosTokenSet = '';
 
 function populatePositionsTokenFilter(entries) {
@@ -2823,6 +2937,84 @@ function attachConnectListeners() {
     });
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Settings Page
+// ═══════════════════════════════════════════════════════════════════
+function renderSettingsPage() {
+  const listEl = document.getElementById('makers-list');
+  if (!listEl) return;
+
+  const allMakers = makers.getAllWithMeta();
+  const addrs = Object.keys(allMakers);
+
+  if (addrs.length === 0) {
+    listEl.innerHTML = '<div class="empty-state" style="padding:12px 0;font-size:0.78rem">No saved makers yet. Visit a market detail page and tap the + button next to a Maker to save them.</div>';
+    return;
+  }
+
+  listEl.innerHTML = '';
+  for (const addr of addrs) {
+    const meta = allMakers[addr];
+    const short = addr.slice(0, 4) + '…' + addr.slice(-4);
+    const item = document.createElement('div');
+    item.className = 'maker-item';
+    item.innerHTML = `
+      <span class="maker-item-name sns-resolve" data-address="${addr}">${short}</span>
+      <span class="maker-item-address">${addr}</span>
+      <button class="maker-remove-btn" data-address="${addr}" title="Remove">✕</button>
+    `;
+    listEl.appendChild(item);
+  }
+
+  // Resolve SNS names
+  ui.resolveSnsElements(listEl);
+
+  // Remove handlers
+  listEl.querySelectorAll('.maker-remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      makers.remove(btn.dataset.address);
+      renderSettingsPage();
+      // Force rebuild of explore maker filter on next load
+      _lastCreatorSet = '';
+      _lastPosMakerSet = '';
+    });
+  });
+}
+
+// Settings export/import
+document.getElementById('makers-export-btn')?.addEventListener('click', () => {
+  const data = makers.exportData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${Math.floor(Date.now() / 1000)}-makers.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('makers-import-input')?.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('makers-import-status');
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+      const result = makers.importData(imported);
+      statusEl.textContent = `Imported: ${result.added} added, ${result.skipped} skipped.`;
+      statusEl.style.color = 'var(--green)';
+      renderSettingsPage();
+      _lastCreatorSet = '';
+      _lastPosMakerSet = '';
+    } catch (err) {
+      statusEl.textContent = err.message || 'Import failed';
+      statusEl.style.color = 'var(--red)';
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
 
 // ═══════════════════════════════════════════════════════════════════
 // Navigation

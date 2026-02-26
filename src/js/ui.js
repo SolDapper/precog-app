@@ -541,7 +541,12 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
       </div>
       <div class="meta-item">
         <span class="meta-label">Maker</span>
-        <span class="meta-value sns-resolve" data-address="${market.creator.toBase58()}" style="font-size:0.72rem">${shortAddress(market.creator.toBase58())}</span>
+        <span class="meta-value" style="display:flex;align-items:center;gap:6px">
+          <span class="sns-resolve" data-address="${market.creator.toBase58()}" style="font-size:0.72rem">${shortAddress(market.creator.toBase58())}</span>
+          <button class="save-maker-btn" id="save-maker-btn" data-address="${market.creator.toBase58()}" title="Save maker">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </span>
       </div>
     </div>
 
