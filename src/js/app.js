@@ -2738,6 +2738,10 @@ function setupWallet() {
         if (view === 'watchlist') loadWatchlist();
         if (view === 'admin') loadAdmin();
       }
+      // Re-render market detail if currently viewing one
+      if (currentMarketPubkey && !document.getElementById('view-market')?.classList.contains('hidden')) {
+        openMarketDetail(currentMarketPubkey);
+      }
     });
     // Update detail view bet button
     updateBetUI();
