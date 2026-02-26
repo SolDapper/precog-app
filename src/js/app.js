@@ -297,6 +297,9 @@ function renderMarketsList(resetPage = true) {
     filtered = filtered.filter(m => m.account.status === 0 && !m.account._expired);
   } else if (currentFilter === 'closed') {
     filtered = filtered.filter(m => m.account._expired);
+  } else if (currentFilter === 'ready') {
+    const nowSec = Math.floor(Date.now() / 1000);
+    filtered = filtered.filter(m => m.account.status === 1 && nowSec >= Number(m.account.resolvedAt) + 86400);
   } else if (currentFilter !== 'all') {
     const map = { resolved: 1, finalized: 2, voided: 3 };
     const val = map[currentFilter];
@@ -1402,6 +1405,9 @@ function renderPositionsList(entries, listEl) {
   // Status filter
   if (currentPositionsStatusFilter === 'closed') {
     filtered = filtered.filter(e => e.status === 0 && e.mk && e.mk._expired);
+  } else if (currentPositionsStatusFilter === 'ready') {
+    const nowSec = Math.floor(Date.now() / 1000);
+    filtered = filtered.filter(e => e.status === 1 && e.mk && nowSec >= Number(e.mk.resolvedAt) + 86400);
   } else if (currentPositionsStatusFilter !== 'all') {
     const statusVal = parseInt(currentPositionsStatusFilter);
     if (statusVal === 0) {

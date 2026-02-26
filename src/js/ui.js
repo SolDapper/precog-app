@@ -160,8 +160,16 @@ export function hideTxOverlay() {
 
 export function renderMarketCard(pubkey, market, userPositions = null) {
   const probs = getImpliedProbabilities(market.outcomePools, market.totalPool);
-  const displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
-  const statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
+  let displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
+  let statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
+  if (market.status === 1) {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const disputeEnd = Number(market.resolvedAt) + 86400;
+    if (nowSec >= disputeEnd) {
+      displayStatus = 'Ready to Finalize';
+      statusClass = 'finalize-ready';
+    }
+  }
 
   const outcomeBarsHtml = market.outcomeLabels.map((label, i) => {
     const pct = probs[i] * 100;
@@ -283,8 +291,16 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
 
 export function renderMarketDetail(pubkey, market, connectedWallet = null, userPositions = null) {
   const probs = getImpliedProbabilities(market.outcomePools, market.totalPool);
-  const displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
-  const statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
+  let displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
+  let statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
+  if (market.status === 1) {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const disputeEnd = Number(market.resolvedAt) + 86400;
+    if (nowSec >= disputeEnd) {
+      displayStatus = 'Ready to Finalize';
+      statusClass = 'finalize-ready';
+    }
+  }
   const denomLabel = market._tokenSymbol || (market.denominationName === 'NativeSol' ? 'SOL' : market.denominationName);
   const tokenIcon = market._tokenIcon || '';
   const tokenName = market._tokenName || denomLabel;
@@ -568,8 +584,16 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
   const amountStr = market.denominationName === 'NativeSol'
     ? formatSol(position.amount) : formatTokenAmount(position.amount, market.tokenDecimals) + ' ' + denomLabel;
   const outcomeLabel = market.outcomeLabels[position.outcomeIndex] ?? `Outcome ${position.outcomeIndex}`;
-  const displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
-  const statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
+  let displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
+  let statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
+  if (market.status === 1) {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const disputeEnd = Number(market.resolvedAt) + 86400;
+    if (nowSec >= disputeEnd) {
+      displayStatus = 'Ready to Finalize';
+      statusClass = 'finalize-ready';
+    }
+  }
   const { category } = parseDescription(market.description);
   const deadlineStr = market.status === 0 ? formatCountdown(market.resolutionDeadline) : formatDate(market.resolutionDeadline);
 
