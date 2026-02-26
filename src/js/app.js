@@ -384,8 +384,11 @@ function renderMarketsList(resetPage = true) {
   } else if (currentFilter === 'ready') {
     const nowSec = Math.floor(Date.now() / 1000);
     filtered = filtered.filter(m => m.account.status === 1 && nowSec >= Number(m.account.resolvedAt) + 86400);
+  } else if (currentFilter === 'resolved') {
+    const nowSec = Math.floor(Date.now() / 1000);
+    filtered = filtered.filter(m => m.account.status === 1 && nowSec < Number(m.account.resolvedAt) + 86400);
   } else if (currentFilter !== 'all') {
-    const map = { resolved: 1, finalized: 2, voided: 3 };
+    const map = { finalized: 2, voided: 3 };
     const val = map[currentFilter];
     if (val !== undefined) filtered = filtered.filter(m => m.account.status === val);
   }
@@ -1510,6 +1513,9 @@ function renderPositionsList(entries, listEl) {
     const statusVal = parseInt(currentPositionsStatusFilter);
     if (statusVal === 0) {
       filtered = filtered.filter(e => e.status === 0 && !(e.mk && e.mk._expired));
+    } else if (statusVal === 1) {
+      const nowSec = Math.floor(Date.now() / 1000);
+      filtered = filtered.filter(e => e.status === 1 && e.mk && nowSec < Number(e.mk.resolvedAt) + 86400);
     } else {
       filtered = filtered.filter(e => e.status === statusVal);
     }

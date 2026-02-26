@@ -94,6 +94,11 @@
           <option value="all">All</option>
         </select>
 
+        <label class="sort-label">Category</label>
+        <select id="explore-category-filter" class="sort-select">
+          <option value="all">All Categories</option>
+        </select>
+
         <label class="sort-label">Sort</label>
         <select id="explore-sort-select" class="sort-select">
           <option value="deadline-asc" selected>Closing Soon</option>
@@ -109,11 +114,6 @@
         <label class="sort-label" style="margin-left:12px">Maker</label>
         <select id="explore-creator-filter" class="sort-select">
           <option value="all">All Makers</option>
-        </select>
-
-        <label class="sort-label" style="margin-left:12px">Category</label>
-        <select id="explore-category-filter" class="sort-select">
-          <option value="all">All Categories</option>
         </select>
 
         <label class="sort-label" style="margin-left:12px">Token</label>
@@ -197,10 +197,6 @@
       </div>
       <div class="positions-filters">
         <div class="explore-sort">
-          <label class="sort-label">Category</label>
-          <select id="positions-category-filter" class="sort-select">
-            <option value="all">All Categories</option>
-          </select>
           <label class="sort-label">Status</label>
           <select id="positions-status-filter" class="sort-select">
             <option value="all">All Statuses</option>
@@ -210,6 +206,10 @@
             <option value="ready">Ready</option>
             <option value="2">Finalized</option>
             <option value="3">Voided</option>
+          </select>
+          <label class="sort-label">Category</label>
+          <select id="positions-category-filter" class="sort-select">
+            <option value="all">All Categories</option>
           </select>
           <label class="sort-label">Result</label>
           <select id="positions-result-filter" class="sort-select">
