@@ -534,7 +534,7 @@ body::before {
   flex-shrink: 0;
 }
 .market-status-badge.open { background: var(--green-dim); color: var(--green); }
-.market-status-badge.resolved { background: var(--blue-dim); color: var(--blue); }
+.market-status-badge.resolved { background: rgba(255, 105, 180, 0.15); color: #ff69b4; }
 .market-status-badge.finalized { background: rgba(179,136,255,0.15); color: var(--purple); }
 .market-status-badge.voided { background: var(--red-dim); color: var(--red); }
 .market-status-badge.finalize-ready { background: rgba(255, 160, 0, 0.15); color: #ffa000; }
