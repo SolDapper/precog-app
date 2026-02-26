@@ -166,7 +166,7 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
     const nowSec = Math.floor(Date.now() / 1000);
     const disputeEnd = Number(market.resolvedAt) + 86400;
     if (nowSec >= disputeEnd) {
-      displayStatus = 'Ready to Finalize';
+      displayStatus = 'Ready';
       statusClass = 'finalize-ready';
     }
   }
@@ -297,7 +297,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
     const nowSec = Math.floor(Date.now() / 1000);
     const disputeEnd = Number(market.resolvedAt) + 86400;
     if (nowSec >= disputeEnd) {
-      displayStatus = 'Ready to Finalize';
+      displayStatus = 'Ready';
       statusClass = 'finalize-ready';
     }
   }
@@ -590,7 +590,7 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
     const nowSec = Math.floor(Date.now() / 1000);
     const disputeEnd = Number(market.resolvedAt) + 86400;
     if (nowSec >= disputeEnd) {
-      displayStatus = 'Ready to Finalize';
+      displayStatus = 'Ready';
       statusClass = 'finalize-ready';
     }
   }
