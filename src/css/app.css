@@ -1717,6 +1717,8 @@ body::before {
   padding: 1px 5px;
   color: var(--gold-dim);
 }
+.manual-toc-link { color: var(--gold); text-decoration: none; font-size: 0.82rem; cursor: pointer; }
+.manual-toc-link:hover { text-decoration: underline; }
 
 /* ── Footer ─────────────────────────────────────────────────────── */
 .footer {

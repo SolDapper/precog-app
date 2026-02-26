@@ -352,12 +352,47 @@
 
       <div class="manual-card card">
         <div class="manual-section">
+          <h3 class="manual-heading">Contents</h3>
+          <p class="manual-text">
+            <a class="manual-toc-link" data-scroll-to="wut-getting-started">Getting Started</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-exploring">Exploring Markets</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-detail">Market Detail</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-position">Choosing a Position</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-lifecycle">Market Lifecycle</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-dispute">Dispute Window</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-positions">Positions</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-making">Making a Market</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-watchlist">Watchlist</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-sharing">Sharing</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-fees">Fees</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-pause">Protocol Pause</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-tips">Tips</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-powered">Powered by</a>
+            &nbsp;·&nbsp;
+            <a class="manual-toc-link" data-scroll-to="wut-contact">Contact</a>
+          </p>
+        </div>
+
+        <div class="manual-section" id="wut-getting-started">
           <h3 class="manual-heading">Getting Started</h3>
           <p class="manual-text">Pelfmont Markets is a fully non-custodial prediction market built on Solana. Everything happens on-chain — no accounts, no databases, no middlemen.</p>
           <p class="manual-text">Tap <strong>Connect</strong> in the top-right corner. Phantom and Solflare wallets are supported on desktop. On mobile, the app uses the Solana Mobile Wallet Adapter. If you have a .sol domain, it will display in the wallet button and throughout the app.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-exploring">
           <h3 class="manual-heading">Exploring Markets</h3>
           <p class="manual-text">The <strong>Explore</strong> tab is your home screen. Each market card shows outcome probability bars, volume, USD value, position count, time remaining, and maker (with SNS name when available). If you have a position in a market, an estimate badge shows your projected payout with USD value right on the card.</p>
           <p class="manual-text"><strong>Status filter</strong> — Use the dropdown to filter by Open, Closed (past deadline, awaiting resolution), Resolved, Finalized, Voided, or All. Default is Open.</p>
@@ -367,14 +402,14 @@
           <p class="manual-text"><strong>Hot Markets chart</strong> — Toggle the bar chart to see the top 10 open markets by USD volume. Closed and voided markets are excluded. Click any bar to jump to that market.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-detail">
           <h3 class="manual-heading">Market Detail</h3>
           <p class="manual-text">Tap any market card to open its detail page. You'll see the full description, outcome distribution charts with USD values, pool breakdown, authority and maker addresses (with SNS names), fee structure, and denomination.</p>
           <p class="manual-text">If you hold a position, estimate badges appear showing your projected payout with USD equivalent (or win/loss once finalized).</p>
           <p class="manual-text">Use the <strong>Share</strong> button to send the market link to others via your device's native share sheet, or it will copy the link to your clipboard.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-position">
           <h3 class="manual-heading">Choosing a Position</h3>
           <p class="manual-text">On the market detail page (open markets only), select the outcome you want to take a position on, enter your amount, and review the estimated payout with USD value. The estimate updates live based on current pool sizes and the total fee.</p>
           <p class="manual-text">For SOL markets, the minimum position is 0.01 SOL. Token markets have no minimum — any amount works depending on the token.</p>
@@ -383,7 +418,7 @@
           <p class="manual-text">Markets that are past their deadline show as <strong>Awaiting Resolution</strong> and no longer accept new positions.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-lifecycle">
           <h3 class="manual-heading">Market Lifecycle</h3>
           <p class="manual-text"><strong>Open</strong> — Accepting positions. Anyone can take a position on any outcome.</p>
           <p class="manual-text"><strong>Awaiting Resolution</strong> — The deadline has passed but the authority hasn't resolved yet. No new positions accepted. Displayed as "Closed" in the status filter.</p>
@@ -392,7 +427,7 @@
           <p class="manual-text"><strong>Voided</strong> — The authority cancelled the market. All participants can claim full refunds regardless of outcome.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-dispute">
           <h3 class="manual-heading">Dispute Window</h3>
           <p class="manual-text">After a market is resolved, a <strong>24-hour dispute window</strong> begins before the market can be finalized. This gives participants time to review the outcome and gives the authority a chance to correct mistakes.</p>
           <p class="manual-text"><strong>Change Resolution</strong> — During the dispute window, the market authority can change the winning outcome to a different one. This restarts the full 24-hour window so everyone has time to review the updated result.</p>
@@ -400,7 +435,7 @@
           <p class="manual-text">Once the 24-hour window passes without any changes, anyone can finalize the market by clicking the <strong>Finalize Market</strong> button. No special permissions are needed to finalize.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-positions">
           <h3 class="manual-heading">Positions — Filtering &amp; Sorting</h3>
           <p class="manual-text">The <strong>Positions</strong> tab shows all your positions across every market. Use the filters to zero in on what you need:</p>
           <p class="manual-text"><strong>Category</strong> — Filter by the market's on-chain category.</p>
@@ -411,7 +446,7 @@
           <p class="manual-text">If a market is finalized and you hold the winning outcome, a <strong>Claim Winnings</strong> button appears. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-making">
           <h3 class="manual-heading">Making a Market</h3>
           <p class="manual-text">Go to the <strong>Make</strong> tab. Fill in a title, optional category, description, and define 2–10 outcomes. Set a resolution deadline.</p>
           <p class="manual-text"><strong>Maker Fee</strong> — Optionally set an additional fee (0–500 bps / up to 5%) that you earn on top of the protocol default. This is paid out of winning claims directly to your wallet.</p>
@@ -419,7 +454,7 @@
           <p class="manual-text">The category is stored on-chain inside the description and displayed as a badge on market cards. As the maker, you are the market authority — responsible for resolving with the correct outcome or voiding if needed.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-watchlist">
           <h3 class="manual-heading">Watchlist</h3>
           <p class="manual-text">Tap the ☆ star on any market card to add it to your watchlist. A picker appears with your existing categories and a field to create a new one inline — just type a name and tap <strong>+</strong>.</p>
           <p class="manual-text">In the <strong>Watchlist</strong> tab, filter by category tabs, reassign categories on individual cards, and manage your categories with the ⚙ button. Categories are sorted alphabetically.</p>
@@ -428,25 +463,25 @@
           <p class="manual-text">Your watchlist is stored locally in your browser.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-sharing">
           <h3 class="manual-heading">Sharing</h3>
           <p class="manual-text">There are two ways to share. The share icon in the top-right nav bar shares whatever page you're on. On market detail pages, the dedicated <strong>Share</strong> button includes the market title for richer context.</p>
           <p class="manual-text">On mobile, this opens your device's native share sheet. On desktop, it copies the link to your clipboard.</p>
           <p class="manual-text">Every market has a permanent deep link: <code>#/market/&lt;address&gt;</code>. Anyone who opens it lands directly on that market.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-fees">
           <h3 class="manual-heading">Fees</h3>
           <p class="manual-text">Fees are charged on winning claims only — never on losing positions, voided refunds, or market creation.</p>
           <p class="manual-text">The total fee is split between the protocol treasury (the default fee set by the admin) and the market maker (any additional fee they set). The fee breakdown is visible on each market's detail page.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-pause">
           <h3 class="manual-heading">Protocol Pause</h3>
           <p class="manual-text">The protocol admin can pause the system, which prevents new markets from being created and new positions from being placed. Claims and refunds always remain available even when paused — your funds are never locked.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-tips">
           <h3 class="manual-heading">Tips</h3>
           <p class="manual-text">• Outcome bars show implied probabilities based on pool sizes — they update live as positions come in.</p>
           <p class="manual-text">• Payout estimates with USD values appear on market cards, position cards, and the bet input when you have an active position.</p>
@@ -455,7 +490,7 @@
           <p class="manual-text">• This app has zero backend infrastructure. If the website goes down, your funds are always safe on-chain and recoverable with any Solana program explorer.</p>
         </div>
 
-        <div class="manual-section">
+        <div class="manual-section" id="wut-powered">
           <h3 class="manual-heading">Powered by Precog Markets</h3>
           <p class="manual-text">Pelfmont Markets is built on top of the <strong>Precog Markets</strong> protocol — a trustless pari-mutuel prediction market program deployed on the Solana blockchain. The protocol handles all market creation, position management, resolution, dispute windows, finalization, and payouts entirely on-chain with no intermediaries.</p>
           <p class="manual-text">The protocol supports native SOL, SPL Token, and Token-2022 denominations (including mints with transfer fee extensions), on-chain M-of-N multisig governance for market authorities, and a permissionless finalization model where anyone can crank finalization once the dispute window passes.</p>
@@ -464,6 +499,16 @@
             <a href="https://www.npmjs.com/package/precog-markets" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">precog-markets on npm</a>
             &nbsp;·&nbsp;
             <a href="https://github.com/SolDapper/precog-markets" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">Source on GitHub</a>
+          </p>
+        </div>
+
+        <div class="manual-section" id="wut-contact">
+          <h3 class="manual-heading">Contact</h3>
+          <p class="manual-text">Pelfmont Markets is a product of <strong>PELFORT</strong>.</p>
+          <p class="manual-text">
+            <a href="https://x.com/pelfsolana" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">𝕏 @pelfsolana</a>
+            &nbsp;·&nbsp;
+            <a href="https://t.me/pelfortportal" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">Telegram</a>
           </p>
         </div>
       </div>

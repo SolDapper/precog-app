@@ -2601,6 +2601,15 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 document.querySelector('.logo-btn')?.addEventListener('click', () => switchView('explore'));
 
+// WUT? TOC smooth scroll (avoids hash router conflicts)
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('[data-scroll-to]');
+  if (!link) return;
+  e.preventDefault();
+  const target = document.getElementById(link.dataset.scrollTo);
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
 // ═══════════════════════════════════════════════════════════════════
 // Hash Router
 // ═══════════════════════════════════════════════════════════════════
