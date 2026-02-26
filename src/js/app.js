@@ -1258,6 +1258,7 @@ async function handlePlaceBet() {
 async function handleResolve() {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p || !currentMarketPubkey) return;
+  if (Number(currentMarketData.totalPositions) === 0) { ui.showCardStatus('authority-status', 'Cannot resolve a market with no positions.', 'error'); return; }
   const outcome = parseInt(document.getElementById('resolve-outcome-dropdown')?.value);
   try {
     ui.showTxOverlay('Resolving…');
