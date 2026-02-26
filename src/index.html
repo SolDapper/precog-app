@@ -246,6 +246,7 @@
     <!-- ═══════════════════════════════════════════════ -->
     <main id="view-make" class="view hidden">
       <h2 class="section-title">Make Market</h2>
+      <div id="create-gate-warning" class="gate-warning hidden"></div>
 
       <div class="create-form card">
         <div class="form-group">
@@ -390,6 +391,7 @@
           <h3 class="manual-heading">Getting Started</h3>
           <p class="manual-text">Pelfmont Markets is a fully non-custodial prediction market built on Solana. Everything happens on-chain — no accounts, no databases, no middlemen.</p>
           <p class="manual-text">Tap <strong>Connect</strong> in the top-right corner. Phantom and Solflare wallets are supported on desktop. On mobile, the app uses the Solana Mobile Wallet Adapter. If you have a .sol domain, it will display in the wallet button and throughout the app.</p>
+          <p class="manual-text"><strong>Token Gate</strong> — This app may require your wallet to hold a specific token in order to place positions and create markets. If a token gate is active, you'll see a warning banner on the Create Market page and the Choose Position card showing which token(s) are required. Browsing, viewing markets, and claiming payouts are always open to everyone.</p>
         </div>
 
         <div class="manual-section" id="wut-exploring">
@@ -416,6 +418,7 @@
           <p class="manual-text">Tap <strong>Confirm Position</strong> and approve the transaction in your wallet. Your funds go directly into the on-chain vault — not to any company or individual.</p>
           <p class="manual-text">Markets can be denominated in native SOL, SPL tokens, or Token-2022 tokens. The denomination is shown on the market card and detail page.</p>
           <p class="manual-text">Markets that are past their deadline show as <strong>Awaiting Resolution</strong> and no longer accept new positions.</p>
+          <p class="manual-text">If a token gate is active, a warning banner will appear at the top of the Choose Position card telling you which token(s) you need to hold. You can still view the market and its odds — you just can't place a position without the required token.</p>
         </div>
 
         <div class="manual-section" id="wut-lifecycle">

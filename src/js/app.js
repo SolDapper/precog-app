@@ -11,6 +11,7 @@ import * as wallet from './wallet.js';
 import * as sdk from './sdk.js';
 import * as ui from './ui.js';
 import * as watchlist from './watchlist.js';
+import { gateEnabled, checkGate, getGateTokenInfo, clearGateCache } from './gate.js';
 
 // ═══════════════════════════════════════════════════════════════════
 // State
@@ -973,6 +974,8 @@ function attachDetailListeners(pubkey, market, tokenUsdPrice = 0) {
   });
   document.getElementById('bet-amount-input')?.addEventListener('input', updateBetUI);
   document.getElementById('place-bet-btn')?.addEventListener('click', handlePlaceBet);
+  // Gate warning for bet card
+  updateGateWarning('bet-gate-warning', wallet.getWallet());
   // Authority
   const w = wallet.getWallet();
   const isAuth = w && market.authority.toBase58() === w.publicKey.toBase58();
@@ -1043,10 +1046,61 @@ function updateBetUI() {
   if (v) v.textContent = payStr;
 }
 
+/**
+ * Token gate check. Returns true if gate is disabled or wallet passes.
+ * Shows an inline error in the given status element ID if blocked.
+ * @param {PublicKey} walletPubkey
+ * @param {string} statusElementId - ID of the status element to show errors in
+ * @returns {Promise<boolean>}
+ */
+async function requireGate(walletPubkey, statusElementId) {
+  if (!gateEnabled) return true;
+  const passed = await checkGate(walletPubkey);
+  if (passed) return true;
+
+  // Build a message showing which tokens are required
+  let msg = 'Token-gated: you must hold one of the required tokens.';
+  try {
+    const tokens = await getGateTokenInfo();
+    if (tokens.length) {
+      const names = tokens.map(t => t.symbol !== t.mint ? `${t.name} (${t.symbol})` : t.mint);
+      msg = `Token required: hold any amount of ${names.join(' or ')} to participate.`;
+    }
+  } catch { /* use generic message */ }
+  ui.showCardStatus(statusElementId, msg, 'error');
+  return false;
+}
+
+/**
+ * Show or hide a persistent gate warning banner on a page.
+ * @param {string} elementId - ID of the .gate-warning div
+ * @param {{ publicKey: PublicKey }|null} w - wallet context
+ */
+async function updateGateWarning(elementId, w) {
+  const el = document.getElementById(elementId);
+  if (!el || !gateEnabled) { el?.classList.add('hidden'); return; }
+  if (!w) { el.classList.add('hidden'); return; }
+
+  const passed = await checkGate(w.publicKey);
+  if (passed) { el.classList.add('hidden'); return; }
+
+  let msg = '🔒 Token-gated — you need to hold a required token to participate.';
+  try {
+    const tokens = await getGateTokenInfo();
+    if (tokens.length) {
+      const names = tokens.map(t => t.symbol !== t.mint ? `<strong>${t.name} (${t.symbol})</strong>` : `<code>${t.mint}</code>`);
+      msg = `🔒 Token-gated — hold any amount of ${names.join(' or ')} to place positions and create markets.`;
+    }
+  } catch { /* use generic */ }
+  el.innerHTML = msg;
+  el.classList.remove('hidden');
+}
+
 async function handlePlaceBet() {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p || selectedOutcome === null || !currentMarketPubkey || !currentMarketData) return;
   if (currentMarketData.status !== 0 || currentMarketData._expired) { ui.showBetStatus('This market is no longer open for positions.', 'error'); return; }
+  if (!(await requireGate(w.publicKey, 'bet-status'))) return;
   const amount = parseFloat(document.getElementById('bet-amount-input').value);
   if (!amount || amount <= 0) return;
   const isSolBet = currentMarketData.denominationName === 'NativeSol';
@@ -1651,6 +1705,7 @@ function updateCreateForm() {
   const w = wallet.getWallet();
   btn.textContent = w ? 'Create Market' : 'Connect Wallet to Create';
   btn.disabled = !w;
+  updateGateWarning('create-gate-warning', w);
 }
 
 function showCreateError(msg) {
@@ -1840,6 +1895,18 @@ document.getElementById('create-market-btn')?.addEventListener('click', handleCr
 async function handleCreateMarket() {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p) return;
+  if (gateEnabled && !(await checkGate(w.publicKey))) {
+    let msg = 'Token-gated: you must hold one of the required tokens.';
+    try {
+      const tokens = await getGateTokenInfo();
+      if (tokens.length) {
+        const names = tokens.map(t => t.symbol !== t.mint ? `${t.name} (${t.symbol})` : t.mint);
+        msg = `Token required: hold any amount of ${names.join(' or ')} to participate.`;
+      }
+    } catch { /* use generic */ }
+    showCreateError(msg);
+    return;
+  }
   const title = document.getElementById('create-title').value.trim();
   const category = document.getElementById('create-category').value.trim();
   const rawDescription = document.getElementById('create-description').value.trim();
@@ -2530,6 +2597,7 @@ function setupWallet() {
       document.getElementById('network-indicator')?.classList.remove('connected');
       // Hide admin link on disconnect
       document.querySelector('.footer-admin-link')?.classList.add('hidden');
+      clearGateCache();
     }
     // Refresh current view
     refreshUserPositions().then(() => {
@@ -2545,6 +2613,10 @@ function setupWallet() {
     });
     // Update detail view bet button
     updateBetUI();
+    // Refresh gate warnings on any visible gated cards
+    const w = wallet.getWallet();
+    updateGateWarning('bet-gate-warning', w);
+    updateGateWarning('create-gate-warning', w);
   });
 }
 

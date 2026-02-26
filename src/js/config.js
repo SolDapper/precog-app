@@ -26,3 +26,7 @@ export const PRIORITY = process.env.PRIORITY || 'Medium';
 
 // SOL price
 export const SOL_MINT = 'So11111111111111111111111111111111111111112';
+
+// Token gate — comma-separated mint addresses. Wallet must hold >0 of ANY listed token.
+// Leave empty string to disable gate (open access).
+export const TOKEN_GATE = process.env.TOKEN_GATE || '';
