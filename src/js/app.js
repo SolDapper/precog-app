@@ -16,6 +16,89 @@ import { gateEnabled, checkGate, getGateTokenInfo, clearGateCache } from './gate
 const PELF_SWAP_URL = 'https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=BgJW7U1u2RY5XJk9uYb5AqFRzjMtqE7pw3kaf9iw9Ntz';
 
 // ═══════════════════════════════════════════════════════════════════
+// Filter Persistence
+// ═══════════════════════════════════════════════════════════════════
+const FILTER_STORAGE_KEY = 'pelfmont_filters';
+
+function saveFilters() {
+  try {
+    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
+      explore: {
+        status: currentFilter,
+        sort: currentSort,
+        mine: currentMineOnly,
+        street: currentStreetBetsOnly,
+        category: currentCategoryFilter,
+        creator: currentCreatorFilter,
+        token: currentTokenFilter,
+      },
+      positions: {
+        category: currentPositionsCategoryFilter,
+        status: currentPositionsStatusFilter,
+        result: currentPositionsResultFilter,
+        sort: currentPositionsSort,
+        token: currentPositionsTokenFilter,
+        mine: posShowMineOnly,
+        street: posShowStreetBetsOnly,
+      },
+    }));
+  } catch { /* storage unavailable */ }
+}
+
+function loadFilters() {
+  try {
+    const raw = localStorage.getItem(FILTER_STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved.explore) {
+      currentFilter = saved.explore.status || 'open';
+      currentSort = saved.explore.sort || 'deadline-asc';
+      currentMineOnly = saved.explore.mine || false;
+      currentStreetBetsOnly = saved.explore.street || false;
+      currentCategoryFilter = saved.explore.category || 'all';
+      currentCreatorFilter = saved.explore.creator || 'all';
+      currentTokenFilter = saved.explore.token || 'all';
+    }
+    if (saved.positions) {
+      currentPositionsCategoryFilter = saved.positions.category || 'all';
+      currentPositionsStatusFilter = saved.positions.status || 'all';
+      currentPositionsResultFilter = saved.positions.result || 'all';
+      currentPositionsSort = saved.positions.sort || 'created-desc';
+      currentPositionsTokenFilter = saved.positions.token || 'all';
+      posShowMineOnly = saved.positions.mine || false;
+      posShowStreetBetsOnly = saved.positions.street || false;
+    }
+  } catch { /* storage unavailable or corrupt */ }
+}
+
+function applyFiltersToDOM() {
+  // Explore dropdowns
+  const statusEl = document.getElementById('explore-status-filter');
+  if (statusEl) statusEl.value = currentFilter;
+  const sortEl = document.getElementById('explore-sort-select');
+  if (sortEl) sortEl.value = currentSort;
+  // Explore toggles
+  const mineBtn = document.getElementById('explore-mine-toggle');
+  if (mineBtn) mineBtn.classList.toggle('active', currentMineOnly);
+  const streetBtn = document.getElementById('explore-street-toggle');
+  if (streetBtn) streetBtn.classList.toggle('active', currentStreetBetsOnly);
+  // Positions dropdowns
+  const posStatusEl = document.getElementById('positions-status-filter');
+  if (posStatusEl) posStatusEl.value = currentPositionsStatusFilter;
+  const posResultEl = document.getElementById('positions-result-filter');
+  if (posResultEl) posResultEl.value = currentPositionsResultFilter;
+  const posSortEl = document.getElementById('positions-sort');
+  if (posSortEl) posSortEl.value = currentPositionsSort;
+  // Positions toggles
+  const posMineBtn = document.getElementById('pos-mine-toggle');
+  if (posMineBtn) posMineBtn.classList.toggle('active', posShowMineOnly);
+  const posStreetBtn = document.getElementById('pos-street-toggle');
+  if (posStreetBtn) posStreetBtn.classList.toggle('active', posShowStreetBetsOnly);
+  // Note: category, creator, and token filters are populated dynamically
+  // and will be set when their populate functions run.
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // State
 // ═══════════════════════════════════════════════════════════════════
 let allMarkets = [];
@@ -482,21 +565,25 @@ document.getElementById('explore-chart-toggle')?.addEventListener('click', () =>
 // Status dropdown filter
 document.getElementById('explore-status-filter')?.addEventListener('change', (e) => {
   currentFilter = e.target.value;
+  saveFilters();
   renderMarketsList();
 });
 // My Markets toggle button
 document.getElementById('explore-mine-toggle')?.addEventListener('click', (e) => {
   currentMineOnly = !currentMineOnly;
   e.target.classList.toggle('active', currentMineOnly);
+  saveFilters();
   renderMarketsList();
 });
 document.getElementById('explore-street-toggle')?.addEventListener('click', (e) => {
   currentStreetBetsOnly = !currentStreetBetsOnly;
   e.target.classList.toggle('active', currentStreetBetsOnly);
+  saveFilters();
   renderMarketsList();
 });
 document.getElementById('explore-sort-select')?.addEventListener('change', (e) => {
   currentSort = e.target.value;
+  saveFilters();
   renderMarketsList();
 });
 
@@ -521,7 +608,7 @@ function populateCreatorFilter() {
   if (key === _lastCreatorSet) return;
   _lastCreatorSet = key;
 
-  const prev = sel.value;
+  const prev = currentCreatorFilter || sel.value;
   sel.innerHTML = '<option value="all">All Makers</option>';
   for (const [addr, short] of creators) {
     const opt = document.createElement('option');
@@ -547,6 +634,7 @@ function populateCreatorFilter() {
 
 document.getElementById('explore-creator-filter')?.addEventListener('change', (e) => {
   currentCreatorFilter = e.target.value;
+  saveFilters();
   renderMarketsList();
 });
 
@@ -571,7 +659,7 @@ function populateCategoryFilter() {
   if (key === _lastCategorySet) return;
   _lastCategorySet = key;
 
-  const prev = sel.value;
+  const prev = currentCategoryFilter || sel.value;
   sel.innerHTML = '<option value="all">All Categories</option>';
   if (uncategorized > 0) {
     const opt = document.createElement('option');
@@ -593,6 +681,7 @@ function populateCategoryFilter() {
 
 document.getElementById('explore-category-filter')?.addEventListener('change', (e) => {
   currentCategoryFilter = e.target.value;
+  saveFilters();
   renderMarketsList();
 });
 
@@ -784,6 +873,7 @@ function populateTokenFilter() {
       if (e.target.closest('.token-mint-link')) return;
       e.stopPropagation();
       currentTokenFilter = item.dataset.mint;
+      saveFilters();
       updateTokenChooserButton();
       dropdown.classList.add('hidden');
       document.querySelector('.token-chooser-backdrop')?.remove();
@@ -862,15 +952,19 @@ document.querySelector('.positions-filters')?.addEventListener('change', (e) => 
   const id = e.target.id;
   if (id === 'positions-category-filter') {
     currentPositionsCategoryFilter = e.target.value;
+    saveFilters();
     reRenderPositions();
   } else if (id === 'positions-status-filter') {
     currentPositionsStatusFilter = e.target.value;
+    saveFilters();
     reRenderPositions();
   } else if (id === 'positions-result-filter') {
     currentPositionsResultFilter = e.target.value;
+    saveFilters();
     reRenderPositions();
   } else if (id === 'positions-sort') {
     currentPositionsSort = e.target.value;
+    saveFilters();
     reRenderPositions();
   }
 });
@@ -878,11 +972,13 @@ document.querySelector('.positions-filters')?.addEventListener('change', (e) => 
 document.getElementById('pos-mine-toggle')?.addEventListener('click', (e) => {
   posShowMineOnly = !posShowMineOnly;
   e.target.classList.toggle('active', posShowMineOnly);
+  saveFilters();
   reRenderPositions();
 });
 document.getElementById('pos-street-toggle')?.addEventListener('click', (e) => {
   posShowStreetBetsOnly = !posShowStreetBetsOnly;
   e.target.classList.toggle('active', posShowStreetBetsOnly);
+  saveFilters();
   reRenderPositions();
 });
 
@@ -1572,6 +1668,7 @@ function populatePositionsTokenFilter(entries) {
       if (e.target.closest('.token-mint-link')) return;
       e.stopPropagation();
       currentPositionsTokenFilter = item.dataset.mint;
+      saveFilters();
       updatePosTokenChooserButton();
       dropdown.classList.add('hidden');
       document.querySelector('.token-chooser-backdrop')?.remove();
@@ -2752,6 +2849,8 @@ window.addEventListener('hashchange', handleRoute);
 // Init
 // ═══════════════════════════════════════════════════════════════════
 async function init() {
+  loadFilters();
+  applyFiltersToDOM();
   setupWallet();
 
   // Initial wallet render
