@@ -155,10 +155,9 @@ body::before {
   padding: 0;
 }
 .logo-icon {
-  width: 60px;
+  width: auto;
   height: 60px;
   border-radius: 6px;
-  object-fit: cover;
   filter: drop-shadow(0 0 6px rgba(255, 188, 12, 0.35));
 }
 .logo-text {
@@ -181,6 +180,10 @@ body::before {
   background: var(--green);
   box-shadow: 0 0 6px var(--green), 0 0 10px var(--green);
   animation: pulse-glow 2.5s ease-in-out infinite;
+}
+.network-indicator.connected.gated {
+  background: var(--red);
+  box-shadow: 0 0 6px var(--red), 0 0 10px var(--red);
 }
 @keyframes pulse-glow {
   0%, 100% { opacity: 1; }
@@ -638,6 +641,12 @@ body::before {
 
 .market-detail { display: flex; flex-direction: column; gap: 16px; }
 .market-detail-header { margin-bottom: 4px; }
+.detail-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
 .detail-header-badges {
   display: flex;
   align-items: center;
@@ -1546,10 +1555,10 @@ body::before {
   display: inline-flex;
   align-items: center;
   padding: 8px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.8);
-  color: #111;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
   font-family: var(--font-display);
   font-size: 0.75rem;
   font-weight: 700;
@@ -1870,11 +1879,13 @@ body::before {
 
   /* Top bar */
   .logo-text { font-size: 0.88rem; letter-spacing: 0.04em; }
-  .logo-icon { width: 50px; height: 50px; }
+  .logo-icon { height: 42px; }
   .wallet-btn { font-size: 0.68rem; padding: 7px 10px; }
   .nav-share-btn { width: 30px; height: 30px; }
   .nav-share-btn svg { width: 14px; height: 14px; }
   .top-bar-right { gap: 6px; }
+  .buy-pelf-label { display: none; }
+  .buy-pelf-btn { padding: 1px 4px 3px 4px; border-radius: 0 0 9px 9px; }
   .detail-share-btn span { display: none; }
   .detail-share-btn { padding: 8px; }
 
@@ -1913,6 +1924,8 @@ body::before {
 
   /* Detail */
   .market-detail-title { font-size: 1.05rem; }
+  .detail-title-row { flex-direction: column; gap: 6px; }
+  .detail-header-badges { flex-wrap: wrap; margin-bottom: 10px; }
   .market-detail-meta { gap: 8px; }
   .detail-charts-row { flex-direction: column; }
   .detail-charts-row .chart-container { min-width: 0; }
@@ -1937,7 +1950,7 @@ body::before {
 /* ── Responsive: Very Small Phones ──────────────────────────────── */
 @media (max-width: 360px) {
   .logo-text { font-size: 0.78rem; }
-  .logo-icon { width: 44px; height: 44px; }
+  .logo-icon { height: 36px; }
   .nav-btn { font-size: 0.45rem; padding: 5px 1px 3px; letter-spacing: 0; gap: 1px; }
   .nav-icon { width: 13px; height: 13px; }
   .market-card-title { font-size: 0.82rem; }

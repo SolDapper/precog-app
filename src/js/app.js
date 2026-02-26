@@ -13,6 +13,8 @@ import * as ui from './ui.js';
 import * as watchlist from './watchlist.js';
 import { gateEnabled, checkGate, getGateTokenInfo, clearGateCache } from './gate.js';
 
+const PELF_SWAP_URL = 'https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=BgJW7U1u2RY5XJk9uYb5AqFRzjMtqE7pw3kaf9iw9Ntz';
+
 // ═══════════════════════════════════════════════════════════════════
 // State
 // ═══════════════════════════════════════════════════════════════════
@@ -1063,11 +1065,13 @@ async function requireGate(walletPubkey, statusElementId) {
   try {
     const tokens = await getGateTokenInfo();
     if (tokens.length) {
-      const names = tokens.map(t => t.symbol !== t.mint ? `${t.name} (${t.symbol})` : t.mint);
+      const names = tokens.map(t => t.symbol !== t.mint
+        ? `<a href="${PELF_SWAP_URL}" target="_blank" rel="noopener" style="color:var(--gold)">${t.name} (${t.symbol})</a>`
+        : `<code>${t.mint}</code>`);
       msg = `Token required: hold any amount of ${names.join(' or ')} to participate.`;
     }
   } catch { /* use generic message */ }
-  ui.showCardStatus(statusElementId, msg, 'error');
+  ui.showCardStatus(statusElementId, msg, 'error', { html: true });
   return false;
 }
 
@@ -1088,7 +1092,9 @@ async function updateGateWarning(elementId, w) {
   try {
     const tokens = await getGateTokenInfo();
     if (tokens.length) {
-      const names = tokens.map(t => t.symbol !== t.mint ? `<strong>${t.name} (${t.symbol})</strong>` : `<code>${t.mint}</code>`);
+      const names = tokens.map(t => t.symbol !== t.mint
+        ? `<a href="${PELF_SWAP_URL}" target="_blank" rel="noopener" style="color:var(--gold);font-weight:700">${t.name} (${t.symbol})</a>`
+        : `<code>${t.mint}</code>`);
       msg = `🔒 Token-gated — hold any amount of ${names.join(' or ')} to place positions and create markets.`;
     }
   } catch { /* use generic */ }
@@ -1900,7 +1906,9 @@ async function handleCreateMarket() {
     try {
       const tokens = await getGateTokenInfo();
       if (tokens.length) {
-        const names = tokens.map(t => t.symbol !== t.mint ? `${t.name} (${t.symbol})` : t.mint);
+        const names = tokens.map(t => t.symbol !== t.mint
+          ? `<a href="${PELF_SWAP_URL}" target="_blank" rel="noopener" style="color:var(--gold)">${t.name} (${t.symbol})</a>`
+          : `<code>${t.mint}</code>`);
         msg = `Token required: hold any amount of ${names.join(' or ')} to participate.`;
       }
     } catch { /* use generic */ }
@@ -2582,7 +2590,15 @@ function setupWallet() {
     if (ctx) {
       const disconnectBtn = ui.renderWalletConnected(ctx.publicKey);
       disconnectBtn.addEventListener('click', wallet.disconnect);
-      document.getElementById('network-indicator')?.classList.add('connected');
+      const indicator = document.getElementById('network-indicator');
+      indicator?.classList.add('connected');
+      indicator?.classList.remove('gated');
+      // Check gate status for indicator color
+      if (gateEnabled) {
+        checkGate(ctx.publicKey).then(passed => {
+          indicator?.classList.toggle('gated', !passed);
+        }).catch(() => {});
+      }
       // Check if connected wallet is admin
       sdk.fetchProtocolConfig().then(config => {
         const adminLink = document.querySelector('.footer-admin-link');
@@ -2594,7 +2610,7 @@ function setupWallet() {
       const isMob = wallet.isMobile() && !wallet.isWalletBrowser();
       ui.renderWalletDisconnected(wallet.getAvailableWallets(), isMob);
       attachConnectListeners();
-      document.getElementById('network-indicator')?.classList.remove('connected');
+      document.getElementById('network-indicator')?.classList.remove('connected', 'gated');
       // Hide admin link on disconnect
       document.querySelector('.footer-admin-link')?.classList.add('hidden');
       clearGateCache();

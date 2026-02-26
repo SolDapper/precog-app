@@ -30,7 +30,7 @@
 <body>
   <a href="https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=BgJW7U1u2RY5XJk9uYb5AqFRzjMtqE7pw3kaf9iw9Ntz" target="_blank" rel="noopener" class="buy-pelf-btn">
     <img src="/.well-known/pelf.jpeg" alt="$PELF" class="buy-pelf-icon">
-    <span>$PELF</span>
+    <span class="buy-pelf-label">$PELF</span>
   </a>
   <div id="app" class="precog-app">
 
@@ -38,7 +38,7 @@
     <header class="top-bar">
       <div class="top-bar-left">
         <button class="logo-btn" data-view="explore">
-          <img src="/.well-known/logo.png" alt="Home" class="logo-img" style="height:60px">
+          <img src="/.well-known/logo.png" alt="Home" class="logo-icon">
         </button>
       </div>
       <div class="top-bar-right">
@@ -355,7 +355,13 @@
         <div class="manual-section">
           <h3 class="manual-heading">Contents</h3>
           <ul class="manual-toc-tree">
-            <li><a class="manual-toc-link" data-scroll-to="wut-getting-started">Getting Started</a></li>
+            <li>
+              <a class="manual-toc-link" data-scroll-to="wut-getting-started">Getting Started</a>
+              <ul>
+                <li><a class="manual-toc-link" data-scroll-to="wut-indicator">Connection Indicator</a></li>
+                <li><a class="manual-toc-link" data-scroll-to="wut-token-gate">Token Gate</a></li>
+              </ul>
+            </li>
             <li>
               <a class="manual-toc-link" data-scroll-to="wut-exploring">Exploring Markets</a>
               <ul>
@@ -390,8 +396,9 @@
         <div class="manual-section" id="wut-getting-started">
           <h3 class="manual-heading">Getting Started</h3>
           <p class="manual-text">Pelfmont Markets is a fully non-custodial prediction market built on Solana. Everything happens on-chain — no accounts, no databases, no middlemen.</p>
-          <p class="manual-text">Tap <strong>Connect</strong> in the top-right corner. Phantom and Solflare wallets are supported on desktop. On mobile, the app uses the Solana Mobile Wallet Adapter. If you have a .sol domain, it will display in the wallet button and throughout the app.</p>
-          <p class="manual-text"><strong>Token Gate</strong> — This app may require your wallet to hold a specific token in order to place positions and create markets. If a token gate is active, you'll see a warning banner on the Create Market page and the Choose Position card showing which token(s) are required. Browsing, viewing markets, and claiming payouts are always open to everyone.</p>
+          <p class="manual-text">Tap <strong>Connect</strong> in the top-right corner. Phantom, Solflare, Jupiter, and Backpack wallets are supported on desktop. On mobile, the app uses the Solana Mobile Wallet Adapter. If you have a .sol domain, it will display in the wallet button and throughout the app.</p>
+          <p class="manual-text" id="wut-indicator"><strong>Connection Indicator</strong> — The small dot next to the wallet button shows your connection status. <strong style="color:var(--text-muted)">Grey</strong> means no wallet is connected. <strong style="color:var(--green)">Green</strong> (pulsing) means your wallet is connected and you have full access. <strong style="color:var(--red)">Red</strong> (pulsing) means your wallet is connected but missing the required token for gated actions — you can still browse and claim, but can't place positions or create markets.</p>
+          <p class="manual-text" id="wut-token-gate"><strong>Token Gate</strong> — This app requires your wallet to hold <a href="https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=BgJW7U1u2RY5XJk9uYb5AqFRzjMtqE7pw3kaf9iw9Ntz" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">$PELF (PELFORT)</a> in any amount to place positions and create markets. The token mint address is <code>BgJW7U1u2RY5XJk9uYb5AqFRzjMtqE7pw3kaf9iw9Ntz</code>. If your wallet doesn't hold the required token, you'll see a warning banner on the Create Market page and the Choose Position card. Browsing, viewing markets, and claiming payouts are always open to everyone.</p>
         </div>
 
         <div class="manual-section" id="wut-exploring">
@@ -507,7 +514,7 @@
 
         <div class="manual-section" id="wut-contact">
           <h3 class="manual-heading">Contact</h3>
-          <p class="manual-text">Pelfmont Markets is a product of <strong>PELFORT</strong>.</p>
+          <p class="manual-text">Pelfmont Markets is a product of <a href="https://www.pelfortsolana.com/" target="_blank" rel="noopener noreferrer" style="color:var(--gold);font-weight:700">Stratton Pelfmont</a>.</p>
           <p class="manual-text">
             <a href="https://x.com/pelfsolana" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">𝕏 @pelfsolana</a>
             &nbsp;·&nbsp;
@@ -604,7 +611,7 @@
   </div>
 
   <footer class="footer">
-    <span class="footer-text"><a href="https://www.pelfortsolana.com/" target="_blank" rel="noopener noreferrer" class="footer-brand-link"><span class="accent">P</span> Pelfmont</a></span>
+    <span class="footer-text"><a href="https://www.pelfortsolana.com/" target="_blank" rel="noopener noreferrer" class="footer-brand-link">&copy; 2026 Stratton Pelfmont</a></span>
     <span class="footer-text">Trustless · Non-Custodial · On-Chain</span>
     <button class="footer-admin-link hidden">Admin</button>
   </footer>

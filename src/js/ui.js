@@ -125,10 +125,10 @@ export function showDisputeStatus(msg, type = 'info') {
   }
 }
 
-export function showCardStatus(elementId, msg, type = 'info') {
+export function showCardStatus(elementId, msg, type = 'info', { html = false } = {}) {
   const el = document.getElementById(elementId);
   if (!el) { showStatus(msg, type); return; }
-  el.textContent = msg;
+  if (html) { el.innerHTML = msg; } else { el.textContent = msg; }
   el.className = `bet-status ${type}`;
   el.classList.remove('hidden');
   if (type !== 'error') {
@@ -476,7 +476,7 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
 
   return `
     <div class="market-detail-header">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div class="detail-title-row">
         <h1 class="market-detail-title">${escapeHtml(market.title)}</h1>
         <span class="detail-header-badges">
           ${market._isStreetBet ? '<span class="street-bet-badge">Street Bet</span>' : ''}
