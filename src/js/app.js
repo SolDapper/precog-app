@@ -346,6 +346,7 @@ function renderMarketsList(resetPage = true) {
   populateCreatorFilter();
   populateCategoryFilter();
   populateTokenFilter();
+  updateTokenChooserButton();
 
   // Reset page when filters/sort change
   if (resetPage) currentPage = 0;
@@ -1453,7 +1454,7 @@ async function loadPositions() {
     const categories = [...new Set(entries.map(e => e.category).filter(Boolean))].sort();
     const filterEl = document.getElementById('positions-category-filter');
     if (filterEl) {
-      const prev = filterEl.value;
+      const prev = currentPositionsCategoryFilter || filterEl.value;
       filterEl.innerHTML = '<option value="all">All Categories</option>'
         + categories.map(c => `<option value="${c}">${c}</option>`).join('');
       if (prev && [...filterEl.options].some(o => o.value === prev)) filterEl.value = prev;
@@ -1463,6 +1464,7 @@ async function loadPositions() {
     renderPositionsList(entries, listEl);
     _positionEntries = entries;
     populatePositionsTokenFilter(entries);
+    updatePosTokenChooserButton();
   } catch (err) {
     console.error(err);
     listEl.innerHTML = '<div class="empty-state">Failed to load positions.</div>';
