@@ -1279,7 +1279,11 @@ async function handleVoid() {
     ui.showTxOverlay('Voiding…');
     const ix = sdk.buildVoidMarket({ market: currentMarketPubkey, authority: w.publicKey });
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
+    const sig = await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
+    ui.updateTxOverlay('Confirming transaction…');
+    const conn = sdk.getConnection();
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('finalized');
+    await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'finalized');
     ui.hideTxOverlay();
     ui.showCardStatus(statusId, 'Market voided!', 'success');
     openMarketDetail(currentMarketPubkey);
@@ -1314,8 +1318,13 @@ async function handleFinalize() {
     ui.showTxOverlay('Finalizing…');
     const ix = sdk.buildFinalizeMarket(currentMarketPubkey);
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
-    ui.hideTxOverlay(); ui.showCardStatus('finalize-status', 'Market finalized!', 'success');
+    const sig = await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
+    ui.updateTxOverlay('Confirming transaction…');
+    const conn = sdk.getConnection();
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('finalized');
+    await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'finalized');
+    ui.hideTxOverlay();
+    ui.showCardStatus('finalize-status', 'Market finalized!', 'success');
     openMarketDetail(currentMarketPubkey);
   } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('finalize-status', err.message || 'Finalize failed', 'error'); }
 }
