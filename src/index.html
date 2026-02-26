@@ -432,12 +432,12 @@
 
         <div class="manual-section" id="wut-lifecycle">
           <h3 class="manual-heading">Market Lifecycle</h3>
-          <p class="manual-text"><strong>Open</strong> — Accepting positions. Anyone can take a position on any outcome.</p>
-          <p class="manual-text"><strong>Awaiting Resolution</strong> — The deadline has passed but the authority hasn't resolved yet. No new positions accepted. Displayed as "Closed" in the status filter.</p>
-          <p class="manual-text"><strong>Resolved</strong> — The authority declared a winning outcome. A 24-hour dispute window begins. No new positions. The badge shows "Resolved" while the window is active.</p>
-          <p class="manual-text"><strong>Ready to Finalize</strong> — The dispute window has passed. The badge changes to "Ready to Finalize" (amber) and anyone can trigger finalization. Use the "Ready" status filter to find these markets quickly.</p>
-          <p class="manual-text"><strong>Finalized</strong> — The dispute window has passed and the market has been finalized. Winners can claim payouts. Finalization is permissionless — anyone can trigger it once the window expires.</p>
-          <p class="manual-text"><strong>Voided</strong> — The authority cancelled the market. All participants can claim full refunds regardless of outcome.</p>
+          <p class="manual-text"><span class="market-status-badge open">Open</span> Accepting positions. Anyone can take a position on any outcome.</p>
+          <p class="manual-text"><span class="market-status-badge resolved">Awaiting Resolution</span> The deadline has passed but the authority hasn't resolved yet. No new positions accepted. Displayed as "Closed" in the status filter.</p>
+          <p class="manual-text"><span class="market-status-badge resolved">Resolved</span> The authority declared a winning outcome. A 24-hour dispute window begins. No new positions. The badge shows "Resolved" while the window is active.</p>
+          <p class="manual-text"><span class="market-status-badge finalize-ready">Ready</span> The dispute window has passed. Anyone can trigger finalization. Use the "Ready" status filter to find these markets quickly.</p>
+          <p class="manual-text"><span class="market-status-badge finalized">Finalized</span> The dispute window has passed and the market has been finalized. Winners can claim payouts. Finalization is permissionless — anyone can trigger it once the window expires.</p>
+          <p class="manual-text"><span class="market-status-badge voided">Voided</span> The authority cancelled the market. All participants can claim full refunds regardless of outcome.</p>
         </div>
 
         <div class="manual-section" id="wut-dispute">
