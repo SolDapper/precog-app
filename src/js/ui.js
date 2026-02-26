@@ -160,7 +160,7 @@ export function hideTxOverlay() {
 
 export function renderMarketCard(pubkey, market, userPositions = null) {
   const probs = getImpliedProbabilities(market.outcomePools, market.totalPool);
-  let displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
+  let displayStatus = market._expired ? 'Pending' : market.statusName;
   let statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
   if (market.status === 1) {
     const nowSec = Math.floor(Date.now() / 1000);
@@ -291,7 +291,7 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
 
 export function renderMarketDetail(pubkey, market, connectedWallet = null, userPositions = null) {
   const probs = getImpliedProbabilities(market.outcomePools, market.totalPool);
-  let displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
+  let displayStatus = market._expired ? 'Pending' : market.statusName;
   let statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
   if (market.status === 1) {
     const nowSec = Math.floor(Date.now() / 1000);
@@ -584,7 +584,7 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
   const amountStr = market.denominationName === 'NativeSol'
     ? formatSol(position.amount) : formatTokenAmount(position.amount, market.tokenDecimals) + ' ' + denomLabel;
   const outcomeLabel = market.outcomeLabels[position.outcomeIndex] ?? `Outcome ${position.outcomeIndex}`;
-  let displayStatus = market._expired ? 'Awaiting Resolution' : market.statusName;
+  let displayStatus = market._expired ? 'Pending' : market.statusName;
   let statusClass = market._expired ? 'resolved' : market.statusName.toLowerCase();
   if (market.status === 1) {
     const nowSec = Math.floor(Date.now() / 1000);
