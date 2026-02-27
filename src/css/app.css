@@ -970,6 +970,18 @@ body::before {
   align-items: center;
   gap: 6px;
   margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.position-badge-labels {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.position-badge-estimates {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 .street-bet-badge {
   font-size: 0.68rem;
@@ -2010,6 +2022,9 @@ body::before {
   .market-badge-row { flex-direction: column; align-items: flex-start; gap: 4px; }
   .market-badge-labels { margin-bottom: 6px; }
   .market-badge-estimates { flex-wrap: wrap; }
+  .position-badge-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .position-badge-labels { margin-bottom: 6px; }
+  .position-badge-estimates { flex-wrap: wrap; }
   .market-card-stats { flex-wrap: wrap; gap: 6px; }
   .market-stat { min-width: 28%; }
   .market-card-title { font-size: 0.88rem; }
@@ -2037,6 +2052,7 @@ body::before {
   .category-tab { font-size: 0.7rem; padding: 5px 10px; }
   #manage-categories-btn, #clear-trash-btn { padding: 2px 12px; }
   .filter-btn { padding: 3px 12px; }
+  .explore-filters { gap: 6px; }
 
   /* Market address */
   .market-address-code { font-size: 0.62rem; }

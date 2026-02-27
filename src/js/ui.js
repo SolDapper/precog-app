@@ -789,9 +789,10 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       <span class="market-status-badge ${statusClass}">${displayStatus}</span>
     </div>
     ${hasBadgeRow ? `<div class="position-badge-row">
-      ${category ? `<span class="position-category-badge">${escapeHtml(category)}</span>` : ''}
-      ${payoutBadge}
-      ${pnlBadge}
+      <div class="position-badge-labels">
+        ${category ? `<span class="position-category-badge">${escapeHtml(category)}</span>` : ''}
+      </div>
+      ${payoutBadge || pnlBadge ? `<div class="position-badge-estimates">${payoutBadge}${pnlBadge}</div>` : ''}
     </div>` : ''}
     <div class="position-details">
       <div class="position-detail">

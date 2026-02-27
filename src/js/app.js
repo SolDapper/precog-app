@@ -45,12 +45,16 @@ function saveFilters() {
         street: posShowStreetBetsOnly,
         filtersOpen: posFiltersOpen,
       },
+      watchlist: {
+        catsOpen: watchlistCatsOpen,
+      },
     }));
   } catch { /* storage unavailable */ }
 }
 
 let exploreFiltersOpen = false;
 let posFiltersOpen = false;
+let watchlistCatsOpen = false;
 
 function loadFilters() {
   try {
@@ -77,6 +81,9 @@ function loadFilters() {
       posShowMineOnly = saved.positions.mine || false;
       posShowStreetBetsOnly = saved.positions.street || false;
       posFiltersOpen = saved.positions.filtersOpen || false;
+    }
+    if (saved.watchlist) {
+      watchlistCatsOpen = saved.watchlist.catsOpen || false;
     }
   } catch { /* storage unavailable or corrupt */ }
 }
@@ -121,6 +128,14 @@ function applyFiltersToDOM() {
   if (posToggleBtn) {
     posToggleBtn.textContent = posFiltersOpen ? 'Filters ▾' : 'Filters ▸';
     posToggleBtn.classList.toggle('active', posFiltersOpen);
+  }
+  // Watchlist categories panel
+  const wlPanel = document.getElementById('watchlist-cats-panel');
+  const wlToggleBtn = document.getElementById('watchlist-cats-toggle');
+  if (wlPanel) wlPanel.classList.toggle('hidden', !watchlistCatsOpen);
+  if (wlToggleBtn) {
+    wlToggleBtn.textContent = watchlistCatsOpen ? 'Categories ▾' : 'Categories ▸';
+    wlToggleBtn.classList.toggle('active', watchlistCatsOpen);
   }
   // Note: category, creator, and token filters are populated dynamically
   // and will be set when their populate functions run.
@@ -623,6 +638,17 @@ document.getElementById('pos-filter-toggle')?.addEventListener('click', () => {
   if (btn) {
     btn.textContent = posFiltersOpen ? 'Filters ▾' : 'Filters ▸';
     btn.classList.toggle('active', posFiltersOpen);
+  }
+  saveFilters();
+});
+document.getElementById('watchlist-cats-toggle')?.addEventListener('click', () => {
+  watchlistCatsOpen = !watchlistCatsOpen;
+  const panel = document.getElementById('watchlist-cats-panel');
+  const btn = document.getElementById('watchlist-cats-toggle');
+  panel?.classList.toggle('hidden', !watchlistCatsOpen);
+  if (btn) {
+    btn.textContent = watchlistCatsOpen ? 'Categories ▾' : 'Categories ▸';
+    btn.classList.toggle('active', watchlistCatsOpen);
   }
   saveFilters();
 });

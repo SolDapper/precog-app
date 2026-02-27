@@ -141,11 +141,13 @@
       <div class="explore-header">
         <h2 class="section-title">Watchlist</h2>
         <div class="explore-filters">
+          <button id="watchlist-cats-toggle" class="filter-btn filter-toggle-btn">Categories ▸</button>
           <button id="manage-categories-btn" class="filter-btn" title="Manage categories">⚙</button>
           <button id="clear-trash-btn" class="filter-btn">Clear Trash</button>
         </div>
       </div>
 
+      <div id="watchlist-cats-panel" class="filters-panel hidden">
       <!-- Category filter tabs -->
       <div id="watchlist-category-tabs" class="watchlist-category-tabs">
         <button class="category-tab active" data-category="all">All</button>
@@ -169,6 +171,7 @@
         <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-primary);text-align:left">
           <button id="clear-watchlist-btn" style="background:none;border:none;color:var(--text-muted);font-size:0.7rem;cursor:pointer;padding:2px 0;text-decoration:underline">Clear entire watchlist</button>
         </div>
+      </div>
       </div>
 
       <div id="watchlist-list" class="markets-list">
