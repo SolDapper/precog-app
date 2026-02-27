@@ -54,7 +54,7 @@ function loadFilters() {
     const saved = JSON.parse(raw);
     if (saved.explore) {
       currentFilter = saved.explore.status || 'open';
-      currentSort = saved.explore.sort || 'deadline-asc';
+      currentSort = saved.explore.sort || 'created-desc';
       currentMineOnly = saved.explore.mine || false;
       currentStreetBetsOnly = saved.explore.street || false;
       currentCategoryFilter = saved.explore.category || 'all';
@@ -108,7 +108,7 @@ function applyFiltersToDOM() {
 // ═══════════════════════════════════════════════════════════════════
 let allMarkets = [];
 let currentFilter = 'open';
-let currentSort = 'deadline-asc';
+let currentSort = 'created-desc';
 let currentMineOnly = false;
 let currentStreetBetsOnly = false;
 let currentCreatorFilter = 'all';
@@ -419,7 +419,6 @@ function renderMarketsList(resetPage = true) {
     case 'value-desc': filtered.sort((a, b) => (b.account._usdVolume || 0) - (a.account._usdVolume || 0)); break;
     case 'value-asc': filtered.sort((a, b) => (a.account._usdVolume || 0) - (b.account._usdVolume || 0)); break;
     case 'deadline-asc':
-      filtered = filtered.filter(m => m.account.status === 0 && !m.account._expired);
       filtered.sort((a, b) => Number(a.account.resolutionDeadline - b.account.resolutionDeadline));
       break;
     case 'deadline-desc': filtered.sort((a, b) => Number(b.account.resolutionDeadline - a.account.resolutionDeadline)); break;
@@ -689,7 +688,7 @@ function populateCategoryFilter() {
     opt.textContent = `Uncategorized (${uncategorized})`;
     sel.appendChild(opt);
   }
-  const sorted = [...categories.entries()].sort((a, b) => b[1] - a[1]);
+  const sorted = [...categories.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   for (const [cat, count] of sorted) {
     const opt = document.createElement('option');
     opt.value = cat;
@@ -1081,14 +1080,18 @@ function attachDetailListeners(pubkey, market, tokenUsdPrice = 0) {
     // Set initial state
     if (makers.has(makerAddr)) {
       makerBtn.classList.add('saved');
-      makerBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      makerBtn.innerHTML = '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
     }
     makerBtn.addEventListener('click', () => {
       const nowSaved = makers.toggle(makerAddr);
       makerBtn.classList.toggle('saved', nowSaved);
       makerBtn.innerHTML = nowSaved
-        ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-        : '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+        ? '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      _lastCreatorSet = '';
+      _lastPosMakerSet = '';
+      populateCreatorFilter();
+      if (_positionEntries.length > 0) populatePositionsMakerFilter(_positionEntries);
     });
   }
   // Share
@@ -2946,7 +2949,7 @@ function renderSettingsPage() {
   if (!listEl) return;
 
   const allMakers = makers.getAllWithMeta();
-  const addrs = Object.keys(allMakers);
+  const addrs = Object.keys(allMakers).sort();
 
   if (addrs.length === 0) {
     listEl.innerHTML = '<div class="empty-state" style="padding:12px 0;font-size:0.78rem">No saved makers yet. Visit a market detail page and tap the + button next to a Maker to save them.</div>';
@@ -2975,9 +2978,10 @@ function renderSettingsPage() {
     btn.addEventListener('click', () => {
       makers.remove(btn.dataset.address);
       renderSettingsPage();
-      // Force rebuild of explore maker filter on next load
       _lastCreatorSet = '';
       _lastPosMakerSet = '';
+      populateCreatorFilter();
+      if (_positionEntries.length > 0) populatePositionsMakerFilter(_positionEntries);
     });
   });
 }
