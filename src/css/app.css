@@ -204,6 +204,9 @@ body::before {
   transition: all 0.2s ease;
   text-transform: uppercase;
   white-space: nowrap;
+  max-width: 115px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .wallet-btn:hover {
   border-color: var(--border-hover);
@@ -408,6 +411,19 @@ body::before {
   transition: all 0.15s ease;
 }
 .filter-btn:hover { border-color: var(--border-hover); color: var(--text-primary); }
+
+/* Filter toggle panel */
+.filter-toggle-btn { font-weight: 600; }
+.filter-toggle-btn.active {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+.filters-panel {
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+.filters-panel.hidden { display: none; }
 .filter-btn.active {
   background: var(--gold);
   color: var(--bg-primary);
@@ -513,6 +529,17 @@ body::before {
   align-items: center;
   gap: 6px;
   margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.market-badge-labels {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.market-badge-estimates {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-wrap: wrap;
 }
 .market-card-title {
@@ -1617,14 +1644,15 @@ body::before {
   display: inline-flex;
   align-items: center;
   padding: 8px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
   font-family: var(--font-display);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
+  opacity: 1;
 }
 .detail-estimate-btn.win {
   background: rgba(0, 230, 118, 0.15);
@@ -1979,6 +2007,9 @@ body::before {
 
   /* Cards */
   .market-card { padding: 14px; }
+  .market-badge-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .market-badge-labels { margin-bottom: 6px; }
+  .market-badge-estimates { flex-wrap: wrap; }
   .market-card-stats { flex-wrap: wrap; gap: 6px; }
   .market-stat { min-width: 28%; }
   .market-card-title { font-size: 0.88rem; }
@@ -2004,6 +2035,8 @@ body::before {
   /* Watchlist */
   .watchlist-category-tabs { gap: 3px; }
   .category-tab { font-size: 0.7rem; padding: 5px 10px; }
+  #manage-categories-btn, #clear-trash-btn { padding: 2px 12px; }
+  .filter-btn { padding: 3px 12px; }
 
   /* Market address */
   .market-address-code { font-size: 0.62rem; }

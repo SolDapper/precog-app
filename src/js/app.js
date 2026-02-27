@@ -32,6 +32,7 @@ function saveFilters() {
         category: currentCategoryFilter,
         creator: currentCreatorFilter,
         token: currentTokenFilter,
+        filtersOpen: exploreFiltersOpen,
       },
       positions: {
         category: currentPositionsCategoryFilter,
@@ -42,10 +43,14 @@ function saveFilters() {
         maker: currentPositionsMakerFilter,
         mine: posShowMineOnly,
         street: posShowStreetBetsOnly,
+        filtersOpen: posFiltersOpen,
       },
     }));
   } catch { /* storage unavailable */ }
 }
+
+let exploreFiltersOpen = false;
+let posFiltersOpen = false;
 
 function loadFilters() {
   try {
@@ -60,6 +65,7 @@ function loadFilters() {
       currentCategoryFilter = saved.explore.category || 'all';
       currentCreatorFilter = saved.explore.creator || 'all';
       currentTokenFilter = saved.explore.token || 'all';
+      exploreFiltersOpen = saved.explore.filtersOpen || false;
     }
     if (saved.positions) {
       currentPositionsCategoryFilter = saved.positions.category || 'all';
@@ -70,6 +76,7 @@ function loadFilters() {
       currentPositionsMakerFilter = saved.positions.maker || 'all';
       posShowMineOnly = saved.positions.mine || false;
       posShowStreetBetsOnly = saved.positions.street || false;
+      posFiltersOpen = saved.positions.filtersOpen || false;
     }
   } catch { /* storage unavailable or corrupt */ }
 }
@@ -85,6 +92,14 @@ function applyFiltersToDOM() {
   if (mineBtn) mineBtn.classList.toggle('active', currentMineOnly);
   const streetBtn = document.getElementById('explore-street-toggle');
   if (streetBtn) streetBtn.classList.toggle('active', currentStreetBetsOnly);
+  // Explore filters panel
+  const explorePanel = document.getElementById('explore-filters-panel');
+  const exploreToggleBtn = document.getElementById('explore-filter-toggle');
+  if (explorePanel) explorePanel.classList.toggle('hidden', !exploreFiltersOpen);
+  if (exploreToggleBtn) {
+    exploreToggleBtn.textContent = exploreFiltersOpen ? 'Filters ▾' : 'Filters ▸';
+    exploreToggleBtn.classList.toggle('active', exploreFiltersOpen);
+  }
   // Positions dropdowns
   const posStatusEl = document.getElementById('positions-status-filter');
   if (posStatusEl) posStatusEl.value = currentPositionsStatusFilter;
@@ -99,6 +114,14 @@ function applyFiltersToDOM() {
   if (posMineBtn) posMineBtn.classList.toggle('active', posShowMineOnly);
   const posStreetBtn = document.getElementById('pos-street-toggle');
   if (posStreetBtn) posStreetBtn.classList.toggle('active', posShowStreetBetsOnly);
+  // Positions filters panel
+  const posPanel = document.getElementById('pos-filters-panel');
+  const posToggleBtn = document.getElementById('pos-filter-toggle');
+  if (posPanel) posPanel.classList.toggle('hidden', !posFiltersOpen);
+  if (posToggleBtn) {
+    posToggleBtn.textContent = posFiltersOpen ? 'Filters ▾' : 'Filters ▸';
+    posToggleBtn.classList.toggle('active', posFiltersOpen);
+  }
   // Note: category, creator, and token filters are populated dynamically
   // and will be set when their populate functions run.
 }
@@ -579,6 +602,29 @@ document.getElementById('explore-status-filter')?.addEventListener('change', (e)
   currentFilter = e.target.value;
   saveFilters();
   renderMarketsList();
+});
+// Filter panel toggles
+document.getElementById('explore-filter-toggle')?.addEventListener('click', () => {
+  exploreFiltersOpen = !exploreFiltersOpen;
+  const panel = document.getElementById('explore-filters-panel');
+  const btn = document.getElementById('explore-filter-toggle');
+  panel?.classList.toggle('hidden', !exploreFiltersOpen);
+  if (btn) {
+    btn.textContent = exploreFiltersOpen ? 'Filters ▾' : 'Filters ▸';
+    btn.classList.toggle('active', exploreFiltersOpen);
+  }
+  saveFilters();
+});
+document.getElementById('pos-filter-toggle')?.addEventListener('click', () => {
+  posFiltersOpen = !posFiltersOpen;
+  const panel = document.getElementById('pos-filters-panel');
+  const btn = document.getElementById('pos-filter-toggle');
+  panel?.classList.toggle('hidden', !posFiltersOpen);
+  if (btn) {
+    btn.textContent = posFiltersOpen ? 'Filters ▾' : 'Filters ▸';
+    btn.classList.toggle('active', posFiltersOpen);
+  }
+  saveFilters();
 });
 // My Markets toggle button
 document.getElementById('explore-mine-toggle')?.addEventListener('click', (e) => {
@@ -1175,17 +1221,20 @@ function updateBetUI() {
   const newPool = currentMarketData.outcomePools[selectedOutcome] + lam;
   const newTotal = currentMarketData.totalPool + lam;
   const pay = sdk.calculatePayout(lam, newPool, newTotal, currentMarketData.feeBps);
+  const profit = pay - lam;
   est.classList.remove('hidden');
   const v = est.querySelector('.bet-payout-value');
   const sym = currentMarketData._tokenSymbol || (isSol ? 'SOL' : 'tokens');
-  let payStr = isSol ? ui.formatSol(pay) : ui.formatTokenAmount(pay, decimals) + ' ' + sym;
+  const absProfit = profit < 0n ? -profit : profit;
+  const sign = profit >= 0n ? '+' : '-';
+  let payStr = sign + (isSol ? ui.formatSol(absProfit) : ui.formatTokenAmount(absProfit, decimals) + ' ' + sym);
   // Append USD value
   const priceMint = isSol ? SOL_MINT : currentMarketData.tokenMint.toBase58();
   const tokenPrice = getTokenPrice(priceMint) || (!isSol ? 1 : 0);
   if (tokenPrice > 0) {
-    const payTokens = Number(pay) / (10 ** decimals);
-    const usd = payTokens * tokenPrice;
-    payStr += ` ($${usd >= 1 ? usd.toFixed(2) : usd.toFixed(4)})`;
+    const profitTokens = Number(absProfit) / (10 ** decimals);
+    const usd = profitTokens * tokenPrice;
+    payStr += ` (${sign}$${usd >= 1 ? usd.toFixed(2) : usd.toFixed(4)})`;
   }
   if (v) v.textContent = payStr;
 }

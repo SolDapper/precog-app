@@ -72,11 +72,13 @@
       <div class="explore-header">
         <h2 class="section-title">Markets</h2>
         <div class="explore-filters">
+          <button id="explore-filter-toggle" class="filter-btn filter-toggle-btn">Filters ▸</button>
           <button id="explore-street-toggle" class="filter-btn">Street Bets</button>
           <button id="explore-mine-toggle" class="filter-btn">My Markets</button>
         </div>
       </div>
 
+      <div id="explore-filters-panel" class="filters-panel hidden">
       <button id="explore-chart-toggle" class="chart-toggle-btn" disabled style="display:none">▸ Show Hot Markets</button>
       <div id="explore-chart-wrap" class="chart-container card hidden" style="margin-bottom:14px">
         <div class="chart-title">Volume by Market (Top 10)</div>
@@ -121,6 +123,7 @@
           <button id="token-chooser-btn" class="token-chooser-btn">All Tokens ▾</button>
           <div id="token-chooser-dropdown" class="token-chooser-dropdown hidden"></div>
         </div>
+      </div>
       </div>
 
       <div id="markets-list" class="markets-list">
@@ -185,16 +188,18 @@
     </main>
 
     <!-- ═══════════════════════════════════════════════ -->
-    <!-- VIEW: My Positions -->
+    <!-- VIEW: Positions -->
     <!-- ═══════════════════════════════════════════════ -->
     <main id="view-positions" class="view hidden">
       <div class="explore-header">
-        <h2 class="section-title">My Positions</h2>
+        <h2 class="section-title">Positions</h2>
         <div class="explore-filters">
+          <button id="pos-filter-toggle" class="filter-btn filter-toggle-btn">Filters ▸</button>
           <button id="pos-street-toggle" class="filter-btn">Street Bets</button>
           <button id="pos-mine-toggle" class="filter-btn">My Markets</button>
         </div>
       </div>
+      <div id="pos-filters-panel" class="filters-panel hidden">
       <div class="positions-filters">
         <div class="explore-sort">
           <label class="sort-label">Status</label>
@@ -243,6 +248,7 @@
             <div id="pos-token-chooser-dropdown" class="token-chooser-dropdown hidden"></div>
           </div>
         </div>
+      </div>
       </div>
       <div id="positions-list" class="positions-list">
         <div class="empty-state">Connect your wallet to view positions.</div>
