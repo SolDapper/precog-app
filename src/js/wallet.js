@@ -350,11 +350,12 @@ export async function connectMobile() {
 // ── Disconnect ───────────────────────────────────────────────────
 
 export async function disconnect() {
-  try { await _walletProvider?.disconnect?.(); } catch {}
+  const provider = _walletProvider;
   _walletContext = null;
   _walletProvider = null;
   _mobileAuthToken = null;
   _notify();
+  try { await provider?.disconnect?.(); } catch {}
 }
 
 // ── Internal ─────────────────────────────────────────────────────
