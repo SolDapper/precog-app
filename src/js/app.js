@@ -623,12 +623,9 @@ function populateCreatorFilter() {
   const prev = currentCreatorFilter || sel.value;
   sel.innerHTML = '<option value="all">All Makers</option>';
 
-  // Only show saved makers, sorted alphabetically by short address
-  const savedAddrs = new Set(makers.getAll());
-  const savedCreators = [];
-  for (const [addr, short] of creators) {
-    if (savedAddrs.has(addr)) savedCreators.push([addr, short]);
-  }
+  // Show all saved makers, sorted alphabetically
+  const savedAddrList = makers.getAll();
+  const savedCreators = savedAddrList.map(addr => [addr, addr.slice(0, 4) + '…' + addr.slice(-4)]);
   savedCreators.sort((a, b) => a[1].localeCompare(b[1]));
 
   for (const [addr, short] of savedCreators) {
@@ -639,7 +636,7 @@ function populateCreatorFilter() {
   }
 
   // Restore previous selection if still valid
-  if (savedAddrs.has(prev)) sel.value = prev;
+  if (savedAddrList.includes(prev)) sel.value = prev;
   else { sel.value = 'all'; currentCreatorFilter = 'all'; }
 
   // Resolve SNS names in background
@@ -1393,6 +1390,10 @@ async function loadPositions() {
   const w = wallet.getWallet();
   if (!w) {
     listEl.innerHTML = '<div class="empty-state">Connect your wallet to view positions.</div>';
+    _positionEntries = [];
+    const makerSel = document.getElementById('positions-maker-filter');
+    if (makerSel) { makerSel.innerHTML = '<option value="all">All Makers</option>'; }
+    _lastPosMakerSet = '';
     return;
   }
   listEl.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading…</span></div>';
@@ -1676,29 +1677,16 @@ function populatePositionsMakerFilter(entries) {
   const sel = document.getElementById('positions-maker-filter');
   if (!sel) return;
 
-  // Gather unique makers from position markets
-  const makerMap = new Map(); // address → short label
-  for (const { mk } of entries) {
-    if (!mk) continue;
-    const addr = mk.authority.toBase58();
-    if (!makerMap.has(addr)) {
-      makerMap.set(addr, addr.slice(0, 4) + '…' + addr.slice(-4));
-    }
-  }
-
-  const key = [...makerMap.keys()].sort().join(',');
+  // Show all saved makers, not just those in current positions
+  const savedAddrs = makers.getAll();
+  const key = savedAddrs.sort().join(',');
   if (key === _lastPosMakerSet) return;
   _lastPosMakerSet = key;
 
   const prev = currentPositionsMakerFilter || sel.value;
   sel.innerHTML = '<option value="all">All Makers</option>';
 
-  // Separate saved vs unsaved
-  const savedAddrs = new Set(makers.getAll());
-  const savedMakers = [];
-  for (const [addr, short] of makerMap) {
-    if (savedAddrs.has(addr)) savedMakers.push([addr, short]);
-  }
+  const savedMakers = savedAddrs.map(addr => [addr, addr.slice(0, 4) + '…' + addr.slice(-4)]);
   savedMakers.sort((a, b) => a[1].localeCompare(b[1]));
 
   for (const [addr, short] of savedMakers) {
@@ -1708,7 +1696,7 @@ function populatePositionsMakerFilter(entries) {
     sel.appendChild(opt);
   }
 
-  if (savedAddrs.has(prev)) sel.value = prev;
+  if (savedAddrs.includes(prev)) sel.value = prev;
   else { sel.value = 'all'; currentPositionsMakerFilter = 'all'; }
 
   // Resolve SNS names
