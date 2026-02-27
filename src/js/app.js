@@ -2830,7 +2830,7 @@ document.getElementById('import-watchlist-file')?.addEventListener('change', (e)
 // Wallet Integration
 // ═══════════════════════════════════════════════════════════════════
 function setupWallet() {
-  wallet.onWalletChange((ctx) => {
+  wallet.onWalletChange(async (ctx) => {
     if (ctx) {
       const disconnectBtn = ui.renderWalletConnected(ctx.publicKey);
       disconnectBtn.addEventListener('click', wallet.disconnect);
@@ -2839,9 +2839,12 @@ function setupWallet() {
       indicator?.classList.remove('gated');
       // Check gate status for indicator color
       if (gateEnabled) {
-        checkGate(ctx.publicKey).then(passed => {
+        try {
+          const passed = await checkGate(ctx.publicKey);
           indicator?.classList.toggle('gated', !passed);
-        }).catch(() => {});
+        } catch {
+          indicator?.classList.add('gated');
+        }
       }
       // Check if connected wallet is admin
       sdk.fetchProtocolConfig().then(config => {
