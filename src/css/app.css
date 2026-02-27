@@ -1627,14 +1627,14 @@ body::before {
   letter-spacing: 0.04em;
 }
 .detail-estimate-btn.win {
-  background: var(--green);
-  border-color: var(--green);
-  color: #111;
+  background: rgba(0, 230, 118, 0.15);
+  border-color: rgba(0, 230, 118, 0.3);
+  color: var(--green);
 }
 .detail-estimate-btn.lost {
-  background: var(--red);
-  border-color: var(--red);
-  color: #fff;
+  background: rgba(255, 82, 82, 0.15);
+  border-color: rgba(255, 82, 82, 0.3);
+  color: var(--red);
 }
 .detail-share-btn {
   display: inline-flex;
