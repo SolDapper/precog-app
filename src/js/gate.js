@@ -52,24 +52,27 @@ export async function checkGate(walletPubkey) {
 
   const conn = getConnection();
   let passed = false;
+  const gateMintSet = new Set(GATE_MINTS.map(m => m.toBase58()));
 
   // Check both SPL Token and Token-2022 programs
   for (const programId of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]) {
     if (passed) break;
-    for (const mint of GATE_MINTS) {
-      if (passed) break;
-      try {
-        const resp = await conn.getParsedTokenAccountsByOwner(walletPubkey, {
-          mint,
-          programId,
-        });
-        for (const { account } of resp.value) {
-          const amount = account.data.parsed?.info?.tokenAmount?.uiAmount ?? 0;
-          if (amount > 0) { passed = true; break; }
+    try {
+      const resp = await conn.getParsedTokenAccountsByOwner(walletPubkey, {
+        programId,
+      });
+      for (const { account } of resp.value) {
+        const info = account.data.parsed?.info;
+        if (!info) continue;
+        const mint = info.mint;
+        const rawAmount = info.tokenAmount?.amount;
+        if (gateMintSet.has(mint) && rawAmount && BigInt(rawAmount) > 0n) {
+          passed = true;
+          break;
         }
-      } catch {
-        // Account doesn't exist for this mint/program — skip
       }
+    } catch {
+      // RPC error — continue to next program
     }
   }
 
