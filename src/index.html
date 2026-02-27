@@ -388,6 +388,12 @@
             </li>
             <li><a class="manual-toc-link" data-scroll-to="wut-making">Making a Market</a></li>
             <li><a class="manual-toc-link" data-scroll-to="wut-watchlist">Watchlist</a></li>
+            <li>
+              <a class="manual-toc-link" data-scroll-to="wut-settings">Settings</a>
+              <ul>
+                <li><a class="manual-toc-link" data-scroll-to="wut-saved-makers">Saved Market Makers</a></li>
+              </ul>
+            </li>
             <li><a class="manual-toc-link" data-scroll-to="wut-sharing">Sharing</a></li>
             <li>
               <a class="manual-toc-link" data-scroll-to="wut-fees">Fees</a>
@@ -412,18 +418,24 @@
         <div class="manual-section" id="wut-exploring">
           <h3 class="manual-heading">Exploring Markets</h3>
           <p class="manual-text">The <strong>Explore</strong> tab is your home screen. Each market card shows outcome probability bars, volume, USD value, position count, time remaining, and maker (with SNS name when available). If you have a position in a market, an estimate badge shows your projected payout with USD value right on the card.</p>
-          <p class="manual-text"><strong>Status filter</strong> — Use the dropdown to filter by Open, Closed (past deadline, pending resolution), Resolved (dispute window active), Ready (dispute window passed, awaiting finalization), Finalized, Voided, or All. Default is Open.</p>
-          <p class="manual-text"><strong>My Markets</strong> — Toggle the button to show only markets where you are the authority or maker.</p>
-          <p class="manual-text"><strong>Street Bets</strong> — Toggle the button to show only markets with a total runtime of 30 minutes or less. These fast-fire markets are tagged with an orange "Street Bet" badge on cards and detail pages.</p>
-          <p class="manual-text"><strong>Sort</strong> — Sort by Closing Soon (default), Deadline, Newest/Oldest, Value High/Low, or Most/Least Positions. Additional filters for maker, category, and token denomination.</p>
-          <p class="manual-text"><strong>Hot Markets chart</strong> — Toggle the bar chart to see the top 10 open markets by USD volume. Closed and voided markets are excluded. Click any bar to jump to that market.</p>
+          <p class="manual-text"><strong>Status filter</strong> — Filter by Open, Closed (pending resolution), Resolved (dispute window active), Ready (awaiting finalization), Finalized, Voided, or All.</p>
+          <p class="manual-text"><strong>Category filter</strong> — Filter by the market's on-chain category. Categories are listed alphabetically, with "All Categories" and "Uncategorized" at the top.</p>
+          <p class="manual-text"><strong>Sort</strong> — Order by Newest First (default), Oldest First, Closing Soon, Value High/Low, or Most/Least Positions.</p>
+          <p class="manual-text"><strong>Maker filter</strong> — Filter by your saved market makers. Save makers from any market detail page using the <strong>+</strong> button next to the Maker address. Only saved makers appear in this dropdown.</p>
+          <p class="manual-text"><strong>Token filter</strong> — Filter by token denomination (SOL, SPL tokens, or Token-2022 tokens).</p>
+          <p class="manual-text"><strong>My Markets</strong> — Toggle to show only markets where you are the authority or maker.</p>
+          <p class="manual-text"><strong>Street Bets</strong> — Toggle to show only markets with a total runtime of 30 minutes or less. These are tagged with an orange "Street Bet" badge.</p>
+          <p class="manual-text"><strong>Hot Markets chart</strong> — Toggle the bar chart to see the top 10 open markets by USD volume. Click any bar to jump to that market.</p>
+          <p class="manual-text">All filter and sort selections are saved locally and persist across page reloads.</p>
         </div>
 
         <div class="manual-section" id="wut-detail">
           <h3 class="manual-heading">Market Detail</h3>
           <p class="manual-text">Tap any market card to open its detail page. You'll see the full description, outcome distribution charts with USD values, pool breakdown, authority and maker addresses (with SNS names), fee structure, and denomination.</p>
+          <p class="manual-text"><strong>Save Maker</strong> — Next to the Maker address, tap the <strong>+</strong> button to save that maker to your Saved Market Makers list. The button turns green with a ✓ when saved. Saved makers appear in the Maker filter dropdowns on both Explore and Positions pages. You can manage your saved makers in the <strong>Settings</strong> tab.</p>
           <p class="manual-text">If you hold a position, estimate badges appear showing your projected payout with USD equivalent (or win/loss once finalized).</p>
           <p class="manual-text">Use the <strong>Share</strong> button to send the market link to others via your device's native share sheet, or it will copy the link to your clipboard.</p>
+          <p class="manual-text">The detail page updates automatically when you connect or disconnect your wallet, showing or hiding authority actions and position-specific UI as appropriate.</p>
         </div>
 
         <div class="manual-section" id="wut-position">
@@ -440,7 +452,7 @@
           <h3 class="manual-heading">Market Lifecycle</h3>
           <p class="manual-text"><span class="market-status-badge open">Open</span> Accepting positions. Anyone can take a position on any outcome.</p>
           <p class="manual-text"><span class="market-status-badge pending">Pending</span> The deadline has passed but the authority hasn't resolved yet. No new positions accepted. Displayed as "Closed" in the status filter.</p>
-          <p class="manual-text"><span class="market-status-badge resolved">Resolved</span> The authority declared a winning outcome. A 24-hour dispute window begins. No new positions. The badge shows "Resolved" while the window is active.</p>
+          <p class="manual-text"><span class="market-status-badge resolved">Resolved</span> The authority declared a winning outcome. A 24-hour dispute window begins. No new positions. The badge shows "Resolved" while the window is active. Markets with no positions cannot be resolved — use Void instead.</p>
           <p class="manual-text"><span class="market-status-badge finalize-ready">Ready</span> The dispute window has passed. Anyone can trigger finalization. Use the "Ready" status filter to find these markets quickly.</p>
           <p class="manual-text"><span class="market-status-badge finalized">Finalized</span> The dispute window has passed and the market has been finalized. Winners can claim payouts. Finalization is permissionless — anyone can trigger it once the window expires.</p>
           <p class="manual-text"><span class="market-status-badge voided">Voided</span> The authority cancelled the market. All participants can claim full refunds regardless of outcome.</p>
@@ -457,12 +469,16 @@
         <div class="manual-section" id="wut-positions">
           <h3 class="manual-heading">Positions — Filtering &amp; Sorting</h3>
           <p class="manual-text">The <strong>Positions</strong> tab shows all your positions across every market. Use the filters to zero in on what you need:</p>
-          <p class="manual-text"><strong>Category</strong> — Filter by the market's on-chain category.</p>
           <p class="manual-text"><strong>Status</strong> — Show only positions in Open, Closed (pending resolution), Resolved (dispute window active), Ready (awaiting finalization), Finalized, or Voided markets.</p>
+          <p class="manual-text"><strong>Category</strong> — Filter by the market's on-chain category.</p>
           <p class="manual-text"><strong>Result</strong> — Filter by Unclaimed (positions with a pending Claim Winnings or Claim Refund button), Claimed, Winning (open markets where your outcome is currently leading), Losing (open markets where your outcome is behind), Won (resolved/finalized markets where you hold the winning outcome), or Lost (resolved/finalized markets where you don't).</p>
-          <p class="manual-text"><strong>Sort</strong> — Order by deadline, newest/oldest, position size, estimated payout, or group by market status.</p>
+          <p class="manual-text"><strong>Sort</strong> — Order by newest/oldest (default), deadline, position size, estimated payout, or group by market status.</p>
+          <p class="manual-text"><strong>Maker</strong> — Filter by your saved market makers. Only saved makers appear in this dropdown.</p>
+          <p class="manual-text"><strong>Token</strong> — Filter by token denomination.</p>
+          <p class="manual-text"><strong>My Markets / Street Bets</strong> — Toggle buttons to narrow results further.</p>
           <p class="manual-text">Each position card shows the outcome, amount, deposit date, deadline, and maker. USD values are shown on estimate badges when price data is available.</p>
-          <p class="manual-text">If a market is finalized and you hold the winning outcome, a <strong>Claim Winnings</strong> button appears. For voided markets, you'll see <strong>Claim Refund</strong>.</p>
+          <p class="manual-text">If a market is finalized and you hold the winning outcome, a <strong>Claim Winnings</strong> button appears with inline transaction status. For voided markets, you'll see <strong>Claim Refund</strong>. The app waits for full transaction confirmation before updating.</p>
+          <p class="manual-text">All filter and sort selections are saved locally and persist across page reloads.</p>
         </div>
 
         <div class="manual-section" id="wut-making">
@@ -480,6 +496,21 @@
           <p class="manual-text"><strong>Trash</strong> — A built-in protected category that always appears last. Move unwanted markets to Trash instead of removing them. Use the <strong>Clear Trash</strong> button to permanently remove all trashed markets.</p>
           <p class="manual-text"><strong>Export / Import</strong> — In the category manager (⚙), use Export to save your entire watchlist as a <code>.json</code> file, and Import to merge a saved watchlist back in. Importing adds new markets and categories without duplicating existing ones.</p>
           <p class="manual-text">Your watchlist is stored locally in your browser.</p>
+        </div>
+
+        <div class="manual-section" id="wut-settings">
+          <h3 class="manual-heading">Settings</h3>
+          <p class="manual-text">The <strong>Settings</strong> tab lets you manage your preferences and saved data.</p>
+        </div>
+
+        <div class="manual-section" id="wut-saved-makers">
+          <h3 class="manual-heading">Saved Market Makers</h3>
+          <p class="manual-text">Your saved makers list controls which makers appear in the Maker filter dropdowns on the Explore and Positions pages.</p>
+          <p class="manual-text">To save a maker, visit any market detail page and tap the <strong>+</strong> button next to the Maker address. It turns green with a ✓ when saved. Tap again to unsave.</p>
+          <p class="manual-text">In Settings, you can view all saved makers (with SNS names when available), remove individual makers with the <strong>✕</strong> button, and export/import your list.</p>
+          <p class="manual-text"><strong>Export</strong> — Downloads your saved makers as a timestamped <code>.json</code> file.</p>
+          <p class="manual-text"><strong>Import</strong> — Merges a saved makers file into your current list without duplicating existing entries.</p>
+          <p class="manual-text">Both Maker filter dropdowns update immediately whenever you add or remove a maker from any page. Your saved makers list is stored locally in your browser.</p>
         </div>
 
         <div class="manual-section" id="wut-sharing">
