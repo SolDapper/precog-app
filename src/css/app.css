@@ -392,7 +392,8 @@ body::before {
   gap: 12px;
 }
 #view-make .section-title,
-#view-info .section-title {
+#view-info .section-title,
+#view-settings .section-title {
   margin-top: 3px;
 }
 .filter-btn {
