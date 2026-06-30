@@ -165,7 +165,7 @@ let _loadMoreObserver = null;
 let currentTokenFilter = 'all';
 let pollInterval = null;
 
-// User positions cache — Map<marketAddress, Array<{outcomeIndex, amount}>>
+// User positions cache - Map<marketAddress, Array<{outcomeIndex, amount}>>
 let userPositionsMap = new Map();
 let _positionsLoading = false;
 
@@ -234,7 +234,7 @@ function switchView(name, { updateHash = true } = {}) {
  */
 function handleWatchlistStarClick(addr, onUpdate) {
   if (watchlist.has(addr)) {
-    // Already watched — remove
+    // Already watched - remove
     watchlist.remove(addr);
     onUpdate(false);
     return;
@@ -284,7 +284,7 @@ function handleWatchlistStarClick(addr, onUpdate) {
       onUpdate(true);
       renderCategoryTabs();
     } else {
-      // Category already exists — just use it
+      // Category already exists - just use it
       watchlist.add(addr, name);
       overlay.remove();
       onUpdate(true);
@@ -335,7 +335,7 @@ async function loadMarkets() {
       account._expired = account.status === 0 && account.resolutionDeadline <= nowSec;
     }
 
-    // Fetch creation times for Street Bet detection — non-blocking
+    // Fetch creation times for Street Bet detection - non-blocking
     Promise.all(allMarkets.map(async ({ pubkey, account }) => {
       const addr = pubkey.toBase58();
       const creationTime = await fetchCreationTime(addr);
@@ -348,7 +348,7 @@ async function loadMarkets() {
       }
     })).then(() => renderMarketsList(false)).catch(() => {});
 
-    // Fetch USD prices for all unique mints (SOL + tokens) — non-blocking for chart
+    // Fetch USD prices for all unique mints (SOL + tokens) - non-blocking for chart
     const allMints = new Set();
     allMints.add(SOL_MINT); // wrapped SOL for price lookup
     for (const { account } of allMarkets) {
@@ -376,7 +376,7 @@ async function loadMarkets() {
       renderMarketsList(false);
     }).catch(() => {});
 
-    // On poll refresh, don't reset the page — show same amount user has scrolled to
+    // On poll refresh, don't reset the page - show same amount user has scrolled to
     const isInitialLoad = listEl.querySelector('.loading-state') !== null;
     renderMarketsList(isInitialLoad);
   } catch (err) {
@@ -926,7 +926,7 @@ function populateTokenFilter() {
     tokens.delete(NATIVE_SOL_MINT);
   }
 
-  // SPL / Token-2022 tokens — fetch icons async
+  // SPL / Token-2022 tokens - fetch icons async
   const sorted = [...tokens.entries()].sort((a, b) => b[1].count - a[1].count);
   for (const [mint, info] of sorted) {
     const shortMint = mint.slice(0, 4) + '…' + mint.slice(-4);
@@ -950,7 +950,7 @@ function populateTokenFilter() {
       const img = item.querySelector('.token-icon');
       const label = item.querySelector('.token-symbol-name');
       if (icon) { img.src = icon; img.style.display = ''; }
-      label.textContent = symbol ? `${symbol}${name ? ' — ' + name : ''}` : shortMint;
+      label.textContent = symbol ? `${symbol}${name ? ' - ' + name : ''}` : shortMint;
     });
   }
 
@@ -1035,7 +1035,7 @@ document.getElementById('token-chooser-dropdown')?.addEventListener('click', (e)
   e.stopPropagation();
 });
 
-// Positions filters — use event delegation for reliability
+// Positions filters - use event delegation for reliability
 function reRenderPositions() {
   const listEl = document.getElementById('positions-list');
   if (_positionEntries.length > 0) renderPositionsList(_positionEntries, listEl);
@@ -1168,7 +1168,7 @@ function attachDetailListeners(pubkey, market, tokenUsdPrice = 0) {
   // Share
   document.getElementById('detail-share-btn')?.addEventListener('click', () => {
     const url = window.location.origin + window.location.pathname + '#/market/' + pubkey.toBase58();
-    shareContent(market.title, market.title + ' — Precog Markets', url);
+    shareContent(market.title, market.title + ' - Precog Markets', url);
   });
   // Copy
   document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
@@ -1217,7 +1217,7 @@ function attachDetailListeners(pubkey, market, tokenUsdPrice = 0) {
     });
   });
 
-  // Detail charts — render immediately (visible by default)
+  // Detail charts - render immediately (visible by default)
   requestAnimationFrame(() => ui.renderDetailCharts(market, tokenUsdPrice));
   document.getElementById('detail-chart-toggle')?.addEventListener('click', () => {
     const wrap = document.getElementById('detail-charts-wrap');
@@ -1307,14 +1307,14 @@ async function updateGateWarning(elementId, w) {
   const passed = await checkGate(w.publicKey);
   if (passed) { el.classList.add('hidden'); return; }
 
-  let msg = '🔒 Token-gated — you need to hold a required token to participate.';
+  let msg = '🔒 Token-gated - you need to hold a required token to participate.';
   try {
     const tokens = await getGateTokenInfo();
     if (tokens.length) {
       const names = tokens.map(t => t.symbol !== t.mint
         ? `<a href="${GATE_SWAP_URL}" target="_blank" rel="noopener" style="color:var(--gold);font-weight:700">${t.name} (${t.symbol})</a>`
         : `<code>${t.mint}</code>`);
-      msg = `🔒 Token-gated — hold any amount of ${names.join(' or ')} to place positions and create markets.`;
+      msg = `🔒 Token-gated - hold any amount of ${names.join(' or ')} to place positions and create markets.`;
     }
   } catch { /* use generic */ }
   el.innerHTML = msg;
@@ -1741,7 +1741,7 @@ function renderPositionsList(entries, listEl) {
   ui.resolveSnsElements(listEl);
 }
 
-// Positions category filter — store entries globally for re-render
+// Positions category filter - store entries globally for re-render
 let _positionEntries = [];
 
 // We handle re-render in the filter handler instead
@@ -1854,7 +1854,7 @@ function populatePositionsTokenFilter(entries) {
       const img = item.querySelector('.token-icon');
       const label = item.querySelector('.token-symbol-name');
       if (icon) { img.src = icon; img.style.display = ''; }
-      label.textContent = symbol ? `${symbol}${name ? ' — ' + name : ''}` : shortMint;
+      label.textContent = symbol ? `${symbol}${name ? ' - ' + name : ''}` : shortMint;
     });
   }
 
@@ -2260,7 +2260,7 @@ async function handleCreateMarket() {
     const config = await sdk.fetchProtocolConfig();
     if (!config) { showCreateError('Protocol not initialized'); ui.hideTxOverlay(); return; }
 
-    // Find the next available market ID — skip any PDAs that already exist on-chain
+    // Find the next available market ID - skip any PDAs that already exist on-chain
     let marketId = config.totalMarketsCreated + 1n;
     let market, vault;
     const conn = sdk.getConnection();
@@ -2293,7 +2293,7 @@ async function handleCreateMarket() {
 
       accounts.tokenMint = tokenMint;
       accounts.vaultAuthority = vaultAuthority;
-      accounts.tokenVault = vault; // Same PDA as vault — program creates it as a token account
+      accounts.tokenVault = vault; // Same PDA as vault - program creates it as a token account
       accounts.tokenProgram = tokenProgramId;
     }
 
@@ -2340,7 +2340,7 @@ async function loadAdmin() {
   try {
     const config = await sdk.fetchProtocolConfig();
     if (!config) {
-      // Not initialized — show init form
+      // Not initialized - show init form
       initPanel.classList.remove('hidden');
       updatePanel.classList.add('hidden');
       statsPanel.innerHTML = '<div class="empty-state">Protocol not initialized yet.</div>';
@@ -2357,7 +2357,7 @@ async function loadAdmin() {
       return;
     }
 
-    // Initialized — hide init form, show stats
+    // Initialized - hide init form, show stats
     initPanel.classList.add('hidden');
     document.getElementById('admin-total-markets').textContent = Number(config.totalMarketsCreated);
     document.getElementById('admin-total-volume').textContent = ui.formatSol(config.totalVolume);
@@ -2581,7 +2581,7 @@ function fallbackCopy(text) {
   });
 }
 
-// Nav bar share — shares current page URL
+// Nav bar share - shares current page URL
 document.getElementById('nav-share-btn')?.addEventListener('click', () => {
   const url = window.location.href;
   const hash = window.location.hash;
@@ -2589,12 +2589,12 @@ document.getElementById('nav-share-btn')?.addEventListener('click', () => {
   let text = 'Check out Precog Markets';
   if (hash.startsWith('#/market/') && currentMarketData) {
     title = currentMarketData.title;
-    text = currentMarketData.title + ' — Precog Markets';
+    text = currentMarketData.title + ' - Precog Markets';
   }
   shareContent(title, text, url);
 });
 
-// Detail share — wired up in attachDetailListeners
+// Detail share - wired up in attachDetailListeners
 
 // ═══════════════════════════════════════════════════════════════════
 // Watchlist View
@@ -3168,7 +3168,7 @@ async function init() {
   // Route based on initial URL hash (handles direct links like #/market/<addr>)
   const hash = window.location.hash || '';
   if (hash.startsWith('#/market/')) {
-    // Let handleRoute open the market directly — skip loadMarkets first
+    // Let handleRoute open the market directly - skip loadMarkets first
     handleRoute();
   } else {
     // Default: load explore view
