@@ -6,7 +6,7 @@ import { Buffer } from 'buffer';
 window.Buffer = Buffer;
 
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { PROGRAM_ID, MARKET_POLL_MS, RPC_URL, PRICE_CACHE_MS, SOL_MINT } from './config.js';
+import { PROGRAM_ID, MARKET_POLL_MS, RPC_URL, PRICE_CACHE_MS, SOL_MINT, TOKEN_GATE } from './config.js';
 import * as wallet from './wallet.js';
 import * as sdk from './sdk.js';
 import * as ui from './ui.js';
@@ -14,12 +14,14 @@ import * as watchlist from './watchlist.js';
 import { gateEnabled, checkGate, getGateTokenInfo, clearGateCache } from './gate.js';
 import * as makers from './makers.js';
 
-const PELF_SWAP_URL = 'https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=BgJW7U1u2RY5XJk9uYb5AqFRzjMtqE7pw3kaf9iw9Ntz';
+const GATE_SWAP_URL = TOKEN_GATE
+  ? `https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=${TOKEN_GATE.split(',')[0].trim()}`
+  : '';
 
 // ═══════════════════════════════════════════════════════════════════
 // Filter Persistence
 // ═══════════════════════════════════════════════════════════════════
-const FILTER_STORAGE_KEY = 'pelfmont_filters';
+const FILTER_STORAGE_KEY = 'precog_filters';
 
 function saveFilters() {
   try {
@@ -1166,7 +1168,7 @@ function attachDetailListeners(pubkey, market, tokenUsdPrice = 0) {
   // Share
   document.getElementById('detail-share-btn')?.addEventListener('click', () => {
     const url = window.location.origin + window.location.pathname + '#/market/' + pubkey.toBase58();
-    shareContent(market.title, market.title + ' — Pelfmont Markets', url);
+    shareContent(market.title, market.title + ' — Precog Markets', url);
   });
   // Copy
   document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
@@ -1283,7 +1285,7 @@ async function requireGate(walletPubkey, statusElementId) {
     const tokens = await getGateTokenInfo();
     if (tokens.length) {
       const names = tokens.map(t => t.symbol !== t.mint
-        ? `<a href="${PELF_SWAP_URL}" target="_blank" rel="noopener" style="color:var(--gold)">${t.name} (${t.symbol})</a>`
+        ? `<a href="${GATE_SWAP_URL}" target="_blank" rel="noopener" style="color:var(--gold)">${t.name} (${t.symbol})</a>`
         : `<code>${t.mint}</code>`);
       msg = `Token required: hold any amount of ${names.join(' or ')} to participate.`;
     }
@@ -1310,7 +1312,7 @@ async function updateGateWarning(elementId, w) {
     const tokens = await getGateTokenInfo();
     if (tokens.length) {
       const names = tokens.map(t => t.symbol !== t.mint
-        ? `<a href="${PELF_SWAP_URL}" target="_blank" rel="noopener" style="color:var(--gold);font-weight:700">${t.name} (${t.symbol})</a>`
+        ? `<a href="${GATE_SWAP_URL}" target="_blank" rel="noopener" style="color:var(--gold);font-weight:700">${t.name} (${t.symbol})</a>`
         : `<code>${t.mint}</code>`);
       msg = `🔒 Token-gated — hold any amount of ${names.join(' or ')} to place positions and create markets.`;
     }
@@ -2226,7 +2228,7 @@ async function handleCreateMarket() {
       const tokens = await getGateTokenInfo();
       if (tokens.length) {
         const names = tokens.map(t => t.symbol !== t.mint
-          ? `<a href="${PELF_SWAP_URL}" target="_blank" rel="noopener" style="color:var(--gold)">${t.name} (${t.symbol})</a>`
+          ? `<a href="${GATE_SWAP_URL}" target="_blank" rel="noopener" style="color:var(--gold)">${t.name} (${t.symbol})</a>`
           : `<code>${t.mint}</code>`);
         msg = `Token required: hold any amount of ${names.join(' or ')} to participate.`;
       }
@@ -2583,11 +2585,11 @@ function fallbackCopy(text) {
 document.getElementById('nav-share-btn')?.addEventListener('click', () => {
   const url = window.location.href;
   const hash = window.location.hash;
-  let title = 'Pelfmont Markets';
-  let text = 'Check out Pelfmont Markets';
+  let title = 'Precog Markets';
+  let text = 'Check out Precog Markets';
   if (hash.startsWith('#/market/') && currentMarketData) {
     title = currentMarketData.title;
-    text = currentMarketData.title + ' — Pelfmont Markets';
+    text = currentMarketData.title + ' — Precog Markets';
   }
   shareContent(title, text, url);
 });
@@ -2864,7 +2866,7 @@ document.getElementById('export-watchlist-btn')?.addEventListener('click', () =>
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'pelfmont.json';
+  a.download = 'precog-watchlist.json';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

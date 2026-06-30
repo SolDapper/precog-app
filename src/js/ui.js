@@ -875,8 +875,8 @@ export function renderVolumeChart(markets, onClickMarket) {
       labels,
       datasets: [{
         data,
-        backgroundColor: 'rgba(255, 188, 12, 0.5)',
-        borderColor: '#ffbc0c',
+        backgroundColor: 'rgba(68, 138, 255, 0.5)',
+        borderColor: '#448aff',
         borderWidth: 1,
         borderRadius: 4,
       }],
@@ -919,7 +919,7 @@ export function renderVolumeChart(markets, onClickMarket) {
       },
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => '$' + c.parsed.x.toFixed(2) + ' USD' } } },
       scales: {
-        x: { beginAtZero: true, grid: { color: 'rgba(255,210,12,0.08)' }, ticks: { color: 'rgba(255,188,12,0.6)', font: { size: 10 }, callback: (v) => '$' + v.toLocaleString() } },
+        x: { beginAtZero: true, grid: { color: 'rgba(68,138,255,0.08)' }, ticks: { color: 'rgba(68,138,255,0.6)', font: { size: 10 }, callback: (v) => '$' + v.toLocaleString() } },
         y: { display: false },
       },
     },
@@ -996,8 +996,8 @@ export function renderDetailCharts(market, tokenUsdPrice = 0) {
         maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => fmtValue(c.parsed.y) } } },
         scales: {
-          x: { grid: { display: false }, ticks: { color: 'rgba(255,188,12,0.8)', font: { size: 11 } } },
-          y: { beginAtZero: true, grid: { color: 'rgba(255,210,12,0.08)' }, ticks: { color: 'rgba(255,188,12,0.6)', font: { size: 10 }, callback: (v) => useUsd ? '$' + v.toLocaleString() : v } },
+          x: { grid: { display: false }, ticks: { color: 'rgba(68,138,255,0.8)', font: { size: 11 } } },
+          y: { beginAtZero: true, grid: { color: 'rgba(68,138,255,0.08)' }, ticks: { color: 'rgba(68,138,255,0.6)', font: { size: 10 }, callback: (v) => useUsd ? '$' + v.toLocaleString() : v } },
         },
       },
     });

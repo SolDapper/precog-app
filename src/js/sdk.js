@@ -1,6 +1,6 @@
 /**
  * @module sdk
- * Bridge between the Pelfmont app and the precog-markets SDK.
+ * Bridge between the Precog Markets app and the precog-markets SDK.
  * Uses PrecogMarketsClient for smart transactions (CU estimation,
  * priority fees, SWQoS-optimized sending).
  */

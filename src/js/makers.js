@@ -10,7 +10,7 @@
  * }
  */
 
-const STORAGE_KEY = 'pelfmont_makers';
+const STORAGE_KEY = 'precog_makers';
 
 function _load() {
   try {

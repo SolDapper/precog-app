@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
    PRECOG MARKETS — App Stylesheet
-   Dark theme · Gold/amber accent · Mobile-first
+   Dark theme · Blue accent · Mobile-first
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ── Reset ──────────────────────────────────────────────────────── */
@@ -16,17 +16,17 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus { outline: none
 /* ── Variables ──────────────────────────────────────────────────── */
 :root {
   --bg-primary: #010101;
-  --bg-card: rgba(255, 210, 12, 0.04);
-  --bg-card-hover: rgba(255, 210, 12, 0.08);
-  --bg-input: rgba(255, 210, 12, 0.06);
-  --border-primary: rgba(255, 210, 12, 0.2);
-  --border-hover: rgba(255, 210, 12, 0.4);
-  --border-active: rgba(255, 210, 12, 0.6);
+  --bg-card: rgba(68, 138, 255, 0.04);
+  --bg-card-hover: rgba(68, 138, 255, 0.08);
+  --bg-input: rgba(68, 138, 255, 0.06);
+  --border-primary: rgba(68, 138, 255, 0.2);
+  --border-hover: rgba(68, 138, 255, 0.4);
+  --border-active: rgba(68, 138, 255, 0.6);
 
-  --gold: #ffbc0c;
-  --gold-dim: rgba(255, 188, 12, 0.7);
-  --gold-muted: rgba(255, 210, 12, 0.4);
-  --gold-ghost: rgba(255, 210, 12, 0.1);
+  --gold: #448aff;
+  --gold-dim: rgba(68, 138, 255, 0.7);
+  --gold-muted: rgba(68, 138, 255, 0.4);
+  --gold-ghost: rgba(68, 138, 255, 0.1);
 
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.65);
@@ -88,51 +88,6 @@ body::before {
 }
 
 /* ── Top Bar ────────────────────────────────────────────────────── */
-/* ── Buy $PELF Button ─────────────────────────────────────────── */
-.buy-pelf-btn {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 9px 5px 6px;
-  background: var(--gold);
-  color: #010101;
-  font-family: var(--font-display);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-decoration: none;
-  border-radius: 0 0 6px 6px;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-.buy-pelf-btn:hover {
-  background: #ffe066;
-  transform: translateX(-50%) scale(1.03);
-}
-.buy-pelf-icon {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-/* Desktop: slightly larger */
-@media (min-width: 641px) {
-  .buy-pelf-btn {
-    gap: 3px;
-    padding: 4px 9px 5px 6px;
-    font-size: 0.75rem;
-  }
-  .buy-pelf-icon {
-    width: 18px;
-    height: 18px;
-  }
-}
 
 .top-bar {
   display: flex;
@@ -214,12 +169,12 @@ body::before {
 }
 .wallet-btn.connected {
   background: var(--gold);
-  color: var(--bg-primary);
+  color: #fff;
   border-color: transparent;
 }
 .wallet-btn.connected:hover {
-  background: #ffd54f;
-  color: var(--bg-primary);
+  background: #82b1ff;
+  color: #fff;
 }
 
 /* Nav share button */
@@ -311,7 +266,7 @@ body::before {
 .nav-btn:hover { color: var(--text-primary); }
 .nav-btn.active {
   background: var(--gold);
-  color: var(--bg-primary);
+  color: #fff;
 }
 
 /* ── Status Bar ─────────────────────────────────────────────────── */
@@ -426,7 +381,7 @@ body::before {
 .filters-panel.hidden { display: none; }
 .filter-btn.active {
   background: var(--gold);
-  color: var(--bg-primary);
+  color: #fff;
   border-color: transparent;
   font-weight: 600;
 }
@@ -874,7 +829,7 @@ body::before {
   color: #f44336;
 }
 .bet-status.info {
-  background: rgba(255, 188, 12, 0.1);
+  background: rgba(68, 138, 255, 0.1);
   color: var(--gold);
 }
 
@@ -898,9 +853,9 @@ body::before {
 }
 .primary-btn {
   background: var(--gold);
-  color: var(--bg-primary);
+  color: #fff;
 }
-.primary-btn:hover:not(:disabled) { background: #ffd54f; }
+.primary-btn:hover:not(:disabled) { background: #82b1ff; }
 .secondary-btn {
   background: transparent;
   border: 1px solid var(--border-primary);
@@ -936,7 +891,7 @@ body::before {
   font-size: 0.82rem;
   color: var(--text-secondary);
   padding: 10px;
-  border-bottom: 1px solid rgba(255,210,12,0.06);
+  border-bottom: 1px solid rgba(68,138,255,0.06);
 }
 .positions-table td.mono {
   font-family: var(--font-display);
@@ -998,8 +953,8 @@ body::before {
 .position-category-badge {
   font-size: 0.68rem;
   color: var(--gold-dim);
-  background: rgba(255, 188, 12, 0.08);
-  border: 1px solid rgba(255, 188, 12, 0.15);
+  background: rgba(68, 138, 255, 0.08);
+  border: 1px solid rgba(68, 138, 255, 0.15);
   border-radius: 4px;
   padding: 2px 7px;
   white-space: nowrap;
@@ -1067,8 +1022,8 @@ body::before {
 
 /* ── User Position Banner (on market cards) ────────────────────── */
 .user-position-banner {
-  background: rgba(255, 188, 12, 0.15);
-  border: 1px solid rgba(255, 188, 12, 0.35);
+  background: rgba(68, 138, 255, 0.15);
+  border: 1px solid rgba(68, 138, 255, 0.35);
   border-radius: 4px;
   padding: 3px 8px;
   display: flex;
@@ -1149,8 +1104,8 @@ body::before {
   font-size: 0.78rem;
   color: var(--text-secondary);
 }
-.token-chooser-item:hover { background: rgba(255,188,12,0.06); }
-.token-chooser-item.active { background: rgba(255,188,12,0.1); color: var(--gold); }
+.token-chooser-item:hover { background: rgba(68,138,255,0.06); }
+.token-chooser-item.active { background: rgba(68,138,255,0.1); color: var(--gold); }
 .token-icon { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; }
 .token-chooser-label { flex: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
 .token-symbol-name { font-weight: 600; color: var(--text-primary); }
@@ -1299,7 +1254,7 @@ body::before {
   height: 36px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: rgba(255, 188, 12, 0.12);
+  background: rgba(68, 138, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1605,7 +1560,7 @@ body::before {
 }
 .watchlist-picker-new-btn:hover {
   background: var(--gold);
-  color: var(--bg-primary);
+  color: #fff;
 }
 
 .watchlist-star {
@@ -1703,7 +1658,7 @@ body::before {
   flex-wrap: wrap;
   margin-bottom: 14px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255,210,12,0.08);
+  border-bottom: 1px solid rgba(68,138,255,0.08);
 }
 .category-tab {
   padding: 6px 14px;
@@ -1720,7 +1675,7 @@ body::before {
 .category-tab:hover { border-color: var(--border-hover); color: var(--text-primary); }
 .category-tab.active {
   background: var(--gold);
-  color: var(--bg-primary);
+  color: #fff;
   border-color: transparent;
   font-weight: 600;
 }
@@ -1743,7 +1698,7 @@ body::before {
   padding: 8px 10px;
   background: rgba(0,0,0,0.2);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255,210,12,0.06);
+  border: 1px solid rgba(68,138,255,0.06);
 }
 .category-item-name {
   flex: 1;
@@ -1781,7 +1736,7 @@ body::before {
   gap: 8px;
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid rgba(255,210,12,0.06);
+  border-top: 1px solid rgba(68,138,255,0.06);
 }
 .category-select {
   flex: 1;
@@ -1809,7 +1764,7 @@ body::before {
 .manual-section {
   margin-bottom: 24px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 210, 12, 0.06);
+  border-bottom: 1px solid rgba(68, 138, 255, 0.06);
 }
 .manual-section:last-child {
   margin-bottom: 0;
@@ -1835,14 +1790,14 @@ body::before {
 .manual-text code {
   font-family: var(--font-display);
   font-size: 0.78rem;
-  background: rgba(255, 210, 12, 0.08);
-  border: 1px solid rgba(255, 210, 12, 0.12);
+  background: rgba(68, 138, 255, 0.08);
+  border: 1px solid rgba(68, 138, 255, 0.12);
   border-radius: 3px;
   padding: 1px 5px;
   color: var(--gold-dim);
 }
 .manual-toc-link { color: var(--gold); text-decoration: none; font-size: 0.82rem; cursor: pointer; transition: color 0.15s; }
-.manual-toc-link:hover { color: var(--gold-bright, #ffe566); text-decoration: none; }
+.manual-toc-link:hover { color: var(--gold-bright, #82b1ff); text-decoration: none; }
 
 /* Tree-style TOC */
 .manual-toc-tree {
@@ -1907,7 +1862,7 @@ body::before {
   align-items: center;
   padding: 16px var(--gutter);
   margin-top: auto;
-  border-top: 1px solid rgba(255,210,12,0.06);
+  border-top: 1px solid rgba(68,138,255,0.06);
 }
 .footer-text {
   font-size: 0.72rem;
@@ -1986,8 +1941,6 @@ body::before {
   .nav-share-btn { width: 30px; height: 30px; }
   .nav-share-btn svg { width: 14px; height: 14px; }
   .top-bar-right { gap: 6px; }
-  .buy-pelf-label { display: none; }
-  .buy-pelf-btn { padding: 1px 4px 3px 4px; border-radius: 0 0 9px 9px; }
   .detail-share-btn span { display: none; }
   .detail-share-btn { padding: 8px; }
 

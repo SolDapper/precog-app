@@ -11,8 +11,8 @@ export const PROGRAM_ID = new PublicKey(
 );
 
 export const APP_IDENTITY = {
-  name: 'Pelfmont Markets',
-  uri: 'https://www.pelfmont.com/',
+  name: 'Precog Markets',
+  uri: 'https://x.com/SolDapper',
   icon: '/.well-known/icon.png',
 };
 
