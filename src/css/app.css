@@ -1011,12 +1011,15 @@ body::before {
 .position-actions {
   margin-top: 12px;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+}
+.position-actions .claim-status {
+  width: 100%;
 }
 .position-actions .action-btn {
   padding: 10px 14px;
   font-size: 0.75rem;
-  flex: 1;
 }
 .payout-value { color: var(--green) !important; }
 
@@ -1126,6 +1129,27 @@ body::before {
   color: var(--text-muted);
   flex-shrink: 0;
 }
+.token-chooser-search {
+  padding: 6px 6px 6px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 1;
+  margin-bottom: 4px;
+}
+.token-search-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-family: var(--font-body);
+}
+.token-search-input::placeholder { color: var(--text-muted); }
+.token-search-input:focus { border-color: var(--border-active); }
+.token-chooser-item.token-overflow { display: none; }
 
 /* ── Create Form ────────────────────────────────────────────────── */
 .create-form { max-width: 100%; }

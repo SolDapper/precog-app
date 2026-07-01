@@ -779,7 +779,7 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
     }
   }
 
-  const hasBadgeRow = category || payoutBadge || pnlBadge;
+  const hasBadgeRow = category || payoutBadge || pnlBadge || market._isStreetBet;
 
   const card = document.createElement('div');
   card.className = 'position-card';
@@ -790,6 +790,7 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
     </div>
     ${hasBadgeRow ? `<div class="position-badge-row">
       <div class="position-badge-labels">
+        ${market._isStreetBet ? '<span class="street-bet-badge">Street Bet</span>' : ''}
         ${category ? `<span class="position-category-badge">${escapeHtml(category)}</span>` : ''}
       </div>
       ${payoutBadge || pnlBadge ? `<div class="position-badge-estimates">${payoutBadge}${pnlBadge}</div>` : ''}

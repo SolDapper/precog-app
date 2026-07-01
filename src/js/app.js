@@ -6,7 +6,7 @@ import { Buffer } from 'buffer';
 window.Buffer = Buffer;
 
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { PROGRAM_ID, MARKET_POLL_MS, RPC_URL, PRICE_CACHE_MS, SOL_MINT, TOKEN_GATE } from './config.js';
+import { PROGRAM_ID, MARKET_POLL_MS, RPC_URL, PRICE_CACHE_MS, SOL_MINT, TOKEN_GATE, JUP_API_KEY, STREET_BET_SECONDS } from './config.js';
 import * as wallet from './wallet.js';
 import * as sdk from './sdk.js';
 import * as ui from './ui.js';
@@ -784,7 +784,6 @@ let _lastTokenSet = '';
 let _tokenIconCache = new Map(); // mint → icon URL
 
 // ── Market creation time cache (for Street Bet detection) ────────
-const STREET_BET_SECONDS = 1800; // 30 minutes
 let _creationTimeCache = new Map(); // market address → unix timestamp
 
 /** Fetch market creation time from its earliest transaction signature */
@@ -858,7 +857,9 @@ async function fetchTokenPrices(mints) {
   if (stale.length > 0) {
     try {
       const ids = stale.join(',');
-      const resp = await fetch(`https://lite-api.jup.ag/price/v3?ids=${ids}`);
+      const headers = { 'Accept': 'application/json' };
+      if (JUP_API_KEY) headers['x-api-key'] = JUP_API_KEY;
+      const resp = await fetch(`https://api.jup.ag/price/v3?ids=${ids}`, { headers });
       if (resp.ok) {
         const data = await resp.json();
         for (const mint of stale) {
@@ -887,9 +888,10 @@ function populateTokenFilter() {
   const dropdown = document.getElementById('token-chooser-dropdown');
   if (!dropdown) return;
 
-  // Gather unique token mints from markets
-  const tokens = new Map(); // mint address → { count, denomination, denominationName }
+  // Gather unique token mints from OPEN markets only
+  const tokens = new Map();
   for (const { account } of allMarkets) {
+    if (account.status !== 0) continue; // open markets only
     const mint = account.denomination === 0 ? NATIVE_SOL_MINT : account.tokenMint.toBase58();
     if (!tokens.has(mint)) {
       tokens.set(mint, { count: 0, denomination: account.denomination, denominationName: account.denominationName, tokenDecimals: account.tokenDecimals });
@@ -901,67 +903,117 @@ function populateTokenFilter() {
   if (key === _lastTokenSet) return;
   _lastTokenSet = key;
 
-  // Build dropdown items
   dropdown.innerHTML = '';
+
+  // Search input
+  const searchWrap = document.createElement('div');
+  searchWrap.className = 'token-chooser-search';
+  searchWrap.innerHTML = `<input type="text" class="token-search-input" placeholder="Search tokens..." autocomplete="off">`;
+  dropdown.appendChild(searchWrap);
 
   // "All Tokens" option
   const allItem = document.createElement('div');
   allItem.className = `token-chooser-item${currentTokenFilter === 'all' ? ' active' : ''}`;
   allItem.dataset.mint = 'all';
+  allItem.dataset.searchable = 'all tokens';
   allItem.innerHTML = `<span class="token-chooser-label">All Tokens</span>`;
   dropdown.appendChild(allItem);
 
-  // Native SOL
+  // Build sorted list: SOL first, then by open count descending
+  const tokenItems = [];
+
   if (tokens.has(NATIVE_SOL_MINT)) {
-    const info = tokens.get(NATIVE_SOL_MINT);
-    const item = document.createElement('div');
-    item.className = `token-chooser-item${currentTokenFilter === NATIVE_SOL_MINT ? ' active' : ''}`;
-    item.dataset.mint = NATIVE_SOL_MINT;
-    item.innerHTML = `
-      <img class="token-icon" src="${SOL_ICON}" alt="SOL" onerror="this.style.display='none'">
-      <span class="token-chooser-label">SOL <span class="token-chooser-sub">Native</span></span>
-      <span class="token-chooser-count">${info.count}</span>
-    `;
-    dropdown.appendChild(item);
+    tokenItems.push({ mint: NATIVE_SOL_MINT, info: tokens.get(NATIVE_SOL_MINT), isSol: true });
     tokens.delete(NATIVE_SOL_MINT);
   }
 
-  // SPL / Token-2022 tokens - fetch icons async
   const sorted = [...tokens.entries()].sort((a, b) => b[1].count - a[1].count);
   for (const [mint, info] of sorted) {
-    const shortMint = mint.slice(0, 4) + '…' + mint.slice(-4);
-    const typeLabel = info.denominationName === 'Token2022' ? 'Token-2022' : 'SPL';
+    tokenItems.push({ mint, info, isSol: false });
+  }
+
+  // Render items
+  tokenItems.forEach(({ mint, info, isSol }, index) => {
     const item = document.createElement('div');
     item.className = `token-chooser-item${currentTokenFilter === mint ? ' active' : ''}`;
     item.dataset.mint = mint;
-    item.innerHTML = `
-      <img class="token-icon" src="" alt="" style="display:none">
-      <span class="token-chooser-label">
-        <span class="token-symbol-name">Loading…</span>
-        <a class="token-mint-link" href="https://solscan.io/token/${mint}" target="_blank" rel="noopener" title="${mint}">${shortMint}</a>
-        <span class="token-chooser-sub">${typeLabel}</span>
-      </span>
-      <span class="token-chooser-count">${info.count}</span>
-    `;
+
+    if (isSol) {
+      item.dataset.searchable = 'sol native solana';
+      item.innerHTML = `
+        <img class="token-icon" src="${SOL_ICON}" alt="SOL" onerror="this.style.display='none'">
+        <span class="token-chooser-label">SOL <span class="token-chooser-sub">Native</span></span>
+        <span class="token-chooser-count">${info.count}</span>
+      `;
+    } else {
+      const shortMint = mint.slice(0, 4) + '…' + mint.slice(-4);
+      const typeLabel = info.denominationName === 'Token2022' ? 'Token-2022' : 'SPL';
+      item.dataset.searchable = `${shortMint} ${typeLabel}`;
+      item.innerHTML = `
+        <img class="token-icon" src="" alt="" style="display:none">
+        <span class="token-chooser-label">
+          <span class="token-symbol-name">Loading…</span>
+          <a class="token-mint-link" href="https://solscan.io/token/${mint}" target="_blank" rel="noopener" title="${mint}">${shortMint}</a>
+          <span class="token-chooser-sub">${typeLabel}</span>
+        </span>
+        <span class="token-chooser-count">${info.count}</span>
+      `;
+
+      // Fetch icon async and update searchable data
+      fetchTokenIcon(mint).then(({ icon, name, symbol }) => {
+        const img = item.querySelector('.token-icon');
+        const label = item.querySelector('.token-symbol-name');
+        if (icon) { img.src = icon; img.style.display = ''; }
+        const displayName = symbol ? `${symbol}${name ? ' - ' + name : ''}` : shortMint;
+        label.textContent = displayName;
+        item.dataset.searchable = `${symbol || ''} ${name || ''} ${shortMint} ${typeLabel} ${mint}`.toLowerCase();
+      });
+    }
+
+    // Hide items beyond top 5 by default (not counting "All Tokens")
+    if (index >= 5) item.classList.add('token-overflow');
+
     dropdown.appendChild(item);
+  });
 
-    // Fetch icon async
-    fetchTokenIcon(mint).then(({ icon, name, symbol }) => {
-      const img = item.querySelector('.token-icon');
-      const label = item.querySelector('.token-symbol-name');
-      if (icon) { img.src = icon; img.style.display = ''; }
-      label.textContent = symbol ? `${symbol}${name ? ' - ' + name : ''}` : shortMint;
+  // Toggle scrollable
+  const visibleCount = dropdown.querySelectorAll('.token-chooser-item:not(.token-overflow)').length;
+  dropdown.classList.toggle('scrollable', visibleCount > 10);
+
+  // Search handler
+  const searchInput = dropdown.querySelector('.token-search-input');
+  searchInput?.addEventListener('input', () => {
+    const query = searchInput.value.toLowerCase().trim();
+    const items = dropdown.querySelectorAll('.token-chooser-item');
+    let shown = 0;
+    items.forEach(item => {
+      if (item.dataset.mint === 'all') {
+        item.style.display = query ? 'none' : '';
+        return;
+      }
+      const match = !query || (item.dataset.searchable || '').includes(query);
+      item.style.display = match ? '' : 'none';
+      item.classList.toggle('token-overflow', false); // show all when searching
+      if (match) shown++;
     });
-  }
+    // When search is cleared, re-hide overflow items
+    if (!query) {
+      items.forEach((item, i) => {
+        item.style.display = '';
+        // i=0 is "All Tokens", so token items start at 1, hide after top 5 (index 6+)
+        if (i > 5) item.classList.add('token-overflow');
+        else item.classList.remove('token-overflow');
+      });
+    }
+    dropdown.classList.toggle('scrollable', shown > 10);
+  });
 
-  // Toggle scrollable when >10 items
-  const itemCount = dropdown.querySelectorAll('.token-chooser-item').length;
-  dropdown.classList.toggle('scrollable', itemCount > 10);
+  // Prevent search input clicks from closing dropdown
+  searchInput?.addEventListener('click', (e) => e.stopPropagation());
 
-  // Click handlers
+  // Click handlers for items
   dropdown.querySelectorAll('.token-chooser-item').forEach(item => {
     item.addEventListener('click', (e) => {
-      // Don't close dropdown if clicking the Solscan link
       if (e.target.closest('.token-mint-link')) return;
       e.stopPropagation();
       currentTokenFilter = item.dataset.mint;
@@ -969,7 +1021,7 @@ function populateTokenFilter() {
       updateTokenChooserButton();
       dropdown.classList.add('hidden');
       document.querySelector('.token-chooser-backdrop')?.remove();
-      _lastTokenSet = ''; // force re-render of active state
+      _lastTokenSet = '';
       populateTokenFilter();
       renderMarketsList();
     });
@@ -1793,15 +1845,22 @@ function populatePositionsTokenFilter(entries) {
   const dropdown = document.getElementById('pos-token-chooser-dropdown');
   if (!dropdown) return;
 
-  // Gather unique token mints from position markets
+  // Gather unique token mints - count OPEN markets only
   const tokens = new Map();
-  for (const { mk } of entries) {
+  const seenMarkets = new Set();
+  for (const { mk, pos } of entries) {
     if (!mk) continue;
+    const marketAddr = pos.market?.toBase58?.() || '';
     const mint = mk.denomination === 0 ? NATIVE_SOL_MINT : mk.tokenMint.toBase58();
     if (!tokens.has(mint)) {
       tokens.set(mint, { count: 0, denomination: mk.denomination, denominationName: mk.denominationName });
     }
-    tokens.get(mint).count++;
+    // Count unique open markets per token
+    const marketKey = `${mint}:${marketAddr}`;
+    if (mk.status === 0 && !seenMarkets.has(marketKey)) {
+      seenMarkets.add(marketKey);
+      tokens.get(mint).count++;
+    }
   }
 
   const key = [...tokens.keys()].sort().join(',');
@@ -1810,57 +1869,106 @@ function populatePositionsTokenFilter(entries) {
 
   dropdown.innerHTML = '';
 
+  // Search input
+  const searchWrap = document.createElement('div');
+  searchWrap.className = 'token-chooser-search';
+  searchWrap.innerHTML = `<input type="text" class="token-search-input" placeholder="Search tokens..." autocomplete="off">`;
+  dropdown.appendChild(searchWrap);
+
   // "All Tokens" option
   const allItem = document.createElement('div');
   allItem.className = `token-chooser-item${currentPositionsTokenFilter === 'all' ? ' active' : ''}`;
   allItem.dataset.mint = 'all';
+  allItem.dataset.searchable = 'all tokens';
   allItem.innerHTML = `<span class="token-chooser-label">All Tokens</span>`;
   dropdown.appendChild(allItem);
 
-  // Native SOL
+  // Build sorted list: SOL first, then by count descending
+  const tokenItems = [];
+
   if (tokens.has(NATIVE_SOL_MINT)) {
-    const info = tokens.get(NATIVE_SOL_MINT);
-    const item = document.createElement('div');
-    item.className = `token-chooser-item${currentPositionsTokenFilter === NATIVE_SOL_MINT ? ' active' : ''}`;
-    item.dataset.mint = NATIVE_SOL_MINT;
-    item.innerHTML = `
-      <img class="token-icon" src="${SOL_ICON}" alt="SOL" onerror="this.style.display='none'">
-      <span class="token-chooser-label">SOL <span class="token-chooser-sub">Native</span></span>
-      <span class="token-chooser-count">${info.count}</span>
-    `;
-    dropdown.appendChild(item);
+    tokenItems.push({ mint: NATIVE_SOL_MINT, info: tokens.get(NATIVE_SOL_MINT), isSol: true });
     tokens.delete(NATIVE_SOL_MINT);
   }
 
-  // SPL / Token-2022 tokens
   const sorted = [...tokens.entries()].sort((a, b) => b[1].count - a[1].count);
   for (const [mint, info] of sorted) {
-    const shortMint = mint.slice(0, 4) + '…' + mint.slice(-4);
-    const typeLabel = info.denominationName === 'Token2022' ? 'Token-2022' : 'SPL';
+    tokenItems.push({ mint, info, isSol: false });
+  }
+
+  // Render items
+  tokenItems.forEach(({ mint, info, isSol }, index) => {
     const item = document.createElement('div');
     item.className = `token-chooser-item${currentPositionsTokenFilter === mint ? ' active' : ''}`;
     item.dataset.mint = mint;
-    item.innerHTML = `
-      <img class="token-icon" src="" alt="" style="display:none">
-      <span class="token-chooser-label">
-        <span class="token-symbol-name">Loading…</span>
-        <a class="token-mint-link" href="https://solscan.io/token/${mint}" target="_blank" rel="noopener" title="${mint}">${shortMint}</a>
-        <span class="token-chooser-sub">${typeLabel}</span>
-      </span>
-      <span class="token-chooser-count">${info.count}</span>
-    `;
-    dropdown.appendChild(item);
-    fetchTokenIcon(mint).then(({ icon, name, symbol }) => {
-      const img = item.querySelector('.token-icon');
-      const label = item.querySelector('.token-symbol-name');
-      if (icon) { img.src = icon; img.style.display = ''; }
-      label.textContent = symbol ? `${symbol}${name ? ' - ' + name : ''}` : shortMint;
-    });
-  }
 
-  // Toggle scrollable when >10 items
-  const posItemCount = dropdown.querySelectorAll('.token-chooser-item').length;
-  dropdown.classList.toggle('scrollable', posItemCount > 10);
+    if (isSol) {
+      item.dataset.searchable = 'sol native solana';
+      item.innerHTML = `
+        <img class="token-icon" src="${SOL_ICON}" alt="SOL" onerror="this.style.display='none'">
+        <span class="token-chooser-label">SOL <span class="token-chooser-sub">Native</span></span>
+        <span class="token-chooser-count">${info.count}</span>
+      `;
+    } else {
+      const shortMint = mint.slice(0, 4) + '…' + mint.slice(-4);
+      const typeLabel = info.denominationName === 'Token2022' ? 'Token-2022' : 'SPL';
+      item.dataset.searchable = `${shortMint} ${typeLabel}`;
+      item.innerHTML = `
+        <img class="token-icon" src="" alt="" style="display:none">
+        <span class="token-chooser-label">
+          <span class="token-symbol-name">Loading…</span>
+          <a class="token-mint-link" href="https://solscan.io/token/${mint}" target="_blank" rel="noopener" title="${mint}">${shortMint}</a>
+          <span class="token-chooser-sub">${typeLabel}</span>
+        </span>
+        <span class="token-chooser-count">${info.count}</span>
+      `;
+
+      fetchTokenIcon(mint).then(({ icon, name, symbol }) => {
+        const img = item.querySelector('.token-icon');
+        const label = item.querySelector('.token-symbol-name');
+        if (icon) { img.src = icon; img.style.display = ''; }
+        const displayName = symbol ? `${symbol}${name ? ' - ' + name : ''}` : shortMint;
+        label.textContent = displayName;
+        item.dataset.searchable = `${symbol || ''} ${name || ''} ${shortMint} ${typeLabel} ${mint}`.toLowerCase();
+      });
+    }
+
+    // Hide items beyond top 5
+    if (index >= 5) item.classList.add('token-overflow');
+
+    dropdown.appendChild(item);
+  });
+
+  const visibleCount = dropdown.querySelectorAll('.token-chooser-item:not(.token-overflow)').length;
+  dropdown.classList.toggle('scrollable', visibleCount > 10);
+
+  // Search handler
+  const searchInput = dropdown.querySelector('.token-search-input');
+  searchInput?.addEventListener('input', () => {
+    const query = searchInput.value.toLowerCase().trim();
+    const items = dropdown.querySelectorAll('.token-chooser-item');
+    let shown = 0;
+    items.forEach(item => {
+      if (item.dataset.mint === 'all') {
+        item.style.display = query ? 'none' : '';
+        return;
+      }
+      const match = !query || (item.dataset.searchable || '').includes(query);
+      item.style.display = match ? '' : 'none';
+      item.classList.toggle('token-overflow', false);
+      if (match) shown++;
+    });
+    if (!query) {
+      items.forEach((item, i) => {
+        item.style.display = '';
+        if (i > 5) item.classList.add('token-overflow');
+        else item.classList.remove('token-overflow');
+      });
+    }
+    dropdown.classList.toggle('scrollable', shown > 10);
+  });
+
+  searchInput?.addEventListener('click', (e) => e.stopPropagation());
 
   // Click handlers
   dropdown.querySelectorAll('.token-chooser-item').forEach(item => {
@@ -1963,6 +2071,25 @@ async function claimWinnings(posAddr, mktAddr) {
       accounts.vaultAuthority = vaultAuthority;
       accounts.tokenMint = tokenMint;
       accounts.tokenProgram = tokenProgramId;
+
+      // DEBUG: log all accounts for PDA verification
+      console.log('=== ClaimWinnings DEBUG ===');
+      console.log('denomination:', market.denomination, market.denominationName);
+      console.log('market:', mk.toBase58());
+      console.log('vault:', vault.toBase58());
+      console.log('position:', posAddr);
+      console.log('claimant:', w.publicKey.toBase58());
+      console.log('protocolConfig:', pc.toBase58());
+      console.log('treasury:', config.treasury.toBase58());
+      console.log('creator:', market.creator.toBase58());
+      console.log('claimantAta:', claimantAta.toBase58());
+      console.log('treasuryAta:', treasuryAta.toBase58());
+      console.log('creatorAta:', creatorAta.toBase58());
+      console.log('vaultAuthority:', vaultAuthority.toBase58());
+      console.log('tokenMint:', tokenMint.toBase58());
+      console.log('tokenProgram:', tokenProgramId.toBase58());
+      console.log('winningOutcome:', market.winningOutcome);
+      console.log('=== END DEBUG ===');
     }
 
     const ix = sdk.buildClaimWinnings(accounts);
