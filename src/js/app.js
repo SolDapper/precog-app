@@ -2523,7 +2523,7 @@ async function handleCreateMarket() {
     // tokenVault uses the SAME PDA as vault: [VAULT_SEED, market]
     if (denomination === 1 || denomination === 2) {
       const mintAddr = document.getElementById('create-token-mint')?.value.trim();
-      if (!mintAddr || mintAddr.length < 32) return showCreateError('Token mint address is required');
+      if (!mintAddr || mintAddr.length < 32) { ui.hideTxOverlay(); return showCreateError('Token mint address is required'); }
       const tokenMint = new PublicKey(mintAddr);
       const tokenProgramId = denomination === 1 ? sdk.TOKEN_PROGRAM_ID : sdk.TOKEN_2022_PROGRAM_ID;
 
@@ -2533,9 +2533,11 @@ async function handleCreateMarket() {
           const validation = await sdk.validateTokenMint(tokenMint);
           if (!validation.ok) {
             const blockedNames = validation.blocked.map(b => b.name || b.error).join(', ');
+            ui.hideTxOverlay();
             return showCreateError(`Blocked extension${validation.blocked.length > 1 ? 's' : ''}: ${blockedNames}. This token cannot be used for markets.`);
           }
         } catch (e) {
+          ui.hideTxOverlay();
           return showCreateError(`Failed to validate token mint: ${e.message}`);
         }
       }
