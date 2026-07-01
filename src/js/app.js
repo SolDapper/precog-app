@@ -194,7 +194,7 @@ async function refreshUserPositions() {
 // ═══════════════════════════════════════════════════════════════════
 // View Router
 // ═══════════════════════════════════════════════════════════════════
-const viewNames = ['explore', 'market', 'positions', 'make', 'admin', 'watchlist', 'info', 'settings'];
+const viewNames = ['explore', 'market', 'positions', 'make', 'admin', 'watchlist', 'info', 'settings', 'privacy', 'terms'];
 
 /** Update the URL hash without triggering hashchange handler re-entrantly */
 let _suppressHashChange = false;
@@ -3261,6 +3261,15 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   const target = document.getElementById(link.dataset.scrollTo);
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// Legal page links and back buttons
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('[data-view]');
+  if (!link) return;
+  e.preventDefault();
+  const view = link.dataset.view;
+  if (viewNames.includes(view)) switchView(view);
 });
 
 // ═══════════════════════════════════════════════════════════════════

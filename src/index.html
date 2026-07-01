@@ -409,6 +409,13 @@
             </li>
             <li><a class="manual-toc-link" data-scroll-to="wut-tips">Tips</a></li>
             <li><a class="manual-toc-link" data-scroll-to="wut-powered">Powered by Precog Markets</a></li>
+            <li>
+              <a class="manual-toc-link" data-scroll-to="wut-legal">Legal</a>
+              <ul>
+                <li><a class="manual-toc-link" data-view="privacy">Privacy Policy</a></li>
+                <li><a class="manual-toc-link" data-view="terms">Terms of Use</a></li>
+              </ul>
+            </li>
             <li><a class="manual-toc-link" data-scroll-to="wut-contact">Contact</a></li>
           </ul>
         </div>
@@ -562,6 +569,15 @@
           </p>
         </div>
 
+        <div class="manual-section" id="wut-legal">
+          <h3 class="manual-heading">Legal</h3>
+          <p class="manual-text">
+            <a href="#privacy" class="manual-legal-link" data-view="privacy" style="color:var(--gold)">Privacy Policy</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href="#terms" class="manual-legal-link" data-view="terms" style="color:var(--gold)">Terms of Use</a>
+          </p>
+        </div>
+
         <div class="manual-section" id="wut-contact">
           <h3 class="manual-heading">Contact</h3>
           <p class="manual-text">Follow us on <a href="https://x.com/SolDapper" target="_blank" rel="noopener noreferrer" style="color:var(--gold);font-weight:700">𝕏 @SolDapper</a></p>
@@ -589,6 +605,105 @@
           </label>
           <div id="makers-import-status" style="font-size:0.72rem;color:var(--text-secondary)"></div>
         </div>
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VIEW: Privacy Policy -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main id="view-privacy" class="view hidden">
+      <div class="explore-header">
+        <h2 class="section-title">Privacy Policy</h2>
+        <button class="filter-btn back-to-wut-btn" data-view="info">Back to WUT?</button>
+      </div>
+      <div class="manual-content card">
+        <p class="manual-text" style="color:var(--text-muted);margin-bottom:16px">Last updated: July 1, 2026</p>
+
+        <h3 class="manual-heading">Overview</h3>
+        <p class="manual-text">Precog Markets is a fully client-side web application with no backend servers, databases, or user accounts. Your privacy is protected by the architecture itself - we have no ability to collect, store, or process personal data because there is no server-side infrastructure to do so.</p>
+
+        <h3 class="manual-heading">Data We Do Not Collect</h3>
+        <p class="manual-text">We do not collect, store, or transmit any of the following: personal information (name, email, phone), wallet addresses or private keys, IP addresses or device identifiers, browsing behavior or analytics, cookies or tracking pixels, market activity or position history.</p>
+
+        <h3 class="manual-heading">Local Browser Storage</h3>
+        <p class="manual-text">The app uses your browser's localStorage to save your preferences locally on your device. This includes filter and sort selections, watchlist and categories, saved market makers, and filter panel visibility states. This data never leaves your browser. It is not transmitted to any server. You can clear it at any time through your browser settings.</p>
+
+        <h3 class="manual-heading">Blockchain Data</h3>
+        <p class="manual-text">When you create markets, place positions, or claim winnings, you submit transactions to the Solana blockchain through your own wallet. All blockchain transactions are public by nature. Your wallet address and transaction history are visible on the Solana blockchain to anyone, regardless of whether you use this app. We do not add any additional tracking or metadata to your transactions beyond what the on-chain program requires.</p>
+
+        <h3 class="manual-heading">Third-Party Services</h3>
+        <p class="manual-text">The app communicates with the following external services:</p>
+        <p class="manual-text"><strong>Solana RPC Provider</strong> - To read on-chain data and submit transactions. Your RPC provider may log requests. The RPC endpoint is configured by the app operator.</p>
+        <p class="manual-text"><strong>Jupiter Price API</strong> - To fetch token prices for USD value display. Requests include token mint addresses only, not wallet addresses. Subject to Jupiter's own privacy policy.</p>
+        <p class="manual-text"><strong>Solana Name Service</strong> - To resolve .sol domain names. Requests include wallet addresses for name lookup.</p>
+        <p class="manual-text">We have no control over the privacy practices of these third-party services.</p>
+
+        <h3 class="manual-heading">Wallet Connection</h3>
+        <p class="manual-text">When you connect your wallet, the app receives only your public key (wallet address). It never has access to your private keys, seed phrase, or the ability to sign transactions without your explicit approval through your wallet's interface.</p>
+
+        <h3 class="manual-heading">Open Source</h3>
+        <p class="manual-text">This application is open source. You can inspect the complete source code to verify these claims at <a href="https://github.com/SolDapper/precog-app" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">github.com/SolDapper/precog-app</a>.</p>
+
+        <h3 class="manual-heading">Changes</h3>
+        <p class="manual-text">If this policy changes, the updated version will be posted here with a new date. Since there is no account system, there is no way to notify users directly - check back periodically.</p>
+
+        <h3 class="manual-heading">Contact</h3>
+        <p class="manual-text">Questions about this policy can be directed to <a href="https://x.com/SolDapper" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">@SolDapper</a> on X.</p>
+      </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- VIEW: Terms of Use -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <main id="view-terms" class="view hidden">
+      <div class="explore-header">
+        <h2 class="section-title">Terms of Use</h2>
+        <button class="filter-btn back-to-wut-btn" data-view="info">Back to WUT?</button>
+      </div>
+      <div class="manual-content card">
+        <p class="manual-text" style="color:var(--text-muted);margin-bottom:16px">Last updated: July 1, 2026</p>
+
+        <h3 class="manual-heading">Acceptance</h3>
+        <p class="manual-text">By accessing or using Precog Markets ("the App"), you agree to these Terms of Use. If you do not agree, do not use the App.</p>
+
+        <h3 class="manual-heading">Description of Service</h3>
+        <p class="manual-text">Precog Markets is an open-source, client-side web application that provides a user interface for interacting with the Precog Markets protocol - a decentralized prediction market program deployed on the Solana blockchain. The App is a frontend interface only. It does not custody funds, execute trades, or control the on-chain program in any way.</p>
+
+        <h3 class="manual-heading">No Custodial Relationship</h3>
+        <p class="manual-text">The App is entirely non-custodial. At no point does the App, its developers, or its operators hold, control, or have access to your funds, private keys, or wallet credentials. All funds are held in program-derived accounts (PDAs) controlled by the on-chain Solana program. Transactions are signed exclusively by you through your own wallet.</p>
+
+        <h3 class="manual-heading">User Responsibility</h3>
+        <p class="manual-text">You are solely responsible for: your wallet security and private key management, understanding the risks of blockchain transactions (including finality and irreversibility), evaluating the markets you participate in, ensuring your use of prediction markets complies with the laws of your jurisdiction, any tax obligations arising from your activity, and verifying transaction details before signing.</p>
+
+        <h3 class="manual-heading">Risks</h3>
+        <p class="manual-text">Prediction markets involve financial risk. You may lose some or all of the funds you deposit into market positions. The value of tokens can fluctuate. Smart contracts may contain bugs despite best efforts. Blockchain networks may experience congestion, outages, or forks. RPC providers may become unavailable. By using the App, you acknowledge and accept these risks.</p>
+
+        <h3 class="manual-heading">No Financial Advice</h3>
+        <p class="manual-text">Nothing in the App constitutes financial, investment, legal, or tax advice. Probability bars, payout estimates, and profit/loss indicators are mathematical calculations based on current pool sizes and are not predictions, recommendations, or guarantees of any outcome.</p>
+
+        <h3 class="manual-heading">Market Resolution</h3>
+        <p class="manual-text">Markets are resolved by the market authority (the wallet that created the market). The App and its developers have no control over how individual markets are resolved. A 24-hour dispute window exists for each resolved market. After finalization, results are permanent and irreversible on-chain.</p>
+
+        <h3 class="manual-heading">No Warranty</h3>
+        <p class="manual-text">The App is provided "as is" and "as available" without warranties of any kind, whether express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement. We do not guarantee that the App will be uninterrupted, error-free, or free of harmful components.</p>
+
+        <h3 class="manual-heading">Limitation of Liability</h3>
+        <p class="manual-text">To the maximum extent permitted by law, the developers and operators of Precog Markets shall not be liable for any direct, indirect, incidental, special, consequential, or exemplary damages arising from your use of or inability to use the App, including but not limited to loss of funds, loss of data, or loss of profits, even if advised of the possibility of such damages.</p>
+
+        <h3 class="manual-heading">Protocol Pause</h3>
+        <p class="manual-text">The protocol admin has the ability to temporarily pause new market creation and position placement. This is a safety mechanism. During a pause, existing claims and refunds remain fully operational. The pause mechanism is on-chain and verifiable.</p>
+
+        <h3 class="manual-heading">Open Source</h3>
+        <p class="manual-text">The App is released under the MIT License. You are free to inspect, modify, fork, and deploy your own instance. The source code is available at <a href="https://github.com/SolDapper/precog-app" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">github.com/SolDapper/precog-app</a>. Use of third-party deployments is at your own risk.</p>
+
+        <h3 class="manual-heading">Modifications</h3>
+        <p class="manual-text">We may update these Terms at any time. Continued use of the App after changes constitutes acceptance of the updated Terms. The "Last updated" date at the top indicates the most recent revision.</p>
+
+        <h3 class="manual-heading">Governing Law</h3>
+        <p class="manual-text">These Terms shall be interpreted in accordance with applicable law. Any disputes arising from or related to these Terms or your use of the App shall be resolved in accordance with applicable law in the relevant jurisdiction.</p>
+
+        <h3 class="manual-heading">Contact</h3>
+        <p class="manual-text">Questions about these Terms can be directed to <a href="https://x.com/SolDapper" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">@SolDapper</a> on X.</p>
       </div>
     </main>
 
