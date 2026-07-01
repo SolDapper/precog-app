@@ -260,6 +260,7 @@
     <main id="view-make" class="view hidden">
       <h2 class="section-title">Make Market</h2>
       <div id="create-gate-warning" class="gate-warning hidden"></div>
+      <div id="create-pause-notice" class="status-bar error hidden" style="margin-bottom:14px">Market creation is temporarily disabled by the protocol admin.</div>
 
       <div class="create-form card">
         <div class="form-group">
@@ -422,30 +423,29 @@
 
         <div class="manual-section" id="wut-exploring">
           <h3 class="manual-heading">Exploring Markets</h3>
-          <p class="manual-text">The <strong>Explore</strong> tab is your home screen. Each market card shows outcome probability bars, volume, USD value, position count, time remaining, and maker (with SNS name when available). If you have a position in a market, an estimate badge shows your projected payout with USD value right on the card.</p>
+          <p class="manual-text">The <strong>Explore</strong> tab is your home screen. Each market card shows outcome probability bars, volume, USD value, position count, time remaining, and maker (with SNS name when available). If you have a position in a market, badges show your estimated profit per outcome and an overall estimated PnL.</p>
+          <p class="manual-text">Use the <strong>Filters</strong> button to reveal the filter panel. Your filter and sort selections are saved locally and persist across page reloads.</p>
           <p class="manual-text"><strong>Status filter</strong> - Filter by Open, Closed (pending resolution), Resolved (dispute window active), Ready (awaiting finalization), Finalized, Voided, or All.</p>
           <p class="manual-text"><strong>Category filter</strong> - Filter by the market's on-chain category. Categories are listed alphabetically, with "All Categories" and "Uncategorized" at the top.</p>
           <p class="manual-text"><strong>Sort</strong> - Order by Newest First (default), Oldest First, Closing Soon, Value High/Low, or Most/Least Positions.</p>
           <p class="manual-text"><strong>Maker filter</strong> - Filter by your saved market makers. Save makers from any market detail page using the <strong>+</strong> button next to the Maker address. Only saved makers appear in this dropdown.</p>
-          <p class="manual-text"><strong>Token filter</strong> - Filter by token denomination (SOL, SPL tokens, or Token-2022 tokens).</p>
+          <p class="manual-text"><strong>Token filter</strong> - Filter by token denomination. Shows the top 5 tokens by open market count with a search field to find any token by name, symbol, or mint address.</p>
           <p class="manual-text"><strong>My Markets</strong> - Toggle to show only markets where you are the authority or maker.</p>
-          <p class="manual-text"><strong>Street Bets</strong> - Toggle to show only markets with a total runtime of 30 minutes or less. These are tagged with an orange "Street Bet" badge.</p>
-          <p class="manual-text"><strong>Hot Markets chart</strong> - Toggle the bar chart to see the top 10 open markets by USD volume. Click any bar to jump to that market.</p>
-          <p class="manual-text">All filter and sort selections are saved locally and persist across page reloads.</p>
+          <p class="manual-text"><strong>Street Bets</strong> - Toggle to show only markets with a short total runtime. These are tagged with an orange "Street Bet" badge.</p>
         </div>
 
         <div class="manual-section" id="wut-detail">
           <h3 class="manual-heading">Market Detail</h3>
-          <p class="manual-text">Tap any market card to open its detail page. You'll see the full description, outcome distribution charts with USD values, pool breakdown, authority and maker addresses (with SNS names), fee structure, and denomination.</p>
+          <p class="manual-text">Tap any market card to open its detail page. You'll see the full description, outcome distribution charts with USD values, pool breakdown, authority and maker addresses (with SNS names), and fee structure.</p>
           <p class="manual-text"><strong>Save Maker</strong> - Next to the Maker address, tap the <strong>+</strong> button to save that maker to your Saved Market Makers list. The button turns green with a ✓ when saved. Saved makers appear in the Maker filter dropdowns on both Explore and Positions pages. You can manage your saved makers in the <strong>Settings</strong> tab.</p>
-          <p class="manual-text">If you hold a position, estimate badges appear showing your projected payout with USD equivalent (or win/loss once finalized).</p>
+          <p class="manual-text">If you hold a position, badges show your estimated profit per outcome. On finalized markets, Won and Lost badges show actual results and a PnL badge shows your total profit or loss across all positions in that market.</p>
           <p class="manual-text">Use the <strong>Share</strong> button to send the market link to others via your device's native share sheet, or it will copy the link to your clipboard.</p>
           <p class="manual-text">The detail page updates automatically when you connect or disconnect your wallet, showing or hiding authority actions and position-specific UI as appropriate.</p>
         </div>
 
         <div class="manual-section" id="wut-position">
           <h3 class="manual-heading">Choosing a Position</h3>
-          <p class="manual-text">On the market detail page (open markets only), select the outcome you want to take a position on, enter your amount, and review the estimated payout with USD value. The estimate updates live based on current pool sizes and the total fee.</p>
+          <p class="manual-text">On the market detail page (open markets only), select the outcome you want to take a position on, enter your amount, and review the estimated profit with USD value. The estimate updates live based on current pool sizes and the total fee.</p>
           <p class="manual-text">For SOL markets, the minimum position is 0.01 SOL. Token markets have no minimum - any amount works depending on the token.</p>
           <p class="manual-text">Tap <strong>Confirm Position</strong> and approve the transaction in your wallet. Your funds go directly into the on-chain vault - not to any company or individual.</p>
           <p class="manual-text">Markets can be denominated in native SOL, SPL tokens, or Token-2022 tokens. The denomination is shown on the market card and detail page.</p>
@@ -473,31 +473,32 @@
 
         <div class="manual-section" id="wut-positions">
           <h3 class="manual-heading">Positions - Filtering &amp; Sorting</h3>
-          <p class="manual-text">The <strong>Positions</strong> tab shows all your positions across every market. Use the filters to zero in on what you need:</p>
+          <p class="manual-text">The <strong>Positions</strong> tab shows all your positions across every market. Use the <strong>Filters</strong> button to reveal the filter panel:</p>
           <p class="manual-text"><strong>Status</strong> - Show only positions in Open, Closed (pending resolution), Resolved (dispute window active), Ready (awaiting finalization), Finalized, or Voided markets.</p>
           <p class="manual-text"><strong>Category</strong> - Filter by the market's on-chain category.</p>
           <p class="manual-text"><strong>Result</strong> - Filter by Unclaimed (positions with a pending Claim Winnings or Claim Refund button), Claimed, Winning (open markets where your outcome is currently leading), Losing (open markets where your outcome is behind), Won (resolved/finalized markets where you hold the winning outcome), or Lost (resolved/finalized markets where you don't).</p>
           <p class="manual-text"><strong>Sort</strong> - Order by newest/oldest (default), deadline, position size, estimated payout, or group by market status.</p>
           <p class="manual-text"><strong>Maker</strong> - Filter by your saved market makers. Only saved makers appear in this dropdown.</p>
-          <p class="manual-text"><strong>Token</strong> - Filter by token denomination.</p>
+          <p class="manual-text"><strong>Token</strong> - Filter by token denomination with search.</p>
           <p class="manual-text"><strong>My Markets / Street Bets</strong> - Toggle buttons to narrow results further.</p>
-          <p class="manual-text">Each position card shows the outcome, amount, deposit date, deadline, and maker. USD values are shown on estimate badges when price data is available.</p>
-          <p class="manual-text">If a market is finalized and you hold the winning outcome, a <strong>Claim Winnings</strong> button appears with inline transaction status. For voided markets, you'll see <strong>Claim Refund</strong>. The app waits for full transaction confirmation before updating.</p>
+          <p class="manual-text">Each position card shows the outcome, amount, deposit date, deadline, maker, and Street Bet badge where applicable. Profit/loss badges show estimated or actual results, and a PnL badge appears on finalized markets.</p>
+          <p class="manual-text">If a market is finalized and you hold the winning outcome, a <strong>Claim Winnings</strong> button appears. For voided markets, you'll see <strong>Claim Refund</strong>. The app waits for full transaction confirmation before updating.</p>
           <p class="manual-text">All filter and sort selections are saved locally and persist across page reloads.</p>
         </div>
 
         <div class="manual-section" id="wut-making">
           <h3 class="manual-heading">Making a Market</h3>
-          <p class="manual-text">Go to the <strong>Make</strong> tab. Fill in a title, optional category, description, and define 2–10 outcomes. Set a resolution deadline.</p>
-          <p class="manual-text"><strong>Maker Fee</strong> - Optionally set an additional fee (0–500 bps / up to 5%) that you earn on top of the protocol default. This is paid out of winning claims directly to your wallet.</p>
+          <p class="manual-text">Go to the <strong>Make</strong> tab. Fill in a title, optional category, description, and define 2-10 outcomes. Set a resolution deadline.</p>
+          <p class="manual-text"><strong>Maker Fee</strong> - Optionally set an additional fee (0-500 bps / up to 5%) that you earn on top of the protocol default. This is paid out of winning claims directly to your wallet.</p>
           <p class="manual-text"><strong>Denomination</strong> - Choose Native SOL, SPL Token, or Token-2022. For token markets, paste the mint address and a live preview with the token icon, name, and symbol will appear from on-chain metadata.</p>
           <p class="manual-text">The category is stored on-chain inside the description and displayed as a badge on market cards. As the maker, you are the market authority - responsible for resolving with the correct outcome or voiding if needed.</p>
+          <p class="manual-text">If the protocol admin has paused the system, the Make form will be disabled with a notice. Claims and refunds remain available during a pause.</p>
         </div>
 
         <div class="manual-section" id="wut-watchlist">
           <h3 class="manual-heading">Watchlist</h3>
           <p class="manual-text">Tap the ☆ star on any market card to add it to your watchlist. A picker appears with your existing categories and a field to create a new one inline - just type a name and tap <strong>+</strong>.</p>
-          <p class="manual-text">In the <strong>Watchlist</strong> tab, filter by category tabs, reassign categories on individual cards, and manage your categories with the ⚙ button. Categories are sorted alphabetically.</p>
+          <p class="manual-text">In the <strong>Watchlist</strong> tab, use the <strong>Categories</strong> button to reveal category tabs for filtering. Reassign categories on individual cards, and manage your categories with the ⚙ button. Categories are sorted alphabetically.</p>
           <p class="manual-text"><strong>Trash</strong> - A built-in protected category that always appears last. Move unwanted markets to Trash instead of removing them. Use the <strong>Clear Trash</strong> button to permanently remove all trashed markets.</p>
           <p class="manual-text"><strong>Export / Import</strong> - In the category manager (⚙), use Export to save your entire watchlist as a <code>.json</code> file, and Import to merge a saved watchlist back in. Importing adds new markets and categories without duplicating existing ones.</p>
           <p class="manual-text">Your watchlist is stored locally in your browser.</p>
@@ -539,9 +540,9 @@
         <div class="manual-section" id="wut-tips">
           <h3 class="manual-heading">Tips</h3>
           <p class="manual-text">• Outcome bars show implied probabilities based on pool sizes - they update live as positions come in.</p>
-          <p class="manual-text">• Payout estimates with USD values appear on market cards, position cards, and the bet input when you have an active position.</p>
+          <p class="manual-text">• Profit estimates with USD values appear on market cards, position cards, and the bet input when you have an active position.</p>
           <p class="manual-text">• Data refreshes automatically every 20 seconds on the Explore page.</p>
-          <p class="manual-text">• Priority fee level and compute tolerance are configurable via environment variables (PRIORITY and TOLERANCE) at build time.</p>
+          <p class="manual-text">• Priority fee level, compute tolerance, and Street Bet threshold are configurable via environment variables at build time.</p>
           <p class="manual-text">• This app has zero backend infrastructure. If the website goes down, your funds are always safe on-chain and recoverable with any Solana program explorer.</p>
         </div>
 
@@ -551,18 +552,19 @@
           <p class="manual-text">The protocol supports native SOL, SPL Token, and Token-2022 denominations (including mints with transfer fee extensions), on-chain M-of-N multisig governance for market authorities, and a permissionless finalization model where anyone can crank finalization once the dispute window passes.</p>
           <p class="manual-text">The open-source JavaScript SDK that powers this app is available as an npm package for developers who want to build their own interfaces or integrations on the same protocol.</p>
           <p class="manual-text">
-            <a href="https://www.npmjs.com/package/precog-markets" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">precog-markets on npm</a>
-            &nbsp;·&nbsp;
-            <a href="https://github.com/SolDapper/precog-markets" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">Source on GitHub</a>
+            <strong>App Source:</strong> <a href="https://github.com/SolDapper/precog-app" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">GitHub</a>
+          </p>
+          <p class="manual-text">
+            <strong>SDK Source:</strong> <a href="https://www.npmjs.com/package/precog-markets" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">NPM</a> &nbsp; <a href="https://github.com/SolDapper/precog-markets" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">GitHub</a>
+          </p>
+          <p class="manual-text">
+            <strong>Program Source:</strong> Coming Soon
           </p>
         </div>
 
         <div class="manual-section" id="wut-contact">
           <h3 class="manual-heading">Contact</h3>
-          <p class="manual-text">Follow us on <a href="https://x.com/SolDapper" target="_blank" rel="noopener noreferrer" style="color:var(--gold);font-weight:700">𝕏</a>.</p>
-          <p class="manual-text">
-            <a href="https://x.com/SolDapper" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">𝕏 @SolDapper</a>
-          </p>
+          <p class="manual-text">Follow us on <a href="https://x.com/SolDapper" target="_blank" rel="noopener noreferrer" style="color:var(--gold);font-weight:700">𝕏 @SolDapper</a></p>
         </div>
       </div>
     </main>
@@ -638,6 +640,10 @@
           <div class="admin-stat">
             <span class="admin-stat-label">Treasury</span>
             <span id="admin-treasury" class="admin-stat-value" style="font-size:0.72rem">—</span>
+          </div>
+          <div class="admin-stat">
+            <span class="admin-stat-label">Program</span>
+            <span id="admin-program" class="admin-stat-value" style="font-size:0.72rem">—</span>
           </div>
         </div>
       </div>

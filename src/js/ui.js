@@ -622,11 +622,12 @@ export function renderMarketDetail(pubkey, market, connectedWallet = null, userP
         <span class="meta-label">Fee</span>
         <span class="meta-value">${market.feeBps / 100}%${market.creatorFeeBps > 0 ? ` <span style="font-size:0.68rem;color:var(--text-muted)">(${(market.feeBps - market.creatorFeeBps) / 100}% protocol + ${market.creatorFeeBps / 100}% maker)</span>` : ''}</span>
       </div>
-      <div class="meta-item">
+      <div class="meta-break"></div>
+      <div class="meta-item meta-item-address">
         <span class="meta-label">Authority</span>
         <span class="meta-value sns-resolve" data-address="${market.authority.toBase58()}" style="font-size:0.72rem">${shortAddress(market.authority.toBase58())}</span>
       </div>
-      <div class="meta-item">
+      <div class="meta-item meta-item-address">
         <span class="meta-label">Maker</span>
         <span class="meta-value" style="display:flex;align-items:center;gap:6px">
           <span class="sns-resolve" data-address="${market.creator.toBase58()}" style="font-size:0.72rem">${shortAddress(market.creator.toBase58())}</span>

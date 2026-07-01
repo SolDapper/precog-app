@@ -1432,8 +1432,13 @@ async function handleResolve() {
     ui.showTxOverlay('Resolving…');
     const ix = sdk.buildResolveMarket({ market: currentMarketPubkey, authority: w.publicKey }, { winningOutcome: outcome });
     ui.updateTxOverlay('Please approve…');
-    await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
-    ui.hideTxOverlay(); ui.showCardStatus('authority-status', 'Market resolved!', 'success');
+    const sig = await sdk.signAndSend(ix, w.publicKey, p, { skipEstimation: true, skipSimulation: true });
+    ui.updateTxOverlay('Confirming transaction…');
+    const conn = sdk.getConnection();
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('finalized');
+    await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'finalized');
+    ui.hideTxOverlay();
+    ui.showCardStatus('authority-status', 'Market resolved!', 'success');
     openMarketDetail(currentMarketPubkey);
   } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('authority-status', err.message || 'Resolve failed', 'error'); }
 }
@@ -2154,12 +2159,32 @@ async function claimRefund(posAddr, mktAddr) {
 // ═══════════════════════════════════════════════════════════════════
 // Create Market View
 // ═══════════════════════════════════════════════════════════════════
-function updateCreateForm() {
+async function updateCreateForm() {
   const btn = document.getElementById('create-market-btn');
   const w = wallet.getWallet();
-  btn.textContent = w ? 'Create Market' : 'Connect Wallet to Create';
-  btn.disabled = !w;
-  updateGateWarning('create-gate-warning', w);
+  const pauseNotice = document.getElementById('create-pause-notice');
+  const form = document.querySelector('.create-form');
+
+  // Check protocol pause status
+  let paused = false;
+  try {
+    const config = await sdk.fetchProtocolConfig();
+    if (config?.paused) paused = true;
+  } catch {}
+
+  if (paused) {
+    pauseNotice?.classList.remove('hidden');
+    btn.textContent = 'Protocol Paused';
+    btn.disabled = true;
+    form?.querySelectorAll('input, select, textarea, button:not(#create-market-btn)').forEach(el => el.disabled = true);
+  } else {
+    pauseNotice?.classList.add('hidden');
+    btn.textContent = w ? 'Create Market' : 'Connect Wallet to Create';
+    btn.disabled = !w;
+    form?.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+    if (!w) btn.disabled = true;
+    updateGateWarning('create-gate-warning', w);
+  }
 }
 
 function showCreateError(msg) {
@@ -2349,6 +2374,11 @@ document.getElementById('create-market-btn')?.addEventListener('click', handleCr
 async function handleCreateMarket() {
   const w = wallet.getWallet(); const p = wallet.getProvider();
   if (!w || !p) return;
+  // Check protocol pause
+  try {
+    const config = await sdk.fetchProtocolConfig();
+    if (config?.paused) { showCreateError('Market creation is temporarily disabled by the protocol admin.'); return; }
+  } catch {}
   if (gateEnabled && !(await checkGate(w.publicKey))) {
     let msg = 'Token-gated: you must hold one of the required tokens.';
     try {
@@ -2491,6 +2521,7 @@ async function loadAdmin() {
     document.getElementById('admin-default-fee').textContent = `${config.defaultFeeBps / 100}%`;
     document.getElementById('admin-paused').textContent = config.paused ? 'Yes' : 'No';
     document.getElementById('admin-treasury').textContent = config.treasury.toBase58();
+    document.getElementById('admin-program').textContent = PROGRAM_ID.toBase58();
 
     // Show update panel only if connected wallet is the admin
     const isAdmin = w && config.admin.toBase58() === w.publicKey.toBase58();
