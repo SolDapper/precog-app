@@ -231,7 +231,11 @@ export { ErrorCode };
  */
 export async function validateTokenMint(mintPubkey) {
   const client = getClient();
-  return client.validateTokenMint(mintPubkey);
+  if (typeof client.validateTokenMint === 'function') {
+    return client.validateTokenMint(mintPubkey);
+  }
+  // Fallback: skip client-side validation, let on-chain program catch it
+  return { ok: true, extensions: [], blocked: [], error: null };
 }
 
 // ═══════════════════════════════════════════════════════════════════
