@@ -12,7 +12,7 @@ export const PROGRAM_ID = new PublicKey(
 
 export const APP_IDENTITY = {
   name: 'Precog Markets',
-  uri: 'https://x.com/SolDapper',
+  uri: 'https://www.precogmarket.com',
   icon: '/.well-known/icon.png',
 };
 
