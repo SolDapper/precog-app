@@ -48,9 +48,6 @@ import {
   TOKEN_2022_PROGRAM_ID,
   ErrorCode,
 
-  // Token-2022 validation
-  validateMintForMarket,
-
   // Client
   PrecogMarketsClient,
 } from 'precog-markets';
@@ -227,16 +224,14 @@ export { ErrorCode };
 
 /**
  * Validate a Token-2022 mint for market compatibility.
- * Fetches the mint account and checks its extensions against the
- * program's allow/block policy.
+ * Uses the SDK client to fetch the mint and check its extensions
+ * against the program's allow/block policy.
  * @param {PublicKey} mintPubkey
  * @returns {Promise<{ ok: boolean, extensions: Array, blocked: Array, error: string|null }>}
  */
 export async function validateTokenMint(mintPubkey) {
-  const conn = getConnection();
-  const info = await conn.getAccountInfo(mintPubkey);
-  if (!info) throw new Error(`Mint account not found: ${mintPubkey.toBase58()}`);
-  return validateMintForMarket(info.data);
+  const client = getClient();
+  return client.validateTokenMint(mintPubkey);
 }
 
 // ═══════════════════════════════════════════════════════════════════
