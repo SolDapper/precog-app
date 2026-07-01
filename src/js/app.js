@@ -161,73 +161,55 @@ let selectedOutcome = null;
 const PAGE_SIZE = 20;
 
 // ═══════════════════════════════════════════════════════════════════
-// Program Error Code Mapping
+// Program Error Code Mapping (driven by SDK - never hardcode numbers)
 // ═══════════════════════════════════════════════════════════════════
-const PROGRAM_ERRORS = {
-  0: 'Invalid instruction data',
-  1: 'Market title is too long',
-  2: 'Market description is too long',
-  3: 'Invalid outcome count (must be 2-10)',
-  4: 'Outcome label is too long',
-  5: 'Deadline must be in the future',
-  6: 'Market is not open',
-  7: 'Market is not resolved',
-  8: 'Market is already resolved',
-  9: 'Winning pool is empty',
-  10: 'Insufficient distinct positions',
-  11: 'Deadline has not been reached',
-  12: 'Deadline has already passed',
-  13: 'Market is in dispute',
-  14: 'Position amount must be greater than zero',
-  15: 'Position amount is below minimum',
-  16: 'Invalid outcome index',
-  17: 'No winning position found',
-  18: 'Winnings already claimed',
-  19: 'Refund not available',
-  20: 'Unauthorized - not the market authority',
-  21: 'Unauthorized - not the protocol admin',
-  22: 'Unauthorized - not the position owner',
-  23: 'Missing required signature',
-  24: 'Invalid PDA derivation',
-  25: 'Account already initialized',
-  26: 'Account not initialized',
-  27: 'Invalid vault account',
-  28: 'Invalid system program',
-  29: 'Arithmetic overflow',
-  30: 'Division by zero',
-  31: 'Fee exceeds maximum allowed',
-  32: 'Dispute period has expired',
-  33: 'Dispute period has not expired',
-  34: 'Invalid token program',
-  35: 'Token mint mismatch',
-  36: 'Invalid token vault owner',
-  37: 'Invalid token account',
-  38: 'Token transfer failed',
-  39: 'Denomination mismatch',
-  40: 'Invalid mint account',
-  41: 'Token decimals mismatch',
-  42: 'Transfer fee exceeds limit',
-  43: 'Insufficient amount after transfer fee',
-  44: 'Transfer hook not allowed',
-  45: 'Unsupported Token-2022 extension found. This token cannot be used for markets.',
-  46: 'Harvest not authorized',
-  47: 'Protocol is paused',
-  48: 'Multisig threshold not met',
-  49: 'Invalid multisig signer',
-  50: 'Proposal already executed',
-  51: 'Proposal expired',
+
+// Friendly overrides for error names where the PascalCase isn't clear enough
+const ERROR_FRIENDLY = {
+  InvalidInstructionData: 'Invalid instruction data',
+  MarketTitleTooLong: 'Market title is too long',
+  MarketDescriptionTooLong: 'Market description is too long',
+  InvalidOutcomeCount: 'Invalid outcome count (must be 2-10)',
+  OutcomeLabelTooLong: 'Outcome label is too long',
+  DeadlineInPast: 'Deadline must be in the future',
+  MarketNotOpen: 'Market is not open',
+  MarketAlreadyResolved: 'Market is already resolved',
+  ZeroBetAmount: 'Position amount must be greater than zero',
+  BetBelowMinimum: 'Position amount is below minimum',
+  AlreadyClaimedWinnings: 'Winnings already claimed',
+  RefundNotAvailable: 'Refund not available',
+  UnauthorizedAuthority: 'Unauthorized - not the market authority',
+  UnauthorizedAdmin: 'Unauthorized - not the protocol admin',
+  UnauthorizedPositionOwner: 'Unauthorized - not the position owner',
+  InvalidPDA: 'Invalid PDA derivation',
+  FeeTooHigh: 'Fee exceeds maximum allowed',
+  TransferHookNotAllowed: 'Tokens with transfer hooks cannot be used for markets',
+  NonTransferableNotAllowed: 'Non-transferable tokens cannot be used for markets',
+  PermanentDelegateNotAllowed: 'Tokens with permanent delegates cannot be used for markets',
+  ConfidentialTransferNotAllowed: 'Tokens with confidential transfers cannot be used for markets',
+  UnsupportedTokenExtension: 'This token has an unsupported Token-2022 extension and cannot be used for markets',
+  NewDeadlineInPast: 'New deadline must be in the future',
+  FeeBelowProtocolMinimum: 'Fee is below the protocol minimum',
+  OutcomeUnchanged: 'Resolution outcome must differ from current',
 };
+
+// Convert PascalCase to readable: "MarketNotOpen" → "Market not open"
+function pascalToReadable(name) {
+  return name.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2');
+}
+
+// Import ErrorCode from SDK (code → name map)
+const _sdkErrorCode = sdk.ErrorCode;
 
 function parseProgramError(err) {
   const msg = err?.message || String(err);
-  const match = msg.match(/custom program error:\s*0x([0-9a-fA-F]+)/i)
-    || msg.match(/"Custom":\s*(\d+)/);
-  if (match) {
-    const code = match[1].startsWith('0') && match[1].length > 1 && !match[1].includes('x')
-      ? parseInt(match[1])
-      : parseInt(match[1], match[0].includes('0x') ? 16 : 10);
-    const friendly = PROGRAM_ERRORS[code];
-    if (friendly) return friendly;
+  // Match "custom program error: 0x2d" or "Custom": 45
+  const hexMatch = msg.match(/custom program error:\s*0x([0-9a-fA-F]+)/i);
+  const jsonMatch = msg.match(/"Custom":\s*(\d+)/);
+  if (hexMatch || jsonMatch) {
+    const code = hexMatch ? parseInt(hexMatch[1], 16) : parseInt(jsonMatch[1], 10);
+    const name = _sdkErrorCode[code];
+    if (name) return ERROR_FRIENDLY[name] || pascalToReadable(name);
     return `Program error ${code}`;
   }
   return msg;
@@ -2304,6 +2286,7 @@ function removeOutcomeRow(row) {
 
 document.getElementById('create-denomination')?.addEventListener('change', (e) => {
   document.getElementById('token-fields')?.classList.toggle('hidden', e.target.value === '0');
+  document.getElementById('mint-validation-warning')?.classList.add('hidden');
   if (e.target.value === '0') {
     showSolPreview();
   } else {
@@ -2380,9 +2363,11 @@ function previewTokenMint(mint) {
   const fullname = document.getElementById('token-preview-fullname');
   const link = document.getElementById('token-preview-link');
   const loader = document.getElementById('token-preview-loader');
+  const warning = document.getElementById('mint-validation-warning');
 
   // Show loader
   loader.classList.remove('hidden');
+  warning?.classList.add('hidden');
   symbol.textContent = 'Loading…';
   fullname.textContent = '';
   icon.style.display = 'none';
@@ -2417,6 +2402,28 @@ function previewTokenMint(mint) {
     fullname.textContent = '';
     showIconFallback(mint[0].toUpperCase());
   });
+
+  // Validate Token-2022 extensions if denomination is Token-2022
+  const denomSelect = document.getElementById('create-denomination');
+  const denomination = denomSelect ? parseInt(denomSelect.value) : 0;
+  if (denomination === 2) {
+    try {
+      const mintPubkey = new PublicKey(mint);
+      sdk.validateTokenMint(mintPubkey).then(result => {
+        if (!result.ok) {
+          const blockedNames = result.blocked.map(b => b.name || b.error).join(', ');
+          warning.textContent = `Blocked extension${result.blocked.length > 1 ? 's' : ''}: ${blockedNames}. This token cannot be used for markets.`;
+          warning.classList.remove('hidden');
+        } else {
+          warning.classList.add('hidden');
+        }
+      }).catch(() => {
+        // Mint fetch failed - will fail at create time anyway
+      });
+    } catch {
+      // Invalid pubkey - ignore
+    }
+  }
 }
 
 document.getElementById('create-token-mint')?.addEventListener('input', (e) => {
@@ -2519,6 +2526,20 @@ async function handleCreateMarket() {
       if (!mintAddr || mintAddr.length < 32) return showCreateError('Token mint address is required');
       const tokenMint = new PublicKey(mintAddr);
       const tokenProgramId = denomination === 1 ? sdk.TOKEN_PROGRAM_ID : sdk.TOKEN_2022_PROGRAM_ID;
+
+      // Validate Token-2022 mint extensions before building tx
+      if (denomination === 2) {
+        try {
+          const validation = await sdk.validateTokenMint(tokenMint);
+          if (!validation.ok) {
+            const blockedNames = validation.blocked.map(b => b.name || b.error).join(', ');
+            return showCreateError(`Blocked extension${validation.blocked.length > 1 ? 's' : ''}: ${blockedNames}. This token cannot be used for markets.`);
+          }
+        } catch (e) {
+          return showCreateError(`Failed to validate token mint: ${e.message}`);
+        }
+      }
+
       const [vaultAuthority] = await sdk.findVaultAuthority(market);
 
       accounts.tokenMint = tokenMint;

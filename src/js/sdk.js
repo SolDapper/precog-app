@@ -46,6 +46,10 @@ import {
   ACCOUNT_DISCRIMINATORS,
   TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
+  ErrorCode,
+
+  // Token-2022 validation
+  validateMintForMarket,
 
   // Client
   PrecogMarketsClient,
@@ -210,6 +214,29 @@ export function buildUpdateProtocolConfig(accounts, args) {
     ],
     data: Buffer.from(parts),
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Error codes (re-exported from SDK so app never hardcodes numbers)
+// ═══════════════════════════════════════════════════════════════════
+export { ErrorCode };
+
+// ═══════════════════════════════════════════════════════════════════
+// Token-2022 mint validation
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Validate a Token-2022 mint for market compatibility.
+ * Fetches the mint account and checks its extensions against the
+ * program's allow/block policy.
+ * @param {PublicKey} mintPubkey
+ * @returns {Promise<{ ok: boolean, extensions: Array, blocked: Array, error: string|null }>}
+ */
+export async function validateTokenMint(mintPubkey) {
+  const conn = getConnection();
+  const info = await conn.getAccountInfo(mintPubkey);
+  if (!info) throw new Error(`Mint account not found: ${mintPubkey.toBase58()}`);
+  return validateMintForMarket(info.data);
 }
 
 // ═══════════════════════════════════════════════════════════════════
