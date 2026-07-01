@@ -12,7 +12,7 @@
     "@bonfida/spl-name-service": "^3.0.19",
     "@parcel/packager-raw-url": "^2.16.4",
     "@parcel/transformer-webmanifest": "^2.16.4",
-    "@solana-mobile/mobile-wallet-adapter-protocol-web3js": "^2.2.5",
+    "@solana-mobile/mobile-wallet-adapter-protocol-web3js": "2.2.5",
     "@solana/web3.js": "^1.95.0",
     "bs58": "^5.0.0",
     "buffer": "^6.0.3",
@@ -37,5 +37,8 @@
     "node-telegram-bot-api": "^0.67.0",
     "punycode": "^2.3.1",
     "url": "^0.11.4"
+  },
+  "overrides": {
+    "@solana-mobile/mobile-wallet-adapter-protocol": "2.2.5"
   }
 }
