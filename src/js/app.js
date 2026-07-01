@@ -159,6 +159,79 @@ let selectedOutcome = null;
 
 // Pagination
 const PAGE_SIZE = 20;
+
+// ═══════════════════════════════════════════════════════════════════
+// Program Error Code Mapping
+// ═══════════════════════════════════════════════════════════════════
+const PROGRAM_ERRORS = {
+  0: 'Invalid instruction data',
+  1: 'Market title is too long',
+  2: 'Market description is too long',
+  3: 'Invalid outcome count (must be 2-10)',
+  4: 'Outcome label is too long',
+  5: 'Deadline must be in the future',
+  6: 'Market is not open',
+  7: 'Market is not resolved',
+  8: 'Market is already resolved',
+  9: 'Winning pool is empty',
+  10: 'Insufficient distinct positions',
+  11: 'Deadline has not been reached',
+  12: 'Deadline has already passed',
+  13: 'Market is in dispute',
+  14: 'Position amount must be greater than zero',
+  15: 'Position amount is below minimum',
+  16: 'Invalid outcome index',
+  17: 'No winning position found',
+  18: 'Winnings already claimed',
+  19: 'Refund not available',
+  20: 'Unauthorized - not the market authority',
+  21: 'Unauthorized - not the protocol admin',
+  22: 'Unauthorized - not the position owner',
+  23: 'Missing required signature',
+  24: 'Invalid PDA derivation',
+  25: 'Account already initialized',
+  26: 'Account not initialized',
+  27: 'Invalid vault account',
+  28: 'Invalid system program',
+  29: 'Arithmetic overflow',
+  30: 'Division by zero',
+  31: 'Fee exceeds maximum allowed',
+  32: 'Dispute period has expired',
+  33: 'Dispute period has not expired',
+  34: 'Invalid token program',
+  35: 'Token mint mismatch',
+  36: 'Invalid token vault owner',
+  37: 'Invalid token account',
+  38: 'Token transfer failed',
+  39: 'Denomination mismatch',
+  40: 'Invalid mint account',
+  41: 'Token decimals mismatch',
+  42: 'Transfer fee exceeds limit',
+  43: 'Insufficient amount after transfer fee',
+  44: 'Transfer hook not allowed',
+  45: 'Unsupported Token-2022 extension found. This token cannot be used for markets.',
+  46: 'Harvest not authorized',
+  47: 'Protocol is paused',
+  48: 'Multisig threshold not met',
+  49: 'Invalid multisig signer',
+  50: 'Proposal already executed',
+  51: 'Proposal expired',
+};
+
+function parseProgramError(err) {
+  const msg = err?.message || String(err);
+  const match = msg.match(/custom program error:\s*0x([0-9a-fA-F]+)/i)
+    || msg.match(/"Custom":\s*(\d+)/);
+  if (match) {
+    const code = match[1].startsWith('0') && match[1].length > 1 && !match[1].includes('x')
+      ? parseInt(match[1])
+      : parseInt(match[1], match[0].includes('0x') ? 16 : 10);
+    const friendly = PROGRAM_ERRORS[code];
+    if (friendly) return friendly;
+    return `Program error ${code}`;
+  }
+  return msg;
+}
 let currentPage = 0;
 let filteredMarkets = [];   // current filtered+sorted list
 let _loadMoreObserver = null;
@@ -1419,7 +1492,7 @@ async function handlePlaceBet() {
     ).then(() => refreshUserPositions()).catch(() => {});
   } catch (err) {
     ui.hideTxOverlay();
-    ui.showBetStatus(err.message || 'Position failed', 'error');
+    ui.showBetStatus(parseProgramError(err), 'error');
   }
 }
 
@@ -1440,7 +1513,7 @@ async function handleResolve() {
     ui.hideTxOverlay();
     ui.showCardStatus('authority-status', 'Market resolved!', 'success');
     openMarketDetail(currentMarketPubkey);
-  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('authority-status', err.message || 'Resolve failed', 'error'); }
+  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('authority-status', parseProgramError(err), 'error'); }
 }
 
 async function handleVoid() {
@@ -1460,7 +1533,7 @@ async function handleVoid() {
     ui.hideTxOverlay();
     ui.showCardStatus(statusId, 'Market voided!', 'success');
     openMarketDetail(currentMarketPubkey);
-  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus(statusId, err.message || 'Void failed', 'error'); }
+  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus(statusId, parseProgramError(err), 'error'); }
 }
 
 async function handleDisputeResolve() {
@@ -1481,7 +1554,7 @@ async function handleDisputeResolve() {
     ui.hideTxOverlay();
     ui.showCardStatus('dispute-status', 'Resolution updated! Dispute window restarted.', 'success');
     openMarketDetail(currentMarketPubkey);
-  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('dispute-status', err.message || 'Dispute resolve failed', 'error'); }
+  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('dispute-status', parseProgramError(err), 'error'); }
 }
 
 async function handleFinalize() {
@@ -1499,7 +1572,7 @@ async function handleFinalize() {
     ui.hideTxOverlay();
     ui.showCardStatus('finalize-status', 'Market finalized!', 'success');
     openMarketDetail(currentMarketPubkey);
-  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('finalize-status', err.message || 'Finalize failed', 'error'); }
+  } catch (err) { ui.hideTxOverlay(); ui.showCardStatus('finalize-status', parseProgramError(err), 'error'); }
 }
 
 document.getElementById('back-to-explore')?.addEventListener('click', () => {
@@ -2109,7 +2182,7 @@ async function claimWinnings(posAddr, mktAddr) {
     loadPositions();
   } catch (err) {
     ui.hideTxOverlay();
-    if (statusEl) { statusEl.textContent = err.message || 'Claim failed'; statusEl.className = 'claim-status bet-status error'; statusEl.classList.remove('hidden'); }
+    if (statusEl) { statusEl.textContent = parseProgramError(err); statusEl.className = 'claim-status bet-status error'; statusEl.classList.remove('hidden'); }
   }
 }
 
@@ -2152,7 +2225,7 @@ async function claimRefund(posAddr, mktAddr) {
     loadPositions();
   } catch (err) {
     ui.hideTxOverlay();
-    if (statusEl) { statusEl.textContent = err.message || 'Refund failed'; statusEl.className = 'claim-status bet-status error'; statusEl.classList.remove('hidden'); }
+    if (statusEl) { statusEl.textContent = parseProgramError(err); statusEl.className = 'claim-status bet-status error'; statusEl.classList.remove('hidden'); }
   }
 }
 
@@ -2480,7 +2553,7 @@ async function handleCreateMarket() {
     openMarketDetail(market);
   } catch (err) {
     ui.hideTxOverlay();
-    showCreateError(err.message || 'Failed to create market');
+    showCreateError(parseProgramError(err));
   }
 }
 
@@ -2587,7 +2660,7 @@ document.getElementById('admin-toggle-pause-btn')?.addEventListener('click', asy
     loadAdmin();
   } catch (err) {
     ui.hideTxOverlay();
-    ui.showCardStatus('admin-status', err.message || 'Failed to update', 'error');
+    ui.showCardStatus('admin-status', parseProgramError(err), 'error');
   }
 });
 
@@ -2619,7 +2692,7 @@ document.getElementById('admin-update-fee-btn')?.addEventListener('click', async
     loadAdmin();
   } catch (err) {
     ui.hideTxOverlay();
-    ui.showCardStatus('admin-status', err.message || 'Failed to update fee', 'error');
+    ui.showCardStatus('admin-status', parseProgramError(err), 'error');
   }
 });
 
@@ -2657,7 +2730,7 @@ document.getElementById('admin-update-treasury-btn')?.addEventListener('click', 
     loadAdmin();
   } catch (err) {
     ui.hideTxOverlay();
-    ui.showCardStatus('admin-status', err.message || 'Failed to update treasury', 'error');
+    ui.showCardStatus('admin-status', parseProgramError(err), 'error');
   }
 });
 
@@ -2704,7 +2777,7 @@ async function handleInitProtocol() {
     loadAdmin();
   } catch (err) {
     ui.hideTxOverlay();
-    statusEl.textContent = err.message || 'Initialization failed';
+    statusEl.textContent = parseProgramError(err);
     statusEl.className = 'form-status error';
     statusEl.classList.remove('hidden');
   }
@@ -3238,7 +3311,7 @@ document.getElementById('makers-import-input')?.addEventListener('change', (e) =
       _lastCreatorSet = '';
       _lastPosMakerSet = '';
     } catch (err) {
-      statusEl.textContent = err.message || 'Import failed';
+      statusEl.textContent = parseProgramError(err);
       statusEl.style.color = 'var(--red)';
     }
   };
