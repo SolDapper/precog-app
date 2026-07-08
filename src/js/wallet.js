@@ -314,20 +314,37 @@ export async function trySilentConnect() {
  * Pre-trigger Chrome's Local Network Access (LNA) permission dialog
  * before opening the wallet intent. Chrome 125+ gates localhost WebSocket
  * connections behind this permission. By triggering it here, the dialog
- * appears while the user is still in the browser, avoiding the awkward
- * flow of switching to the wallet, back to Chrome, approving, then back
- * to the wallet again. Only needed on Android Chrome.
+ * appears while the user is still in the browser.
+ *
+ * Uses a real WebSocket attempt (matching what MWA does internally) so
+ * Chrome's LNA gate fires on the WebSocket handshake. The Promise won't
+ * resolve until the user interacts with the dialog, preventing the
+ * wallet intent from firing prematurely.
+ *
+ * Only needed on Android Chrome. Returns true if localhost is accessible.
  */
 async function ensureLocalNetworkAccess() {
-  if (!/Android/i.test(navigator.userAgent)) return;
-  try {
-    // Attempt a no-cors fetch to localhost to trigger the LNA prompt.
-    // This will always fail (no server), but Chrome shows the permission
-    // dialog before the request errors out. Once granted, it persists.
-    await fetch('http://localhost/', { mode: 'no-cors', signal: AbortSignal.timeout(3000) });
-  } catch {
-    // Expected - no server on localhost. Permission was either granted or denied.
-  }
+  if (!/Android/i.test(navigator.userAgent)) return true;
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = (ok) => { if (!settled) { settled = true; resolve(ok); } };
+
+    try {
+      const ws = new WebSocket('ws://localhost:1');
+      // Connection to port 1 will always fail (nothing listening),
+      // but Chrome shows the LNA dialog during the handshake attempt
+      // and holds the connection pending until the user responds.
+      ws.onopen = () => { ws.close(); done(true); };
+      ws.onerror = () => { done(true); }; // LNA was granted, connection just failed (expected)
+      ws.onclose = () => { done(true); };
+      // Safety timeout - if nothing happens in 10s, proceed anyway
+      setTimeout(() => done(false), 10000);
+    } catch {
+      // WebSocket constructor threw - proceed anyway
+      done(false);
+    }
+  });
 }
 
 export async function connectMobile() {
