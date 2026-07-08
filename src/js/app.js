@@ -13,6 +13,7 @@ import * as ui from './ui.js';
 import * as watchlist from './watchlist.js';
 import { gateEnabled, checkGate, getGateTokenInfo, clearGateCache } from './gate.js';
 import * as makers from './makers.js';
+import * as notifications from './notifications.js';
 
 const GATE_SWAP_URL = TOKEN_GATE
   ? `https://jup.ag/swap?sell=So11111111111111111111111111111111111111112&buy=${TOKEN_GATE.split(',')[0].trim()}`
@@ -3267,6 +3268,26 @@ function attachConnectListeners() {
 // Settings Page
 // ═══════════════════════════════════════════════════════════════════
 function renderSettingsPage() {
+  // Update notification toggle state
+  const toggleBtn = document.getElementById('notification-toggle');
+  const statusEl = document.getElementById('notification-status');
+  if (toggleBtn) {
+    toggleBtn.classList.toggle('active', notifications.isEnabled());
+    if (statusEl) {
+      if (typeof Notification === 'undefined') {
+        statusEl.textContent = 'Notifications are not supported in this browser.';
+      } else if (Notification.permission === 'denied') {
+        statusEl.textContent = 'Notifications are blocked. Enable them in your browser settings.';
+      } else if (notifications.isEnabled()) {
+        statusEl.textContent = 'Listening for events on your watchlisted markets.';
+        statusEl.style.color = 'var(--green)';
+      } else {
+        statusEl.textContent = '';
+        statusEl.style.color = '';
+      }
+    }
+  }
+
   const listEl = document.getElementById('makers-list');
   if (!listEl) return;
 
@@ -3309,6 +3330,16 @@ function renderSettingsPage() {
 }
 
 // Settings export/import
+// Notification toggle
+document.getElementById('notification-toggle')?.addEventListener('click', async () => {
+  if (notifications.isEnabled()) {
+    notifications.disable();
+  } else {
+    await notifications.enable();
+  }
+  renderSettingsPage();
+});
+
 document.getElementById('makers-export-btn')?.addEventListener('click', () => {
   const data = makers.exportData();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -3419,6 +3450,9 @@ async function init() {
   loadFilters();
   applyFiltersToDOM();
   setupWallet();
+
+  // Initialize notifications
+  notifications.init(sdk.getConnection());
 
   // Initial wallet render
   const isMob = wallet.isMobile() && !wallet.isWalletBrowser();

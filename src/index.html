@@ -593,6 +593,22 @@
       <h2 class="section-title">Settings</h2>
 
       <div class="card" style="margin-bottom:14px">
+        <div class="bet-section-title">Notifications</div>
+        <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:12px">
+          Receive browser notifications when events happen on your watchlisted markets (new positions, resolution, finalization). Requires the app tab to be open.
+        </p>
+        <div class="notification-toggle-row">
+          <span class="notification-toggle-label">Watchlist Notifications</span>
+          <button id="notification-toggle" class="notification-toggle-btn">
+            <span class="notification-toggle-track">
+              <span class="notification-toggle-thumb"></span>
+            </span>
+          </button>
+        </div>
+        <div id="notification-status" class="notification-status" style="margin-top:8px;font-size:0.72rem;color:var(--text-muted)"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
         <div class="bet-section-title">Saved Market Makers</div>
         <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:10px">
           Save makers from market detail pages. Saved makers are pinned to the top of the Maker filter on Explore and Positions.

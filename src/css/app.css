@@ -546,6 +546,54 @@ body::before {
 }
 
 /* Makers list (Settings page) */
+/* ── Notification Toggle ─────────────────────────────────────────── */
+.notification-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.notification-toggle-label {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.notification-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.notification-toggle-track {
+  display: block;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  position: relative;
+  transition: background 0.2s ease;
+}
+.notification-toggle-btn.active .notification-toggle-track {
+  background: var(--gold);
+}
+.notification-toggle-thumb {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.2s ease;
+}
+.notification-toggle-btn.active .notification-toggle-thumb {
+  transform: translateX(20px);
+}
+.notification-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
 .makers-list { display: flex; flex-direction: column; gap: 6px; }
 .maker-item {
   display: flex;
