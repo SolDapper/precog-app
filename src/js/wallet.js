@@ -310,41 +310,66 @@ export async function trySilentConnect() {
 
 // ── Mobile connect (MWA) ─────────────────────────────────────────
 
+const LNA_KEY = 'precog_lna_granted';
+
 /**
  * Ensure Chrome's Local Network Access (LNA) permission is granted
  * before attempting MWA. Chrome 125+ gates localhost connections behind
  * a permission dialog. If we fire the solana-wallet:// intent before
  * LNA is granted, the dialog appears behind the wallet app.
  *
- * Strategy: probe localhost with fetch. A TypeError ("Failed to fetch")
- * means the request reached the network layer (LNA granted, no server).
- * Any other rejection means LNA is blocking. We trigger the dialog
- * with the first probe, then poll until the user grants it.
- * Only Android Chrome is affected.
+ * On first Android connect: triggers the LNA dialog via a dummy fetch,
+ * then shows an overlay prompting the user to allow and tap Continue.
+ * The wallet intent won't fire until the user confirms.
+ * Subsequent connects skip this entirely (localStorage flag).
  */
 async function ensureLocalNetworkAccess() {
-  if (!/Android/i.test(navigator.userAgent)) return true;
+  if (!/Android/i.test(navigator.userAgent)) return;
+  try { if (localStorage.getItem(LNA_KEY)) return; } catch {}
 
-  const probe = () => fetch('http://localhost/', { mode: 'no-cors', signal: AbortSignal.timeout(2000) })
-    .then(() => true)
-    .catch(e => e instanceof TypeError); // TypeError = network error = LNA passed
+  // Fire a dummy fetch to trigger Chrome's LNA dialog
+  try {
+    await fetch('http://localhost/', { mode: 'no-cors', signal: AbortSignal.timeout(2000) });
+  } catch {}
 
-  // First probe - triggers the LNA dialog if not yet granted
-  if (await probe()) return true;
+  // Show overlay and wait for user to confirm they've allowed LNA
+  await new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.id = 'lna-primer';
+    overlay.innerHTML = `
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;
+        display:flex;align-items:center;justify-content:center;padding:24px">
+        <div style="background:#1a1d2e;border-radius:12px;padding:28px 24px;max-width:340px;
+          text-align:center;color:#e0e0e0;font-family:system-ui,sans-serif">
+          <div style="font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:12px">
+            Browser Permission Required
+          </div>
+          <div style="font-size:0.85rem;line-height:1.5;margin-bottom:8px">
+            Chrome needs permission to connect to wallet apps on this device.
+          </div>
+          <div style="font-size:0.85rem;line-height:1.5;margin-bottom:20px">
+            Tap <strong style="color:#448aff">Allow</strong> on the Chrome dialog, then tap Continue below.
+          </div>
+          <button id="lna-continue-btn" style="background:#448aff;color:#fff;border:none;
+            border-radius:8px;padding:12px 32px;font-size:0.9rem;font-weight:600;
+            cursor:pointer;width:100%;font-family:inherit">
+            Continue
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
 
-  // LNA dialog is likely showing. Poll until user grants it.
-  for (let i = 0; i < 15; i++) {
-    await new Promise(r => setTimeout(r, 1000));
-    if (await probe()) return true;
-  }
-  return false;
+    document.getElementById('lna-continue-btn').addEventListener('click', () => {
+      overlay.remove();
+      try { localStorage.setItem(LNA_KEY, '1'); } catch {}
+      resolve();
+    });
+  });
 }
 
 export async function connectMobile() {
-  const lnaOk = await ensureLocalNetworkAccess();
-  if (!lnaOk) {
-    throw new Error('Local network access is required for mobile wallet connection. Please allow the "Access other apps and services" permission in your browser and try again.');
-  }
+  await ensureLocalNetworkAccess();
   await transact(async (wallet) => {
     const authResult = await wallet.authorize({
       chain: 'solana:mainnet-beta',
