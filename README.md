@@ -148,6 +148,7 @@ The following files contain hardcoded domain and branding references that you sh
 - **`src/index.html`** - Open Graph and Twitter meta tags (`og:url`, `og:image`, `twitter:image`), footer link, social links in the WUT page, and the page `<title>`
 - **`src/js/config.js`** - The `APP_IDENTITY` object (`name`, `uri`, `icon`) used by the Solana Mobile Wallet Adapter (MWA) to identify your app during wallet connections on mobile. Update all three fields to match your deployment
 - **`src/js/app.js`** - Share text that includes the app name
+- **`.well-known/assetlinks.json`** - Digital Asset Links file used by wallets and browsers to verify your web identity. Update the `site` field to your domain
 
 Search for `precogmarket.com` across the source to find all references.
 
