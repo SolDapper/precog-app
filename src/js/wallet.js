@@ -311,44 +311,40 @@ export async function trySilentConnect() {
 // ── Mobile connect (MWA) ─────────────────────────────────────────
 
 /**
- * Pre-trigger Chrome's Local Network Access (LNA) permission dialog
- * before opening the wallet intent. Chrome 125+ gates localhost WebSocket
- * connections behind this permission. By triggering it here, the dialog
- * appears while the user is still in the browser.
+ * Ensure Chrome's Local Network Access (LNA) permission is granted
+ * before attempting MWA. Chrome 125+ gates localhost connections behind
+ * a permission dialog. If we fire the solana-wallet:// intent before
+ * LNA is granted, the dialog appears behind the wallet app.
  *
- * Uses a real WebSocket attempt (matching what MWA does internally) so
- * Chrome's LNA gate fires on the WebSocket handshake. The Promise won't
- * resolve until the user interacts with the dialog, preventing the
- * wallet intent from firing prematurely.
- *
- * Only needed on Android Chrome. Returns true if localhost is accessible.
+ * Strategy: probe localhost with fetch. A TypeError ("Failed to fetch")
+ * means the request reached the network layer (LNA granted, no server).
+ * Any other rejection means LNA is blocking. We trigger the dialog
+ * with the first probe, then poll until the user grants it.
+ * Only Android Chrome is affected.
  */
 async function ensureLocalNetworkAccess() {
   if (!/Android/i.test(navigator.userAgent)) return true;
 
-  return new Promise((resolve) => {
-    let settled = false;
-    const done = (ok) => { if (!settled) { settled = true; resolve(ok); } };
+  const probe = () => fetch('http://localhost/', { mode: 'no-cors', signal: AbortSignal.timeout(2000) })
+    .then(() => true)
+    .catch(e => e instanceof TypeError); // TypeError = network error = LNA passed
 
-    try {
-      const ws = new WebSocket('ws://localhost:1');
-      // Connection to port 1 will always fail (nothing listening),
-      // but Chrome shows the LNA dialog during the handshake attempt
-      // and holds the connection pending until the user responds.
-      ws.onopen = () => { ws.close(); done(true); };
-      ws.onerror = () => { done(true); }; // LNA was granted, connection just failed (expected)
-      ws.onclose = () => { done(true); };
-      // Safety timeout - if nothing happens in 10s, proceed anyway
-      setTimeout(() => done(false), 10000);
-    } catch {
-      // WebSocket constructor threw - proceed anyway
-      done(false);
-    }
-  });
+  // First probe - triggers the LNA dialog if not yet granted
+  if (await probe()) return true;
+
+  // LNA dialog is likely showing. Poll until user grants it.
+  for (let i = 0; i < 15; i++) {
+    await new Promise(r => setTimeout(r, 1000));
+    if (await probe()) return true;
+  }
+  return false;
 }
 
 export async function connectMobile() {
-  await ensureLocalNetworkAccess();
+  const lnaOk = await ensureLocalNetworkAccess();
+  if (!lnaOk) {
+    throw new Error('Local network access is required for mobile wallet connection. Please allow the "Access other apps and services" permission in your browser and try again.');
+  }
   await transact(async (wallet) => {
     const authResult = await wallet.authorize({
       chain: 'solana:mainnet-beta',
