@@ -1,0 +1,27 @@
+{
+  "name": "Precog Markets",
+  "short_name": "Precog",
+  "description": "Trustless prediction markets on Solana",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1d2e",
+  "theme_color": "#010101",
+  "icons": [
+    {
+      "src": "/.well-known/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/.well-known/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/.well-known/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
