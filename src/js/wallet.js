@@ -310,7 +310,28 @@ export async function trySilentConnect() {
 
 // ── Mobile connect (MWA) ─────────────────────────────────────────
 
+/**
+ * Pre-trigger Chrome's Local Network Access (LNA) permission dialog
+ * before opening the wallet intent. Chrome 125+ gates localhost WebSocket
+ * connections behind this permission. By triggering it here, the dialog
+ * appears while the user is still in the browser, avoiding the awkward
+ * flow of switching to the wallet, back to Chrome, approving, then back
+ * to the wallet again. Only needed on Android Chrome.
+ */
+async function ensureLocalNetworkAccess() {
+  if (!/Android/i.test(navigator.userAgent)) return;
+  try {
+    // Attempt a no-cors fetch to localhost to trigger the LNA prompt.
+    // This will always fail (no server), but Chrome shows the permission
+    // dialog before the request errors out. Once granted, it persists.
+    await fetch('http://localhost/', { mode: 'no-cors', signal: AbortSignal.timeout(3000) });
+  } catch {
+    // Expected - no server on localhost. Permission was either granted or denied.
+  }
+}
+
 export async function connectMobile() {
+  await ensureLocalNetworkAccess();
   await transact(async (wallet) => {
     const authResult = await wallet.authorize({
       chain: 'solana:mainnet-beta',

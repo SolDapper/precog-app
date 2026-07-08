@@ -505,6 +505,16 @@ body::before {
   line-height: 1.35;
   flex: 1;
 }
+.market-card-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 8px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
 .market-status-badge {
   padding: 3px 8px;
   border-radius: 4px;

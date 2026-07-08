@@ -56,9 +56,27 @@ import {
 // Connection & Client singletons
 // ═══════════════════════════════════════════════════════════════════
 
+const RPC_OVERRIDE_KEY = 'precog_rpc_override';
+const RPC_OVERRIDE_ENABLED_KEY = 'precog_rpc_enabled';
+
+function getActiveRpcUrl() {
+  try {
+    const enabled = localStorage.getItem(RPC_OVERRIDE_ENABLED_KEY) === 'true';
+    const override = localStorage.getItem(RPC_OVERRIDE_KEY);
+    if (enabled && override) return override;
+  } catch {}
+  return RPC_URL;
+}
+
+let _currentRpcUrl = null;
 let _connection = null;
 export function getConnection() {
-  if (!_connection) _connection = new Connection(RPC_URL, 'confirmed');
+  const url = getActiveRpcUrl();
+  if (!_connection || url !== _currentRpcUrl) {
+    _currentRpcUrl = url;
+    _connection = new Connection(url, 'confirmed');
+    _client = null; // reset client when connection changes
+  }
   return _connection;
 }
 
@@ -72,6 +90,16 @@ function getClient() {
     });
   }
   return _client;
+}
+
+/**
+ * Force reconnection with updated RPC URL.
+ * Called when the user changes the RPC override in Settings.
+ */
+export function resetConnection() {
+  _connection = null;
+  _client = null;
+  _currentRpcUrl = null;
 }
 
 // ═══════════════════════════════════════════════════════════════════

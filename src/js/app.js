@@ -3288,6 +3288,29 @@ function renderSettingsPage() {
     }
   }
 
+  // Update RPC override state
+  const rpcInput = document.getElementById('rpc-override-input');
+  const rpcToggle = document.getElementById('rpc-override-toggle');
+  const rpcStatus = document.getElementById('rpc-override-status');
+  if (rpcInput) {
+    const savedUrl = localStorage.getItem('precog_rpc_override') || '';
+    const enabled = localStorage.getItem('precog_rpc_enabled') === 'true';
+    rpcInput.value = savedUrl;
+    rpcToggle?.classList.toggle('active', enabled && !!savedUrl);
+    if (rpcStatus) {
+      if (enabled && savedUrl) {
+        rpcStatus.textContent = 'Using custom RPC';
+        rpcStatus.style.color = 'var(--green)';
+      } else if (savedUrl) {
+        rpcStatus.textContent = 'Custom RPC saved but disabled';
+        rpcStatus.style.color = '';
+      } else {
+        rpcStatus.textContent = 'Using default RPC';
+        rpcStatus.style.color = '';
+      }
+    }
+  }
+
   const listEl = document.getElementById('makers-list');
   if (!listEl) return;
 
@@ -3337,6 +3360,35 @@ document.getElementById('notification-toggle')?.addEventListener('click', async 
   } else {
     await notifications.enable();
   }
+  renderSettingsPage();
+});
+
+// RPC Override handlers
+document.getElementById('rpc-override-save')?.addEventListener('click', () => {
+  const url = document.getElementById('rpc-override-input')?.value.trim();
+  if (!url) return;
+  try { new URL(url); } catch { alert('Invalid URL'); return; }
+  localStorage.setItem('precog_rpc_override', url);
+  localStorage.setItem('precog_rpc_enabled', 'true');
+  sdk.resetConnection();
+  renderSettingsPage();
+});
+
+document.getElementById('rpc-override-toggle')?.addEventListener('click', () => {
+  const savedUrl = localStorage.getItem('precog_rpc_override');
+  if (!savedUrl) return;
+  const enabled = localStorage.getItem('precog_rpc_enabled') === 'true';
+  localStorage.setItem('precog_rpc_enabled', enabled ? 'false' : 'true');
+  sdk.resetConnection();
+  renderSettingsPage();
+});
+
+document.getElementById('rpc-override-remove')?.addEventListener('click', () => {
+  localStorage.removeItem('precog_rpc_override');
+  localStorage.removeItem('precog_rpc_enabled');
+  const input = document.getElementById('rpc-override-input');
+  if (input) input.value = '';
+  sdk.resetConnection();
   renderSettingsPage();
 });
 

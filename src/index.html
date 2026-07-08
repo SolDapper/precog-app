@@ -398,6 +398,7 @@
             <li>
               <a class="manual-toc-link" data-scroll-to="wut-settings">Settings</a>
               <ul>
+                <li><a class="manual-toc-link" data-scroll-to="wut-notifications">Notifications</a></li>
                 <li><a class="manual-toc-link" data-scroll-to="wut-saved-makers">Saved Market Makers</a></li>
               </ul>
             </li>
@@ -514,7 +515,15 @@
 
         <div class="manual-section" id="wut-settings">
           <h3 class="manual-heading">Settings</h3>
-          <p class="manual-text">The <strong>Settings</strong> tab lets you manage your preferences and saved data.</p>
+          <p class="manual-text">The <strong>Settings</strong> tab lets you manage notifications, saved makers, and other preferences.</p>
+        </div>
+
+        <div class="manual-section" id="wut-notifications">
+          <h3 class="manual-heading">Notifications</h3>
+          <p class="manual-text">Enable <strong>Watchlist Notifications</strong> to receive native browser alerts when events happen on your watchlisted markets. The app subscribes to on-chain program activity via WebSocket and notifies you in real time when:</p>
+          <p class="manual-text">A new position is placed, a market is resolved, finalized, or voided, a dispute resolution occurs, or winnings/refunds are claimed.</p>
+          <p class="manual-text">Clicking a notification will focus the app and open that market's detail page. Notifications require browser permission, which is requested the first time you enable the toggle. Your preference is saved locally.</p>
+          <p class="manual-text">Note: notifications are active while the app tab is open (it can be backgrounded). Closing the tab stops the WebSocket connection and notifications.</p>
         </div>
 
         <div class="manual-section" id="wut-saved-makers">
@@ -606,6 +615,29 @@
           </button>
         </div>
         <div id="notification-status" class="notification-status" style="margin-top:8px;font-size:0.72rem;color:var(--text-muted)"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="bet-section-title">RPC Override</div>
+        <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:12px">
+          Override the default RPC endpoint with your own. Stored locally in your browser. Toggle off to revert to the app default without losing your URL.
+        </p>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="rpc-override-input" type="text" class="form-input" placeholder="https://your-rpc-endpoint.com" style="flex:1;font-size:0.78rem">
+          <button id="rpc-override-save" class="action-btn primary-btn" style="width:auto;padding:8px 16px;font-size:0.72rem">Save</button>
+        </div>
+        <div class="notification-toggle-row" style="margin-bottom:8px">
+          <span class="notification-toggle-label">Use Custom RPC</span>
+          <button id="rpc-override-toggle" class="notification-toggle-btn">
+            <span class="notification-toggle-track">
+              <span class="notification-toggle-thumb"></span>
+            </span>
+          </button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span id="rpc-override-status" style="font-size:0.72rem;color:var(--text-muted)"></span>
+          <button id="rpc-override-remove" class="action-btn secondary-btn" style="width:auto;padding:4px 12px;font-size:0.68rem">Remove</button>
+        </div>
       </div>
 
       <div class="card" style="margin-bottom:14px">

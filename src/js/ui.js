@@ -194,7 +194,7 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
 
   const addr = pubkey.toBase58();
   const isWatched = watchlist.has(addr);
-  const { category: marketCategory } = parseDescription(market.description);
+  const { category: marketCategory, description: cleanDesc } = parseDescription(market.description);
 
   // User position estimate badges
   let positionBadges = '';
@@ -316,6 +316,7 @@ export function renderMarketCard(pubkey, market, userPositions = null) {
       </div>
       ${positionBadges ? `<div class="market-badge-estimates">${positionBadges}</div>` : ''}
     </div>` : ''}
+    ${cleanDesc ? `<p class="market-card-desc">${escapeHtml(cleanDesc)}</p>` : ''}
     <div class="outcome-bars">${outcomeBarsHtml}</div>
     <div class="market-card-stats">
       <div class="market-stat">
@@ -687,7 +688,7 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       statusClass = 'finalize-ready';
     }
   }
-  const { category } = parseDescription(market.description);
+  const { category, description: posCleanDesc } = parseDescription(market.description);
   const deadlineStr = market.status === 0 ? formatCountdown(market.resolutionDeadline) : formatDate(market.resolutionDeadline);
 
   // Determine action buttons
@@ -796,6 +797,7 @@ export function renderPositionCard(positionPubkey, position, market, marketPubke
       </div>
       ${payoutBadge || pnlBadge ? `<div class="position-badge-estimates">${payoutBadge}${pnlBadge}</div>` : ''}
     </div>` : ''}
+    ${posCleanDesc ? `<p class="market-card-desc">${escapeHtml(posCleanDesc)}</p>` : ''}
     <div class="position-details">
       <div class="position-detail">
         <span class="position-detail-label">Outcome</span>
