@@ -221,17 +221,22 @@ export function getIOSWalletOptions() {
   return [
     {
       name: 'Phantom',
-      icon: '👻',
-      browseUrl: `https://phantom.app/ul/browse/${currentUrl}?ref=${ref}`,
+      icon: '/.well-known/phantom-icon.svg',
+      browseUrl: `https://phantom.com/ul/browse/${currentUrl}?ref=${ref}`,
     },
     {
       name: 'Solflare',
-      icon: '☀️',
+      icon: '/.well-known/solflare-icon.ico',
       browseUrl: `https://solflare.com/ul/v1/browse/${currentUrl}?ref=${ref}`,
     },
     {
+      name: 'Jupiter',
+      icon: '/.well-known/jupiter-icon.ico',
+      browseUrl: `https://jup.ag/ul/browse/${currentUrl}?ref=${ref}`,
+    },
+    {
       name: 'Backpack',
-      icon: '🎒',
+      icon: '/.well-known/backpack-icon.ico',
       browseUrl: `https://backpack.app/ul/browse/${currentUrl}?ref=${ref}`,
     },
   ];
@@ -245,18 +250,29 @@ export function getIOSWalletOptions() {
 // prefer the legacy provider for these since their legacy APIs are mature)
 const LEGACY_NAMES = new Set(['phantom', 'solflare']);
 
-/** Returns array of { name, provider } for installed desktop wallets */
+// Known wallet icon URLs (local assets)
+const WALLET_ICONS = {
+  phantom: '/.well-known/phantom-icon.svg',
+  solflare: '/.well-known/solflare-icon.ico',
+  jupiter: '/.well-known/jupiter-icon.ico',
+  backpack: '/.well-known/backpack-icon.ico',
+};
+
+// Preferred display order
+const WALLET_ORDER = ['phantom', 'solflare', 'jupiter', 'backpack'];
+
+/** Returns array of { name, icon, provider } for installed desktop wallets, sorted by preferred order */
 export function getAvailableWallets() {
   const wallets = [];
   const seen = new Set();
 
   // Legacy injected providers
   if (window.phantom?.solana?.isPhantom) {
-    wallets.push({ name: 'Phantom', provider: window.phantom.solana });
+    wallets.push({ name: 'Phantom', icon: WALLET_ICONS.phantom, provider: window.phantom.solana });
     seen.add('phantom');
   }
   if (window.solflare?.isSolflare) {
-    wallets.push({ name: 'Solflare', provider: window.solflare });
+    wallets.push({ name: 'Solflare', icon: WALLET_ICONS.solflare, provider: window.solflare });
     seen.add('solflare');
   }
 
@@ -267,9 +283,17 @@ export function getAvailableWallets() {
     if (seen.has(lowerName)) continue;
     if ([...LEGACY_NAMES].some(ln => lowerName.includes(ln))) continue;
 
-    wallets.push({ name, provider: wrapStandardWallet(stdWallet) });
+    const knownIcon = WALLET_ICONS[lowerName];
+    wallets.push({ name, icon: knownIcon || stdWallet.icon || null, provider: wrapStandardWallet(stdWallet) });
     seen.add(lowerName);
   }
+
+  // Sort by preferred order, unknowns at end
+  wallets.sort((a, b) => {
+    const ai = WALLET_ORDER.indexOf(a.name.toLowerCase());
+    const bi = WALLET_ORDER.indexOf(b.name.toLowerCase());
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+  });
 
   return wallets;
 }

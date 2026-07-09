@@ -177,6 +177,40 @@ body::before {
   color: #fff;
 }
 
+/* iOS wallet deep-link chooser */
+.ios-wallet-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius);
+  padding: 6px;
+  z-index: 100;
+  min-width: 160px;
+}
+.ios-wallet-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+.ios-wallet-option:hover { background: rgba(68,138,255,0.08); }
+.ios-wallet-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.ios-wallet-name { flex: 1; }
+
 /* Nav share button */
 .nav-share-btn {
   display: flex;
@@ -202,30 +236,47 @@ body::before {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  background: #111;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
+  background: #111827;
+  border: 1px solid rgba(68, 138, 255, 0.15);
+  border-radius: 14px;
   overflow: hidden;
   z-index: 200;
-  min-width: 160px;
+  min-width: 180px;
+  padding: 4px;
 }
 .wallet-option {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  padding: 10px 16px;
+  padding: 10px 12px;
   border: none;
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--gold);
+  color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease;
 }
 .wallet-option:hover {
-  background: var(--gold-ghost);
-  color: var(--text-primary);
+  background: rgba(68, 138, 255, 0.08);
+}
+.wallet-option-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.wallet-btn-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
 }
 
 /* ── Navigation ─────────────────────────────────────────────────── */

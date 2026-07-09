@@ -1344,7 +1344,7 @@ function updateBetUI() {
   if (!btn) return;
   const amount = parseFloat(document.getElementById('bet-amount-input')?.value);
   const w = wallet.getWallet();
-  if (!w) { btn.textContent = 'Connect Wallet'; btn.disabled = true; }
+  if (!w) { btn.textContent = 'Connect Wallet First'; btn.disabled = true; }
   else if (selectedOutcome === null) { btn.textContent = 'Select an Outcome'; btn.disabled = true; }
   else if (!amount || amount <= 0) { btn.textContent = 'Enter Amount'; btn.disabled = true; }
   else { btn.textContent = 'Confirm Position'; btn.disabled = false; }
@@ -3230,6 +3230,34 @@ function attachConnectListeners() {
   const connectBtn = document.getElementById('connect-wallet-btn');
   if (!connectBtn) return;
 
+  // iOS mobile (not in wallet browser): show deep link chooser
+  if (isMob && wallet.isIOS()) {
+    const iosOptions = wallet.getIOSWalletOptions();
+    const dropdown = document.createElement('div');
+    dropdown.id = 'ios-wallet-dropdown';
+    dropdown.className = 'ios-wallet-dropdown hidden';
+    dropdown.innerHTML = iosOptions.map((w, i) => `
+      <a class="ios-wallet-option" href="${w.browseUrl}" rel="noopener">
+        <img class="ios-wallet-icon" src="${w.icon}" alt="${w.name}" onerror="this.style.display='none'">
+        <span class="ios-wallet-name">${w.name}</span>
+      </a>
+    `).join('');
+    connectBtn.parentElement.style.position = 'relative';
+    connectBtn.parentElement.appendChild(dropdown);
+
+    connectBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#ios-wallet-dropdown') && !e.target.closest('#connect-wallet-btn')) {
+        dropdown.classList.add('hidden');
+      }
+    });
+    return;
+  }
+
+  // Android mobile: MWA flow
   if (isMob) {
     connectBtn.addEventListener('click', async () => {
       try { await wallet.connectMobile(); } catch (err) {

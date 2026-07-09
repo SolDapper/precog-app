@@ -1046,7 +1046,8 @@ export function renderWalletDisconnected(wallets, isMobileDevice) {
   }
 
   if (wallets.length === 1) {
-    section.innerHTML = `<button id="connect-wallet-btn" class="wallet-btn">Connect ${wallets[0].name}</button>`;
+    const w = wallets[0];
+    section.innerHTML = `<button id="connect-wallet-btn" class="wallet-btn">${w.icon ? `<img class="wallet-btn-icon" src="${w.icon}" alt="">` : ''}Connect</button>`;
     return;
   }
 
@@ -1054,7 +1055,7 @@ export function renderWalletDisconnected(wallets, isMobileDevice) {
     <div class="wallet-dropdown">
       <button id="connect-wallet-btn" class="wallet-btn">Connect</button>
       <div id="wallet-options" class="wallet-options hidden">
-        ${wallets.map((w, i) => `<button class="wallet-option" data-index="${i}">${w.name}</button>`).join('')}
+        ${wallets.map((w, i) => `<button class="wallet-option" data-index="${i}">${w.icon ? `<img class="wallet-option-icon" src="${w.icon}" alt="" onerror="this.style.display='none'">` : ''}<span>${w.name}</span></button>`).join('')}
       </div>
     </div>
   `;

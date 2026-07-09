@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wallet Chooser Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #060a14;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .chooser {
+    background: #111827;
+    border: 1px solid rgba(68, 138, 255, 0.15);
+    border-radius: 14px;
+    padding: 4px;
+    width: 220px;
+  }
+  .chooser-title {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px 12px 6px;
+    font-weight: 600;
+  }
+  .wallet-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: #e0e0e0;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .wallet-option:hover {
+    background: rgba(68, 138, 255, 0.08);
+  }
+  .wallet-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  .wallet-name {
+    flex: 1;
+  }
+</style>
+</head>
+<body>
+
+<div class="chooser">
+  <div class="chooser-title">Select wallet</div>
+  <a class="wallet-option" href="#">
+    <img class="wallet-icon" src=".well-known/phantom-icon.svg" alt="Phantom">
+    <span class="wallet-name">Phantom</span>
+  </a>
+  <a class="wallet-option" href="#">
+    <img class="wallet-icon" src=".well-known/solflare-icon.ico" alt="Solflare">
+    <span class="wallet-name">Solflare</span>
+  </a>
+  <a class="wallet-option" href="#">
+    <img class="wallet-icon" src=".well-known/jupiter-icon.ico" alt="Jupiter">
+    <span class="wallet-name">Jupiter</span>
+  </a>
+  <a class="wallet-option" href="#">
+    <img class="wallet-icon" src=".well-known/backpack-icon.ico" alt="Backpack">
+    <span class="wallet-name">Backpack</span>
+  </a>
+</div>
+
+</body>
+</html>
