@@ -2,7 +2,7 @@
 
 ### The Ratcheting Parimutuel Market
 
-*An open mechanism in the parimutuel market maker class, with entry-time payout floors*
+*An open mechanism in the parimutuel market maker class, with self-financing payout floors and solvency anyone can check*
 
 **Nathan Green**
 Publisher, Precog Markets
