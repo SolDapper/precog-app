@@ -1,6 +1,8 @@
 # Precog RPM Upgrade
 
-### The Ratcheting Parimutuel Market: an open construction in the parimutuel market maker class, with entry-time payout floors
+### The Ratcheting Parimutuel Market
+
+*An open mechanism in the parimutuel market maker class, with entry-time payout floors*
 
 **Nathan Green**
 Publisher, Precog Markets
@@ -11,7 +13,7 @@ Revision 1, July 2026
 
 ## Abstract
 
-A market that prices continuously cannot quote an empty book, and seeding one requires capital from an operator or a designated liquidity provider, which decides in advance which markets are allowed to exist. This document specifies RPM, the ratcheting parimutuel market, a construction in the parimutuel market maker class set out by Melee Markets in July 2026. An RPM market opens flat with no capital committed by anyone, stays liquid at par until every outcome carries stake and a published threshold is cleared, and then converts to share-ratio curve pricing initialized from the stakes already present, so the payout ratio is continuous across the handoff. Every position carries a floor quoted at purchase and equal to what was paid, which rises as capital arrives on opposing outcomes at a rate fixed at market creation and published. A position in the realized outcome is paid at least its floor.
+A market that prices continuously cannot quote an empty book, and seeding one requires capital from an operator or a designated liquidity provider, which decides in advance which markets are allowed to exist. This document specifies RPM, the ratcheting parimutuel market, a mechanism in the parimutuel market maker (PMM) class set out by Melee Markets in July 2026. An RPM market opens flat with no capital committed by anyone, stays liquid at par until every outcome carries stake and a published threshold is cleared, and then converts to share-ratio curve pricing initialized from the stakes already present, so the payout ratio is continuous across the handoff. Every position carries a floor quoted at purchase and equal to what was paid, which rises as capital arrives on opposing outcomes at a rate fixed at market creation and published. A position in the realized outcome is paid at least its floor.
 
 The construction rests on a single inequality: the pool is at least the outstanding floor obligation on every outcome, after every operation. We show it is preserved by every operation the mechanism supports, give a constant-time accumulator that maintains it while positions enter at arbitrary times, and specify the integer arithmetic the deployed form requires along with the rounding discipline that keeps the aggregate obligation from falling short of what holders can claim. The condition is evaluable by any third party from public account state, with no operator participating.
 
@@ -41,7 +43,7 @@ We think the class is the right one, and this document is written inside it rath
 
 ## 1.3 What this document specifies
 
-RPM, the ratcheting parimutuel market, is a construction in that class. A market opens flat, with one share per unit on every outcome and no capital committed by anyone. Positions are liquid at par until the market goes live. Once every outcome carries stake and the pool clears a published threshold, the market converts to a share-ratio curve initialized from the stakes already present, so the payout ratio is continuous across the handoff. A market that never converts resolves as an ordinary parimutuel, which is the base regime working normally rather than a failure needing refunds.
+RPM, the ratcheting parimutuel market, is a mechanism in that class. A market opens flat, with one share per unit on every outcome and no capital committed by anyone. Positions are liquid at par until the market goes live. Once every outcome carries stake and the pool clears a published threshold, the market converts to a share-ratio curve initialized from the stakes already present, so the payout ratio is continuous across the handoff. A market that never converts resolves as an ordinary parimutuel, which is the base regime working normally rather than a failure needing refunds.
 
 Every position carries a floor, quoted when it is bought and equal to what was paid. The floor rises, and only rises, as capital arrives on the outcomes opposing it, at a rate `λ` fixed at creation and published per market. If the position's outcome resolves true it is paid at least its floor. One inequality carries the whole construction: the pool is at least the outstanding floor obligation on every outcome, after every operation.
 
