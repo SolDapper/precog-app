@@ -1,0 +1,211 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 1348" width="820" height="1348" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a1a1a"/>
+    </marker>
+    <marker id="av" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f3a8f"/>
+    </marker>
+    <style>
+      .ttl  { font-size:19px; font-weight:700; fill:#1a1a1a; letter-spacing:.02em }
+      .sub  { font-size:11.5px; fill:#6b6b6b }
+      .eyeb { font-size:9.5px; fill:#8a8a8a; letter-spacing:.14em; text-transform:uppercase }
+      .box  { font-size:13px; font-weight:600; fill:#1a1a1a }
+      .note { font-size:10.5px; fill:#6b6b6b }
+      .mono { font-family:"SF Mono",Menlo,Consolas,monospace; font-size:10px; fill:#4a4a4a }
+      .monos{ font-family:"SF Mono",Menlo,Consolas,monospace; font-size:9px; fill:#8a8a8a }
+      .vf   { font-size:11px; fill:#2f3a8f }
+      .vfb  { font-size:12.5px; font-weight:700; fill:#2f3a8f }
+      .edge { stroke:#1a1a1a; stroke-width:1.1; fill:none }
+      .edged{ stroke:#a8a8a8; stroke-width:1; fill:none; stroke-dasharray:3 3 }
+      .vedge{ stroke:#2f3a8f; stroke-width:1.4; fill:none }
+      .card { fill:#ffffff; stroke:#1a1a1a; stroke-width:1.1 }
+      .cardq{ fill:#ffffff; stroke:#c4c4c4; stroke-width:1 }
+      .cardv{ fill:#ffffff; stroke:#2f3a8f; stroke-width:1.3 }
+      .fill { fill:#f4f4f2 }
+      .rule { stroke:#1a1a1a; stroke-width:1.6 }
+      .hair { stroke:#d4d4d4; stroke-width:1 }
+    </style>
+  </defs>
+
+  <rect width="820" height="1348" fill="#ffffff"/>
+
+  <!-- header -->
+  <text x="48" y="56" class="ttl">Appendix A. System architecture</text>
+  <text x="48" y="76" class="sub">Precog. Zero backend: every path runs from the browser through the user's wallet to the chain.</text>
+  <line x1="48" y1="92" x2="772" y2="92" class="rule"/>
+
+  <!-- ============ OFF CHAIN ============ -->
+  <text x="48" y="120" class="eyeb">Off chain</text>
+
+  <rect x="48" y="132" width="196" height="72" rx="2" class="card"/>
+  <text x="64" y="158" class="box">Wallet</text>
+  <text x="64" y="176" class="note">Holds keys. Signs every</text>
+  <text x="64" y="190" class="note">instruction. Never custodial.</text>
+
+  <rect x="268" y="132" width="228" height="72" rx="2" class="card"/>
+  <text x="284" y="158" class="box">Browser PWA</text>
+  <text x="284" y="176" class="note">Parcel, vanilla JS.</text>
+  <text x="284" y="190" class="monos">precogmarket.com</text>
+
+  <rect x="520" y="132" width="252" height="72" rx="2" class="card"/>
+  <text x="536" y="156" class="box">SDK</text>
+  <text x="536" y="174" class="monos">precog-markets</text>
+  <text x="536" y="192" class="note">ESM, zero dependency.</text>
+
+  <path d="M496,168 L516,168" class="edge" marker-end="url(#a)"/>
+  <path d="M268,168 L248,168" class="edge" marker-end="url(#a)"/>
+
+  <!-- read only services -->
+  <rect x="268" y="222" width="228" height="46" rx="2" class="cardq"/>
+  <text x="284" y="242" class="box" fill="#6b6b6b">Read-only services</text>
+  <text x="284" y="258" class="note">Jupiter for USD pricing. SNS for names.</text>
+  <path d="M382,222 L382,204" class="edged"/>
+  <text x="392" y="216" class="monos">display only, never settlement</text>
+
+  <text x="48" y="240" class="note">No server holds</text>
+  <text x="48" y="254" class="note">user state. Nothing</text>
+  <text x="48" y="268" class="note">to trust offline.</text>
+
+  <!-- ============ CHAIN BOUNDARY ============ -->
+  <line x1="48" y1="300" x2="772" y2="300" class="rule"/>
+  <rect x="48" y="288" width="112" height="24" class="fill"/>
+  <text x="56" y="305" class="eyeb">On chain</text>
+  <rect x="694" y="294" width="82" height="18" class="fill"/>
+  <text x="772" y="305" class="monos" text-anchor="end">Solana</text>
+
+  <path d="M646,204 L646,300" class="edge" marker-end="url(#a)"/>
+  <text x="656" y="252" class="mono">signed tx</text>
+
+  <!-- ============ PROGRAMS ============ -->
+  <rect x="48" y="332" width="340" height="118" rx="2" class="cardq"/>
+  <text x="64" y="356" class="box" fill="#6b6b6b">Parimutuel program</text>
+  <text x="64" y="374" class="note">Live since February 2026. Unchanged.</text>
+  <text x="64" y="392" class="monos">6KfoCcTUVsS8i1h31dhK8cydvDXGmRyTdya7jbjoymn9</text>
+  <line x1="64" y1="404" x2="372" y2="404" class="hair"/>
+  <text x="64" y="420" class="mono">PlaceBet  ClaimWinnings  ResolveMarket</text>
+  <text x="64" y="436" class="mono">VoidMarket  ClaimRefund  DisputeResolve</text>
+
+  <rect x="432" y="332" width="340" height="118" rx="2" class="card"/>
+  <text x="448" y="356" class="box">RPM program</text>
+  <text x="448" y="374" class="note">Specified in this document. Separate program ID.</text>
+  <text x="448" y="392" class="note">Not an in-place upgrade: authority to multisig or revoked.</text>
+  <line x1="448" y1="404" x2="756" y2="404" class="hair"/>
+  <text x="448" y="420" class="mono">Buy  Switch  Transfer  Claim</text>
+  <text x="448" y="436" class="mono">Withdraw (Ante only)</text>
+
+  <text x="48" y="474" class="note">Both run at once. The app selects by program ID, and labels which guarantee applies.</text>
+
+  <!-- ============ ACCOUNTS ============ -->
+  <text x="432" y="494" class="eyeb">Program accounts, all PDAs</text>
+  <path d="M700,450 L700,500" class="edge" marker-end="url(#a)"/>
+
+  <rect x="432" y="508" width="340" height="66" rx="2" class="card"/>
+  <text x="448" y="530" class="box">Market</text>
+  <text x="448" y="546" class="monos">seeds ["market", ...]</text>
+  <text x="448" y="562" class="note">q[i] shares, S[i] obligation, acc[i], mode, λ, threshold</text>
+
+  <rect x="432" y="588" width="340" height="66" rx="2" class="card"/>
+  <text x="448" y="610" class="box">UserPosition</text>
+  <text x="448" y="626" class="monos">seeds ["position", market, owner]</text>
+  <text x="448" y="642" class="note">outcome, shares, floor base, accumulator snapshot</text>
+
+  <rect x="432" y="668" width="340" height="66" rx="2" class="card"/>
+  <text x="448" y="690" class="box">Vault</text>
+  <text x="448" y="706" class="monos">seeds ["vault", ...] authority ["vault_authority", market]</text>
+  <text x="448" y="722" class="note">Holds the pool. Program signs, no human key.</text>
+
+  <rect x="432" y="748" width="163" height="62" rx="2" class="cardq"/>
+  <text x="448" y="770" class="box" fill="#6b6b6b">ProtocolConfig</text>
+  <text x="448" y="786" class="monos">["protocol_config"]</text>
+  <text x="448" y="800" class="note">fee default, treasury</text>
+
+  <rect x="609" y="748" width="163" height="62" rx="2" class="cardq"/>
+  <text x="625" y="770" class="box" fill="#6b6b6b">Multisig</text>
+  <text x="625" y="786" class="note">Proposals, approvals,</text>
+  <text x="625" y="800" class="note">threshold execution.</text>
+
+  <path d="M602,574 L602,588" class="edge"/>
+  <path d="M602,654 L602,668" class="edge"/>
+  <path d="M602,734 L602,748" class="edged"/>
+
+  <!-- token layer -->
+  <rect x="432" y="838" width="340" height="62" rx="2" class="cardq"/>
+  <text x="448" y="860" class="box" fill="#6b6b6b">SPL Token / Token-2022</text>
+  <text x="448" y="878" class="note">Cost basis taken from the balance difference,</text>
+  <text x="448" y="892" class="note">not the requested amount.</text>
+  <path d="M545,810 L545,838" class="edged"/>
+
+  <!-- ============ VERIFICATION PATH: the signature ============ -->
+  <line x1="48" y1="508" x2="48" y2="988" class="vedge"/>
+  <text x="64" y="530" class="eyeb" fill="#2f3a8f">The property this architecture exists for</text>
+
+  <rect x="64" y="548" width="336" height="70" rx="2" class="cardv"/>
+  <text x="80" y="572" class="box" fill="#2f3a8f">Any third party</text>
+  <text x="80" y="590" class="vf">No account here. No permission asked.</text>
+  <text x="80" y="606" class="vf">No operator cooperating.</text>
+
+  <path d="M232,618 L232,652" class="vedge" marker-end="url(#av)"/>
+  <text x="242" y="640" class="mono" fill="#2f3a8f">public RPC read</text>
+
+  <rect x="64" y="652" width="336" height="54" rx="2" class="cardv"/>
+  <text x="80" y="674" class="box" fill="#2f3a8f">Market and every UserPosition</text>
+  <text x="80" y="692" class="vf">Raw account bytes. Nothing derived, nothing reported.</text>
+
+  <path d="M232,706 L232,740" class="vedge" marker-end="url(#av)"/>
+
+  <rect x="64" y="740" width="336" height="88" rx="2" class="cardv"/>
+  <text x="80" y="764" class="vf">evaluate, for every outcome i</text>
+  <text x="80" y="796" class="vfb" font-family="Georgia, serif" font-size="21">P  ≥  S</text>
+  <text x="146" y="801" class="vfb" font-family="Georgia, serif" font-size="13">i</text>
+  <text x="80" y="818" class="vf">pool at least the outstanding floor obligation</text>
+
+  <path d="M400,679 L416,679 L416,556 L426,556" class="vedge" marker-end="url(#av)"/>
+  <path d="M400,679 L416,679 L416,621 L426,621" class="vedge" marker-end="url(#av)"/>
+
+  <text x="64" y="858" class="vf">If it holds, every floor in the market is funded.</text>
+  <text x="64" y="876" class="vf">If it ever failed, anyone would see it, in the same</text>
+  <text x="64" y="894" class="vf">block, without asking us.</text>
+
+  <line x1="64" y1="920" x2="400" y2="920" class="hair"/>
+  <text x="64" y="944" class="note">A guarantee resting on an undisclosed schedule is a</text>
+  <text x="64" y="960" class="note">promise. A guarantee resting on an inequality over</text>
+  <text x="64" y="976" class="note">published state is a fact about the account.</text>
+
+  <!-- ============ FOOTER: what moves when ============ -->
+  <line x1="48" y1="1040" x2="772" y2="1040" class="rule"/>
+  <text x="48" y="1068" class="eyeb">Lifecycle of one market</text>
+
+  <line x1="64" y1="1108" x2="756" y2="1108" class="hair"/>
+
+  <circle cx="112" cy="1108" r="4.5" fill="#1a1a1a"/>
+  <text x="112" y="1096" class="box" text-anchor="middle" font-size="12">Ante</text>
+  <text x="112" y="1132" class="note" text-anchor="middle">flat, 1 share per unit</text>
+  <text x="112" y="1148" class="note" text-anchor="middle">withdraw at par</text>
+  <text x="112" y="1164" class="note" text-anchor="middle">no fee, no ratchet</text>
+
+  <circle cx="330" cy="1108" r="4.5" fill="#1a1a1a"/>
+  <text x="330" y="1096" class="box" text-anchor="middle" font-size="12">Go live</text>
+  <text x="330" y="1132" class="note" text-anchor="middle">every outcome staked</text>
+  <text x="330" y="1148" class="note" text-anchor="middle">threshold cleared</text>
+  <text x="330" y="1164" class="note" text-anchor="middle">fee taken once, positions lock</text>
+
+  <circle cx="548" cy="1108" r="4.5" fill="#1a1a1a"/>
+  <text x="548" y="1096" class="box" text-anchor="middle" font-size="12">Live</text>
+  <text x="548" y="1132" class="note" text-anchor="middle">share-ratio curve</text>
+  <text x="548" y="1148" class="note" text-anchor="middle">floors ratchet up only</text>
+  <text x="548" y="1164" class="note" text-anchor="middle">exit by transfer</text>
+
+  <circle cx="722" cy="1108" r="4.5" fill="#1a1a1a"/>
+  <text x="722" y="1096" class="box" text-anchor="middle" font-size="12">Settle</text>
+  <text x="722" y="1132" class="note" text-anchor="middle">floor, then residual</text>
+  <text x="722" y="1148" class="note" text-anchor="middle">pro rata by shares</text>
+
+  <path d="M64,1108 L48,1108 L48,1196 L722,1196 L722,1182" class="edged" marker-end="url(#a)"/>
+  <text x="400" y="1220" class="note" text-anchor="middle">A market that never clears the threshold stays in Ante and resolves as an ordinary parimutuel.</text>
+  <text x="400" y="1236" class="note" text-anchor="middle">That is the base regime working, not a failure needing refunds.</text>
+
+  <line x1="48" y1="1272" x2="772" y2="1272" class="hair"/>
+  <text x="48" y="1294" class="note">Instruction sets above are those relevant to market flow. Administrative and multisig instructions are omitted.</text>
+  <text x="48" y="1312" class="note">The parimutuel program is shown as deployed. The RPM program is shown as specified in Sections 2.2 to 2.11.</text>
+</svg>

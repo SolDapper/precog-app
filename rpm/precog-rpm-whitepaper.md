@@ -443,3 +443,11 @@ Peters, M., So, A., and Ye, Y. (2006). A convex parimutuel formulation for conti
 The Precog parimutuel implementation which this work extends was published in February 2026 and is the foundation for everything described here.
 
 **Declaration.** In preparing this work the author used Claude (Anthropic) to assist in deriving and verifying the results of Sections 2.3 to 2.11 and to draft portions of the text. The author reviewed and edited all content, directed the research, made all design and parameter decisions, and takes full responsibility for this draft.
+
+---
+
+# Appendix A. System architecture
+
+The specification above describes a mechanism. This appendix shows the system it runs in, which is implementation rather than mechanism and is included for orientation rather than as part of what is specified. The parimutuel program is drawn as deployed. The RPM program is drawn as specified in Sections 2.2 to 2.11.
+
+![System architecture: off-chain browser and SDK, the two programs, the program accounts, the third-party verification path, and the lifecycle of a single market](system-diagram.svg)
