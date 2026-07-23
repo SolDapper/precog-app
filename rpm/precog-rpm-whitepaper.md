@@ -194,7 +194,11 @@ The result is a phase where a participant's money is unconditionally theirs. Tha
 
 A market stays in Ante until every outcome carries some stake and the pool clears a threshold set at creation. A market that never satisfies both resolves as an ordinary parimutuel. That is the base regime operating normally, not a failure requiring refunds.
 
-One design decision, flagged as such. Ante buys should carry no fee, with the entry fee charged once at go-live against the positions that convert. This keeps withdrawal genuinely costless and still collects from everyone who actually participates. The haircut applies atomically and uniformly, and it preserves (I) across 2,000 markets at fee rates to 5%, conditional on rewards not accruing during Ante. The two together break the invariant in 278 of 2,000 markets, and neither does so alone.
+Ante collects no fee. The entry fee is charged once at go-live against the positions that convert, which keeps withdrawal genuinely costless and still collects from everyone who actually participates. It preserves (I) across 2,000 markets at fee rates to 5%, conditional on rewards not accruing during Ante. The two together break the invariant in 278 of 2,000 markets, and neither does so alone.
+
+Collecting at go-live cannot be done by walking the positions. They are separate accounts, a market has no bound on how many, and no single instruction can touch them all. The fee is therefore computed on each buy as it happens and escrowed against the position that generated it, held outside the pool and outside `P`. A withdrawal returns the cost basis together with that escrow, so leaving during Ante returns the entire amount paid. Conversion sweeps the market's escrow total into collected fees in one field update, which is what keeps go-live a bounded instruction.
+
+Escrow and a haircut applied at conversion collect the same amount, to the base unit, across 3,000 matched buy sequences. What differs is what a position holds in the meantime. The fee exists from the moment it is incurred and is attributable to the position that owes it, so a withdrawal has an exact figure to return rather than a share of an aggregate: 10,017 Ante withdrawals in that suite each returned precisely what had been paid in. The alternative of deferring the haircut to each position's first touch after conversion is arithmetically sound and drops a position's floor at that touch, which can fall at claim time, long after the number was quoted.
 
 ---
 
@@ -365,7 +369,7 @@ What a holder gives up is worth stating rather than leaving to be found. Measure
 
 A void during Ante needs no separate argument. Ante charges no fee and accrues no floor, so `cₚ` is the whole amount paid in and a void there is every position exercising the withdrawal of 2.4 at the same moment.
 
-Fees already collected are not part of `P` and sit outside Lemma 4. Whether a void returns them is a question about fee custody rather than about the pool.
+Fees already collected are not part of `P` and sit outside Lemma 4. Whether a void returns them is a question about fee custody rather than about the pool. Under the escrow of 2.4 a void during Ante returns them, because nothing has been collected yet and the escrow is still attributable to the position that paid it.
 
 ---
 
