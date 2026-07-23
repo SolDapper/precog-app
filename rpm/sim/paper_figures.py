@@ -1,4 +1,4 @@
-"""Every number quoted in litepaper section 2, regenerated from the current
+"""Every number quoted in whitepaper section 2, regenerated from the current
 simulators.
 
 Section 2 states that every claim in it is implemented in the reference

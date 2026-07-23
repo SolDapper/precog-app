@@ -35,7 +35,7 @@ python3 int_reference.py     # integer arithmetic and the rounding discipline
 python3 ante.py              # flat-price opening, withdrawal, ratchet gating
 python3 bootstrap.py         # conversion from flat pricing to the curve
 python3 bounds.py            # arithmetic bounds, overflow, go-live fee haircut
-python3 settle_fee.py        # settlement fee for markets that never convert
+python3 void_refund.py       # the refund path after a void, and its rounding
 python3 paper_figures.py     # every number quoted in the paper
 ```
 

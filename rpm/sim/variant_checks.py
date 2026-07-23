@@ -4,8 +4,12 @@ the failure recorded as error 15. Each figure below is quoted somewhere in
 prose, so it needs to live here where it can be rechecked.
 
   1. Ante ratchet crossed with the go-live haircut       whitepaper 2.5, error 12
-  2. Refund at cost basis after a void is solvent        handoff section 9
-  3. Headroom is not other-outcome stake                 handoff section 3
+  2. Headroom is not other-outcome stake                 handoff section 3
+
+Refund solvency after a void used to live here as a third check. It exercised
+buys only, so it never touched the switch, transfer or withdrawal paths that
+the claim depends on. It now lives in void_refund.py, which covers all of them
+and carries Lemma 4. One claim, one home.
 """
 import random
 
@@ -78,44 +82,13 @@ def variant_matrix(trials=2000):
     print()
 
 
-# ---- 2. void and refund ----------------------------------------------------
-# Not specified in the whitepaper. If a market is voided, positions refund at
-# cost basis. P = Sum(c) holds by construction and the haircut removes the same
-# amount from both sides, so this is exactly solvent with zero slack. Zero slack
-# is the point: the rounding has to go the right way or it fails.
-
-def refund_solvency(trials=3000):
-    print("2. refund at cost basis after a void")
-    random.seed(101)
-    breaks, worst = 0, None
-    for _ in range(trials):
-        n = random.choice([2, 3, 10])
-        m = HaircutMarket(n,
-                          lam_bps=random.choice([0, 4000, 9900]),
-                          threshold=random.choice([10**5, 10**9, 10**14]),
-                          fee_bps=random.choice([0, 100, 300]))
-        for _ in range(random.randint(2, 50)):
-            m.buy(random.randrange(n),
-                  random.choice([1, 7, 10**3, 10**7, 10**11]))
-            m.check()
-        gap = m.P - sum(p['c'] for p in m.pos)
-        breaks += gap < 0
-        worst = gap if worst is None else min(worst, gap)
-    print(f"   {trials} markets, markets unable to cover refunds: {breaks}")
-    print(f"   worst pool minus owed: {worst}")
-    assert breaks == 0 and worst == 0
-    print("   Exactly solvent, and exactly zero slack. Needs its own lemma")
-    print("   before the instruction is written.")
-    print()
-
-
-# ---- 3. the headroom identity that was false -------------------------------
+# ---- 2. the headroom identity that was false -------------------------------
 # The reference card claimed H_i = P - S_i equals the value staked on every
 # other outcome. It does not: floors already ratcheted onto i sit inside S_i.
 # The two coincide only at lambda = 0.
 
 def headroom_gap(trials=400):
-    print("3. headroom against other-outcome stake")
+    print("2. headroom against other-outcome stake")
     random.seed(3)
     worst, n_obs = 0.0, 0
     at_zero_lambda = 0.0
@@ -145,5 +118,4 @@ def headroom_gap(trials=400):
 
 if __name__ == "__main__":
     variant_matrix()
-    refund_solvency()
     headroom_gap()

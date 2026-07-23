@@ -320,7 +320,7 @@ Positions on unrealized outcomes receive nothing, as in any parimutuel. The resi
 
 ## 2.11 Integer arithmetic
 
-Every proof above holds in real arithmetic. On chain the values are `u64` and `u128` integers, and truncation in the wrong direction breaks (I) by a single unit, which is enough to make Theorem 1 false. Three rules govern the implementation.
+Every proof above holds in real arithmetic. On chain the values are `u64` and `u128` integers, and truncation in the wrong direction breaks (I) by a single unit, which is enough to make Theorem 1 false. Four rules govern the implementation.
 
 **R1. Anything that increases a participant's claim rounds down.** Shares issued on a buy, shares issued on a switch, a position's accrued floor, and the residual share at settlement.
 
@@ -335,6 +335,8 @@ Sⱼ   += gross                        obligation, exact
 
 **R3. Truncated dust stays in the pool.** It is never credited anywhere and settles to winners as residual.
 
+**R4. The go-live haircut removes from the pool exactly the sum of the per-position deductions.** Each converting position gives up `floor(cₚ · r)` and the pool gives up the total of those amounts, never a rate applied to the pool balance. Because the floor of a sum is at least the sum of the floors, charging the pool directly takes more out of it than the positions give up, by up to one unit per position. That direction is harmless for (I) and fatal for the refund path of 2.12, which has no slack to absorb it.
+
 Together these give the integer form of the invariant.
 
 ```
@@ -345,11 +347,35 @@ The middle term is slack created by truncation. It only grows, and only in the p
 
 ---
 
-## 2.12 What is not promised
+## 2.12 Void and refund
+
+A market can fail to produce an outcome. The resolution source may not report, the event may be cancelled, or the question may prove ill-posed. That case needs a terminal path of its own, because (I) bounds what can be paid to one outcome and a void pays every outcome at once.
+
+The refund pays each open position the amount that entered the pool on its behalf, its cost basis `c`. Accrued floors are extinguished.
+
+**Lemma 4.** At every point in a market's life, `P = Σₚ cₚ` summed over open positions. Refunding every open position its cost basis therefore exhausts the pool exactly.
+
+Induction over the operations. An empty market satisfies it. A buy takes the fee before crediting the pool, so `P` and the recorded basis both gain `c`. A ratchet writes `accⱼ` and `Sⱼ` and moves neither side. The go-live haircut reduces each position by `floor(cₚ · r)` and the pool by the sum of those reductions, which is R4. A switch changes `q`, `S`, `b` and `a` while leaving `P` and `cₚ` untouched, so a position that has moved outcome still carries the basis it entered with. A transfer writes the owner field. An Ante withdrawal removes `cₚ` from both sides. Settlement is terminal. Every operation moves the two sides by equal amounts.
+
+(I) carries slack that truncation only widens. Lemma 4 is an equality with none: the pool covers the refunds to the unit and never by more, so any operation moving the pool and the recorded bases by different amounts breaks the path. This is why R4 is a rule rather than an implementation note, and it is worth checking directly, since the invariant assertion cannot see the failure.
+
+Extinguishing accrued floors follows from what a floor is. `Fₚ` is a claim on the pool conditional on outcome `i` being realized, and a void is the case where no outcome is realized, so no floor's condition is met. The alternative is unavailable in any event. Each outcome's obligation is bounded by the pool separately rather than jointly, so `Σᵢ Sᵢ` stands above `P` whenever a ratchet has run, at a median of 1.66 times the pool across Live markets in the sample and reaching 8.31. Honouring accrued floors on a void would mean scaling all of them down by a common factor, which is a different rule wearing the same word. It is also the worse incentive. A refund of any kind means a position on a losing outcome prefers a void and one on a winning outcome opposes it, which is why the void authority has to be narrow and rule-bound. Paying accrued floors would additionally let a position holding a large ratchet on a losing outcome collect a guarantee that could never have been realized.
+
+What a holder gives up is worth stating rather than leaving to be found. Measured at `λ = 0.4` over 3,000 converted markets, a position of 1e7 base units or more carries a median floor of 1.36 times its basis at a random moment, with a ninetieth percentile of 2.55 and a maximum of 9. Smaller positions record much larger multiples, to 600,486, because a ratchet sized by the rest of the market lands on a small basis. The aggregate mean across all sizes is 2,117 and describes none of them.
+
+A void during Ante needs no separate argument. Ante charges no fee and accrues no floor, so `cₚ` is the whole amount paid in and a void there is every position exercising the withdrawal of 2.4 at the same moment.
+
+Fees already collected are not part of `P` and sit outside Lemma 4. Whether a void returns them is a question about fee custody rather than about the pool.
+
+---
+
+## 2.13 What is not promised
 
 - Backing the wrong outcome loses the stake. The floor is a lower bound on a winning payout, not insurance against being wrong. Downside is fixed conditional on being right.
 - The floor applies at resolution. A position sold to a peer beforehand fetches whatever that peer pays, which may be less.
 - Switching re-quotes the floor. Monotonicity holds for a position left alone.
+- A void extinguishes accrued floors. The refund is the amount paid in, so a position sitting on a large ratchet returns at its basis.
+- A void after go-live does not return the entry fee. It was collected at conversion and the refund is the cost basis net of it. A void during Ante returns everything, since nothing has been collected yet.
 - Rewards require opposition. A market nobody contests generates almost no ratchet, and positions settle near their cost basis.
 - Ante markets that never clear the threshold are ordinary parimutuels. Money-back floors, no continuous pricing, no exit.
 - Simulation is not audit. Nothing here has been verified against a deployed program, and the program has not been audited.
@@ -370,9 +396,9 @@ The reference simulator implements this specification and asserts (I), accumulat
 | Liquid Ante with withdrawal | 2,000 | zero violations with ratchets off, 902 of 2,000 with ratchets on |
 | Switch round trip, integer | 4,000 | 24,000 round trips, none share-positive |
 | Go-live fee haircut | 2,000 | free Ante, conversion-time fee, rates to 5% |
-| Residual-only settlement fee | 3,000 | markets that never convert; converted markets exempt |
 | Settlement residual policy | 2,400 | pro rata against exposure weighting |
 | λ selection | 24,000 | per-trade calibration distribution, switch truncation, self-dealing |
+| Void and refund | 3,000 | cost-basis identity across buys, switches, transfers and Ante withdrawal |
 
 The last row is load bearing for 2.4. Free withdrawal during Ante is safe only because rewards do not accrue there.
 
@@ -389,10 +415,11 @@ All results in this section are reproducible from artifacts published alongside 
 | `int_reference.py` | The integer implementation, the rounding discipline of 2.11, and the incorrect variant which fails. |
 | `ante.py` | Withdrawal during Ante, run with reward accrual enabled and disabled. |
 | `bounds.py` | Derivation of the arithmetic bounds, runtime overflow assertions at extreme magnitudes, and the go-live fee haircut. |
+| `void_refund.py` | The refund path of 2.12. The cost-basis identity checked after every operation, the haircut rounding of R4 and how it fails, and what a void extinguishes by position size. |
 
 Each file runs directly under Python 3 with no dependencies outside the standard library and prints its own results. Assertions fire on the invariant, on the relation between the aggregate obligation and the sum of individual floors, on share conservation, on floor monotonicity, and on overpayment at settlement.
 
-The distinction between what is proven and what is tested should be kept in view. Theorems 1 and 2 and Lemmas 1 to 3 are analytic and hold in real arithmetic; the simulator exercises them but does not establish them. The integer results in 2.11 are empirical. The bound on `accⱼ` given in the parameter notes below is argued informally rather than proved. Nothing here has been machine-checked in a proof assistant, and nothing has been audited.
+The distinction between what is proven and what is tested should be kept in view. Theorems 1 and 2 and Lemmas 1 to 4 are analytic and hold in real arithmetic; the simulator exercises them but does not establish them. The integer results in 2.11 and the measurements in 2.12 are empirical. The bound on `accⱼ` given in the parameter notes below is argued informally rather than proved. Nothing here has been machine-checked in a proof assistant, and nothing has been audited.
 
 ### Where we would attack this
 
