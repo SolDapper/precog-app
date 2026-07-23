@@ -35,8 +35,16 @@ python3 int_reference.py     # integer arithmetic and the rounding discipline
 python3 ante.py              # flat-price opening, withdrawal, ratchet gating
 python3 bootstrap.py         # conversion from flat pricing to the curve
 python3 bounds.py            # arithmetic bounds, overflow, go-live fee haircut
-python3 void_refund.py       # the refund path after a void, and its rounding
-python3 paper_figures.py     # every number quoted in the paper
+python3 void_refund.py       # the refund path, the Ante escrow, the settlement sweep
+python3 position_merge.py    # adding to a position already held, against keeping separate
+python3 variant_checks.py    # the cross-cutting combinations, including the 278 of 2,000
+python3 fee_timing.py        # collecting at conversion against collecting after it
+python3 residual_policy.py   # residual pro rata by shares against weighting by time held
+python3 lambda_range.py      # what bounds lambda, from five directions
+python3 calibration_risk.py  # per-trade calibration, floors, quoted against executed
+python3 creator_params.py    # whether a creator setting lambda or the threshold gains an edge
+python3 worked_example.py    # one market end to end, and which buyer the mechanism favours
+python3 paper_figures.py     # every number quoted in the paper, under both grouping models
 ```
 
 Each file asserts its own results and exits non-zero on failure. The suite takes
