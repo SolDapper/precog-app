@@ -112,9 +112,9 @@
 
   <rect x="432" y="612" width="340" height="82" rx="2" class="card"/>
   <text x="448" y="634" class="box">UserPosition</text>
-  <text x="448" y="650" class="monos">address fixed for life; owner and outcome are fields</text>
+  <text x="448" y="650" class="monos">seeds ["position", market, creator, nonce]</text>
   <text x="448" y="666" class="note">market, owner, outcome_index, amount, shares, base_floor,</text>
-  <text x="448" y="682" class="note">acc_snapshot, ante_escrow, delegate, payout</text>
+  <text x="448" y="682" class="note">acc_snapshot, ante_escrow, delegate, payout, creator, nonce</text>
 
   <rect x="432" y="708" width="340" height="66" rx="2" class="card"/>
   <text x="448" y="730" class="box">Vault</text>
