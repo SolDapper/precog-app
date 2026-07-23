@@ -45,7 +45,10 @@ a few minutes end to end.
 ## Precog
 
 The parimutuel implementation this work extends has been running on Solana
-since February 2026, MIT licensed, with no backend.
+since February 2026, MIT licensed, with no backend. RPM ships an indexer for
+reads, because positions are no longer derivable from an address. It holds no
+authority and settles nothing, and the solvency check in the paper is made
+against chain state without it.
 
 | | |
 |---|---|
@@ -56,7 +59,7 @@ since February 2026, MIT licensed, with no backend.
 | Live | precogmarket.com |
 
 RPM ships as a separate program, SDK and app. The existing protocol stays live
-and unchanged.
+and this work does not modify it.
 
 ## Licence
 

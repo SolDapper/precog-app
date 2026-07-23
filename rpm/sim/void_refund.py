@@ -461,6 +461,154 @@ def escrowed_ante_fee(trials=3000):
     print()
 
 
+# ---- 8. the sweep on a market that never converts ---------------------------
+
+DEFAULT_FEE_BPS = 100          # protocol takes this; the creator keeps the rest
+
+
+class NeverConvertMarket(EscrowMarket):
+    """A market that never clears its threshold sweeps its escrow at
+    settlement instead of at conversion.
+
+    Collection is otherwise triggered by go-live, so without this a market
+    whose threshold is never reached pays out its whole pool having collected
+    nothing, and the creator is the one who sets the threshold. That is
+    error 13.
+
+    The escrow is a single field, so the split between the protocol share and
+    the creator share has to be derived from it at sweep time. Deriving is not
+    the same as having maintained: the escrow is a sum of truncated per-buy
+    fees, and a ratio taken over that sum truncates a second time. Both are
+    tracked so the gap is measured rather than assumed away. The creator side
+    rounds down either way, so the remainder falls to the treasury, which is
+    the party with no ability to cause a market to end up here.
+    """
+
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.creator_bps   = max(0, self.fee_bps - DEFAULT_FEE_BPS)
+        self.creator_true  = 0          # maintained per buy
+        self.protocol_true = 0
+        self.swept         = 0
+
+    def buy(self, i, value, owner=0):
+        before = self.escrow
+        p = super().buy(i, value, owner=owner)
+        if p is None:
+            return None
+        fee = self.escrow - before
+        if fee > 0:
+            cred = min((value * self.creator_bps) // BPS, fee)
+            self.creator_true  += cred
+            self.protocol_true += fee - cred
+        return p
+
+    def sweep_at_settlement(self):
+        """One field update at finalization, on a market still in Ante."""
+        esc = self.escrow
+        creator_derived = (esc * self.creator_bps) // self.fee_bps if self.fee_bps else 0
+        protocol_derived = esc - creator_derived
+        self.fees  += esc
+        self.swept  = esc
+        self.escrow = 0
+        for p in self.pos:
+            p['esc'] = 0
+        return protocol_derived, creator_derived
+
+
+def never_converted_sweep(trials=3000):
+    print("8. the escrow sweep on a market that never converts")
+    random.seed(202)
+    n_never = n_conv = 0
+    collected_at_nominal = 0
+    conv_collected_at_settlement = 0
+    pool_moved = 0
+    floor_breaks = 0
+    split_exact = 0
+    over = under = 0
+    worst_gap = 0
+    worst_rel = 0.0
+    for _ in range(trials):
+        n = random.choice([2, 3, 10])
+        never = random.random() < 0.7
+        m = NeverConvertMarket(
+            n,
+            lam_bps=random.choice([0, 4000, 9900]),
+            threshold=10**18 if never else 10**5,
+            fee_bps=random.choice([0, 100, 137, 217, 250, 300]))
+        nominal = 0
+        for _ in range(random.randint(2, 60)):
+            v = random.choice([1, 7, 101, 999, 1234, 10**3, 12_345,
+                               10**7, 999_999_937, 10**11])
+            i = random.randrange(n)
+            in_ante = not m.curve
+            if m.buy(i, v) is not None and in_ante:
+                nominal += (v * m.fee_bps) // BPS
+            m.check()
+        w = random.randrange(n)
+        winners = [p for p in m.pos if p['i'] == w]
+        if not winners:
+            continue
+
+        floors = [(p, m.floor_of(p)) for p in winners]
+        pool_before = m.P
+        converted = m.curve
+
+        prot, cred = m.sweep_at_settlement()
+        assert prot + cred == m.swept          # nothing leaks in the split
+        pool_moved += (m.P != pool_before)
+
+        if converted:
+            n_conv += 1
+            conv_collected_at_settlement += m.swept
+        else:
+            n_never += 1
+            collected_at_nominal += (m.swept == nominal)
+            gap = cred - m.creator_true
+            over  += gap > 0
+            under += gap < 0
+            worst_gap = max(worst_gap, abs(gap))
+            if m.swept:
+                worst_rel = max(worst_rel, abs(gap) / m.swept)
+            split_exact += (gap == 0)
+
+        residual = m.P - m.S[w]
+        for p, f in floors:
+            pay = f + (p['s'] * residual) // m.q[w]
+            if pay < f:
+                floor_breaks += 1
+        paid, dust = m.settle(w)
+        assert paid + dust == pool_before
+
+    print(f"   {n_never:,} markets never converted, {n_conv:,} converted")
+    print(f"   never-converted markets collecting the nominal rate: "
+          f"{collected_at_nominal:,}/{n_never:,}")
+    print(f"   converted markets collecting at settlement: "
+          f"{conv_collected_at_settlement:,} base units")
+    print(f"   sweeps that moved the pool: {pool_moved:,}")
+    print(f"   winning positions paid below their floor: {floor_breaks:,}")
+    assert collected_at_nominal == n_never
+    assert conv_collected_at_settlement == 0
+    assert pool_moved == 0
+    assert floor_breaks == 0
+    print("   The escrow sits outside P, so sweeping it moves no pool and no")
+    print("   payout. Collection is exact because the swept total is the sum of")
+    print("   fees already taken, rather than a rate applied to something at")
+    print("   settlement, which is what made the residual fee of error 13 vary")
+    print("   with where the stake happened to sit.")
+    print()
+    print(f"   deriving the creator share from the swept total instead of")
+    print(f"   maintaining it: exact in {split_exact:,}/{n_never:,} markets,")
+    print(f"   worst gap {worst_gap:,} base units, worst as a share of the")
+    print(f"   sweep {worst_rel:.3%}")
+    print(f"   creator over-credited in {over:,}, under-credited in {under:,}")
+    print("   The gap is the second truncation. One field cannot reproduce a")
+    print("   split that was never stored, so either the layout carries the")
+    print("   creator share separately or the design states that the treasury")
+    print("   absorbs the difference.")
+    print()
+
+
 if __name__ == "__main__":
     cost_basis_identity()
     haircut_rounding()
@@ -469,3 +617,4 @@ if __name__ == "__main__":
     obligation_total()
     deferred_haircut()
     escrowed_ante_fee()
+    never_converted_sweep()

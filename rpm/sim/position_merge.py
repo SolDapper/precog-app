@@ -1,11 +1,19 @@
-"""Buying into an outcome you already hold.
+"""Adding to a position you already hold.
 
-v1 seeds a position at [POSITION_SEED, market, bettor, outcome_index], so there
-is exactly one position account per bettor per outcome and a second bet tops up
-the first. Every simulator here appends a fresh position on every buy instead,
-so the program and the reference model would be describing different mechanisms.
-That is error 11 again, and a second bet on the same outcome is ordinary user
-behaviour rather than an edge case.
+v1 seeds a position at [POSITION_SEED, market, bettor, outcome_index] and
+validates it with assert_pda, so a second bet on the same outcome necessarily
+tops up the first. v2 cannot keep that seed. A PDA address is a function of its
+seeds, so every seeded field is immutable for the life of the account, and v2
+adds two instructions that rewrite exactly those fields: Switch changes the
+outcome and Transfer changes the owner. The v2 position is therefore seeded on
+something immutable, its address is stable for life, and owner and outcome are
+ordinary mutable state.
+
+So the top-up is not forced by the protocol. Both groupings are legal and the
+client decides which happens by choosing the account it passes. That makes this
+file more load bearing rather than less: the program has to implement the
+top-up correctly because the SDK will use it by default, and it has to remain
+correct alongside appending, because both are reachable in the same program.
 
 A top-up cannot simply add shares. The position carries an accumulator snapshot
 `a`, and its accrued floor is `b + s·(acc[i] − a) / ACC`. Raising `s` while
@@ -28,6 +36,7 @@ incoming floor being min(Fₚ, H_b) rather than a fresh cost basis.
   4. merging against appending, on identical inputs
 """
 import random
+import statistics
 from math import isqrt
 
 from int_reference import IntMarket, BPS, ACC
@@ -217,9 +226,15 @@ def without_banking(trials=2000):
 
 def merge_vs_append(trials=2000):
     print("4. merging against appending, identical inputs")
-    same_pool = 0
-    same_paid = 0
-    n_runs    = 0
+    same_pool   = 0
+    same_paid   = 0
+    n_runs      = 0
+    merge_more  = 0
+    append_more = 0
+    acct_merge  = 0
+    acct_append = 0
+    gaps = []
+    rel  = []
     for seed in range(trials):
         random.seed(seed)
         n  = random.choice([2, 3])
@@ -236,19 +251,41 @@ def merge_vs_append(trials=2000):
             a.buy(i, v, owner=o)
             b.buy(i, v, owner=o)
         a.check(); b.check()
+        acct_merge  += len(a.pos)
+        acct_append += len(b.pos)
+
         pa, _ = a.settle(w)
         pb, _ = b.settle(w)
         n_runs   += 1
         same_pool += a.P == b.P
         same_paid += pa == pb
+        d = pa - pb
+        if   d > 0: merge_more  += 1
+        elif d < 0: append_more += 1
+        if d:
+            gaps.append(d)
+            rel.append(abs(d) / max(a.P + pa, 1))
+
     print(f"   {n_runs} matched runs")
     print(f"   pools identical:   {same_pool:,}/{n_runs}")
     print(f"   total paid identical: {same_paid:,}/{n_runs}")
+    print(f"   merge pays more: {merge_more:,}   "
+          f"append pays more: {append_more:,}")
+    print(f"   gap where they differ: median {statistics.median(gaps):,.0f}, "
+          f"max {max(gaps):,} base units")
+    print(f"   largest gap as a share of the settled total: {max(rel):.2e}")
+    print(f"   position accounts at settlement: merge {acct_merge:,}, "
+          f"append {acct_append:,}  ({acct_append/acct_merge:.2f}x)")
     assert same_pool == n_runs
+    assert max(rel) < 1e-4
     print("   The pool is identical because the merge changes only how claims")
     print("   are grouped, never how much enters. Payouts differ where they do")
     print("   because truncation is applied once per account rather than once")
     print("   per buy, and it rounds down either way, so dust stays in the pool.")
+    print("   The two groupings are therefore the same money to within dust and")
+    print("   differ by more than double in rent. That is the whole trade, and")
+    print("   it is why the SDK should top up by default even though the")
+    print("   protocol no longer forces it.")
     print()
 
 
