@@ -22,6 +22,7 @@ evaluable by any third party from public account state.
 |---|---|
 | `precog-rpm-whitepaper.md` | The specification. Cover, introduction, mechanism, proofs, integer arithmetic, limits |
 | `sim/` | Reference simulators. Every numeric claim in the paper is regenerated here |
+| `system-diagram.svg` | Appendix A. Renders inline in the whitepaper on GitHub |
 
 ## Running the simulators
 
